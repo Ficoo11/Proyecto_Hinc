@@ -1,12 +1,155 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/fontAwesome.css' %}" />
+    <link rel="shortcut icon" href="{% static 'img/Hinc.png' %}" type="image/x-icon" />
+    <title>Hinc</title>
 </head>
 <body>
-    <h1>Hola Mundo</h1>
-    <h2>Soy aprendiz del Sena</h2>
+
+    <!-- Header -->
+    <header class="header">
+        <video class="header-video" autoplay muted loop>
+            <source src="{% static 'Hinc.mp4' %}" type="video/mp4" />
+        </video>
+        <nav class="nav">
+            <a href="{% url 'index' %}"><img src="{% static 'img/Hinc.png' %}" alt="" class="logo" /></a>
+            <div class="nav-navbar">
+                <a href="#Categorias" class="navbar-hombre">Categorias</a>
+                <a href="#Sobre-Nosotros" class="navbar-mujer">Sobre Nosotros</a>
+            </div>
+            <a href="{% url 'login' %}" class="usuario"><i class="fa-solid fa-user"></i></a>
+        </nav>
+        <div class="header-content">
+            <h1>Bienvenidos<br>a Hinc</h1>
+        </div>
+    </header>
+
+    <!-- Productos destacados -->
+    <section class="featured-products">
+        <h2 class="featured-title">Productos Destacados</h2>
+        <div class="products-section">
+            <div class="product">
+                <a href="">
+                    <img src="{% static 'img/Producto1.jpg' %}" alt="Producto 1" />
+                </a>
+                <div class="product-name">Zapatos 32</div>
+                <div class="product-price">$50.00</div>
+            </div>
+            <div class="product">
+                <a href="">
+                    <img src="{% static 'img/Producto2.jpg' %}" alt="Producto 2" />
+                </a>
+                <div class="product-name">Bolso de Cuero</div>
+                <div class="product-price">$70.00</div>
+            </div>
+            <div class="product">
+                <a href="">
+                    <img src="{% static 'img/Producto3.png' %}" alt="Producto 3" />
+                </a>
+                <div class="product-name">Camisa Casual</div>
+                <div class="product-price">$30.00</div>
+            </div>
+            <div class="product">
+                <a href="">
+                    <img src="{% static 'img/Producto4.jpg' %}" alt="Producto 4" />
+                </a>
+                <div class="product-name">Reloj Moderno</div>
+                <div class="product-price">$120.00</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categorias -->
+    <section class="categories" id="Categorias">
+        <h2 class="categories-title">Explora por Categorías</h2>
+        <div class="categories-container">
+            <a href="#" class="category-card">
+                <img src="{% static 'img/Hombre.jpg' %}" alt="Categoría Hombre" class="category-image" />
+                <div class="category-overlay">
+                    <p class="category-label">Hombre</p>
+                </div>
+            </a>
+            <a href="#" class="category-card">
+                <img src="{% static 'img/Mujer.png' %}" alt="Categoría Mujer" class="category-image" />
+                <div class="category-overlay">
+                    <p class="category-label">Mujer</p>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <!-- Ofertas -->
+    <section class="offers">
+        <h2 class="offers-title">Ofertas</h2>
+        <div class="products-section">
+            <div class="product">
+                <a href="#">
+                    <img src="{% static 'img/Producto5.jpg' %}" alt="Producto 1 Oferta" />
+                </a>
+                <div class="product-name">Producto 1</div>
+                <div class="product-price"><span class="price-old">$59.99</span> $39.99</div>
+            </div>
+            <div class="product">
+                <a href="#">
+                    <img src="{% static 'img/Producto6.jpg' %}" alt="Producto 2 Oferta" />
+                </a>
+                <div class="product-name">Producto 2</div>
+                <div class="product-price"><span class="price-old">$79.99</span> $49.99</div>
+            </div>
+            <div class="product">
+                <a href="#">
+                    <img src="{% static 'img/Producto7.jpg' %}" alt="Producto 3 Oferta" />
+                </a>
+                <div class="product-name">Producto 3</div>
+                <div class="product-price"><span class="price-old">$49.99</span> $29.99</div>
+            </div>
+            <div class="product">
+                <a href="#">
+                    <img src="{% static 'img/Producto8.jpg' %}" alt="Producto 4 Oferta" />
+                </a>
+                <div class="product-name">Producto 4</div>
+                <div class="product-price"><span class="price-old">$89.99</span> $59.99</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- footer -->
+    <footer class="footer1" id="Sobre-Nosotros">
+        <div class="grupo1">
+            <div class="box">
+                <figure>
+                    <a href="#">
+                        <img src="{% static 'img/CodeCrafters.png' %}" alt="Logo CodeCrafter" />
+                    </a>
+                </figure>
+            </div>
+            <div class="box">
+                <h2>SOBRE NOSOTROS</h2>
+                <p>Medellín es una ciudad llena de emprendimiento e innovación, Hinc representa precisamente eso!</p>
+                <p>Sueña en grande y cumple tus metas, haz los mejores esfuerzos para poder lograr lo que quieres.</p>
+            </div>
+            <div class="box">
+                <h2>SIGUENOS</h2>
+                <div class="red-social">
+                    <a href="#" class="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="#" class="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" class="Whatsapp"><i class="fa-brands fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer2">
+            <small>&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</small>
+        </div>
+    </footer>
+
+    <!-- boton volver arriba -->
+    <button id="backToTopBtn">&#8679;</button>
+    <script src="{% static 'js/backToTop.js' %}"></script>
+
 </body>
 </html>
