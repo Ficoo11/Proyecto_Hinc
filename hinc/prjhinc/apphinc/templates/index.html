@@ -14,7 +14,7 @@
     <!-- Header -->
     <header class="header">
         <video class="header-video" autoplay muted loop>
-            <source src="{% static 'Hinc.mp4' %}" type="video/mp4" />
+            <source src="{% static 'img/Hinc.mp4' %}" type="video/mp4" />
         </video>
         <nav class="nav">
             <a href="{% url 'index' %}"><img src="{% static 'img/Hinc.png' %}" alt="" class="logo" /></a>
@@ -22,7 +22,7 @@
                 <a href="#Categorias" class="navbar-hombre">Categorias</a>
                 <a href="#Sobre-Nosotros" class="navbar-mujer">Sobre Nosotros</a>
             </div>
-            <a href="{% url 'login' %}" class="usuario"><i class="fa-solid fa-user"></i></a>
+            <a href="{% url 'login' %}" class="usuario">User<i class="fa-solid fa-user"></i></a>
         </nav>
         <div class="header-content">
             <h1>Bienvenidos<br>a Hinc</h1>
@@ -124,7 +124,7 @@
             <div class="box">
                 <figure>
                     <a href="#">
-                        <img src="{% static 'img/CodeCrafters.png' %}" alt="Logo CodeCrafter" />
+                        <img src="{% static 'img/CodeCrafters.png' %}" alt="Logo CodeCrafter" class="CodeCrafter"/>
                     </a>
                 </figure>
             </div>
