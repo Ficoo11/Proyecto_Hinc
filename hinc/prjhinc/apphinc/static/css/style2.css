@@ -1,0 +1,426 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --vinotinto: #800E0E;
+    --grisClaro: #DDDDDD;
+    --fondoOscuro: #222;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: var(--grisClaro);
+}
+
+/* Header */
+.header {
+    position: relative;
+    height: 500px;
+    overflow: hidden;
+}
+
+.header-video {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+}
+
+.nav {
+    position: absolute;
+    width: 100%;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    z-index: 3;
+}
+
+.nav-navbar a {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0 10px;
+    padding: 5px 10px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.nav-navbar a:hover {
+    color: black;
+    background-color: white;
+    border: 2px solid white;
+    border-radius: 5px;
+    text-decoration: underline;
+}
+
+.usuario {
+    font-size: 18px;
+    color: white;
+    text-decoration: none;
+    padding: 5px;
+    transition: color 0.3s ease, background-color 0.3s ease;
+    border-radius: 5px;
+}
+
+.usuario:hover {
+    color: black;
+    background-color: white;
+}
+
+.logo {
+    width: 18px;
+    height: 30px;
+}
+
+.header-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 2;
+}
+
+.header-content h1 {
+    font-size: 48px;
+    color: white;
+}
+
+.header-button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    background: none;
+    border: 2px solid white;
+    cursor: pointer;
+    transition: background 0.3s, color 0.3s;
+}
+
+.header-button:hover {
+    background: white;
+    color: black;
+}
+
+/* Productos destacados */
+.featured-products {
+    padding: 80px 30px;
+    background: #fff;
+    text-align: center;
+}
+
+.featured-title {
+    font-size: 48px;
+    color: var(--vinotinto);
+    margin-bottom: 40px;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.products-section {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+    flex-wrap: wrap; /* Permitir que los productos se envuelvan en pantallas más pequeñas */
+}
+
+.product {
+    text-align: center;
+    color: #333;
+    flex: 1 1 300px; /* Permitir que los productos crezcan y se reduzcan */
+    max-width: 400px; /* Ancho máximo para los productos */
+    margin: 10px; /* Espaciado entre productos */
+}
+
+.product img {
+    width: 300px; /* Ancho fijo para las imágenes */
+    height: 400px; /* Altura fija para las imágenes */
+    object-fit: cover; /* Mantener la proporción y cubrir el área */
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    cursor: pointer;
+}
+
+.product img:hover {
+    transform: scale(1.05); /* Aumentar el tamaño de la imagen sin tapar el texto */
+    opacity: 0.8;
+}
+
+.product-name {
+    font-size: 20px; /* Aumentar tamaño del nombre del producto */
+    margin: 10px 0 5px;
+    font-weight: bold;
+}
+
+.product-price {
+    font-size: 18px; /* Aumentar tamaño del precio */
+    color: #666;
+}
+
+.price-old {
+    text-decoration: line-through; /* Estilo para el precio antiguo */
+    color: red; /* Color para el precio antiguo */
+}
+
+/* Categorías */
+.categories {
+    padding: 80px 30px;
+    background-color: #f8f9fa;
+    text-align: center;
+}
+
+.categories-title {
+    font-size: 48px;
+    color: var(--vinotinto);
+    margin-bottom: 40px;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.categories-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap; /* Permitir que las categorías se envuelvan en pantallas más pequeñas */
+}
+
+.category-card {
+    position: relative;
+    width: 300px; /* Ancho fijo para las tarjetas de categoría */
+    height: 400px; /* Altura fija para las tarjetas de categoría */
+    overflow: hidden;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    margin: 10px; /* Espaciado entre tarjetas */
+}
+
+.category-card:hover {
+    transform: scale(1.05);
+}
+
+.category-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.category-card:hover .category-image {
+    transform: scale(1.1);
+}
+
+.category-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.category-card:hover .category-overlay {
+    opacity: 1;
+}
+
+.category-label {
+    font-size: 24px;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* Ofertas */
+.offers {
+    padding: 80px 30px;
+    background: #fff;
+    text-align: center;
+}
+
+.offers-title {
+    font-size: 48px;
+    color: var(--vinotinto);
+    margin-bottom: 40px;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.products-section {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+    flex-wrap: wrap; /* Permitir que los productos se envuelvan en pantallas más pequeñas */
+}
+
+/* footer  */
+.footer1 {
+    width: 100%;
+    background-color: black;
+}
+
+.footer1 .grupo1 {
+    width: 100%;
+    max-width: 1200px;
+    margin: auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 50px;
+    padding: 40px 0px;
+    color: black;
+}
+
+.footer1 .grupo1 .box figure {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.footer1 .grupo1 .box figure img {
+    width: 250px;
+}
+
+.footer1 .grupo1 .box h2 {
+    color: #fff;
+    margin-bottom: 25px;
+    font-size: 20px;
+}
+
+.footer1 .grupo1 .box p {
+    color: #efefef;
+    margin-bottom: 10px;
+}
+
+.footer1 .grupo1 .red-social a {
+    color: white;
+    display: inline-block;
+    text-decoration: none;
+    width: 45px;
+    height: 45px;
+    line-height: 45px;
+    margin-right: 10px;
+    background-color: #800E0E;
+    text-align: center;
+    transition: all 300ms ease;
+    font-size: 22px;
+}
+
+.footer1 .grupo1 .red-social a:hover {
+    color: black;
+}
+
+.footer1 .footer2 {
+    background-color: #800E0E;
+    padding: 15px 10px;
+    text-align: center;
+    color: #fff;
+}
+
+.footer1 .footer2 small {
+    font-size: 15px;
+}
+
+/* boton volver arriba */
+#backToTopBtn {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    display: none;
+    background-color: var(--vinotinto);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1000;
+    transition: opacity 0.3s ease;
+    opacity: 0; 
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#backToTopBtn.show {
+    display: block;
+    animation: fadeIn 0.5s ease forwards;
+    opacity: 1;
+}
+
+#backToTopBtn:hover {
+    background-color: #600b0b;
+}
+
+/* Media Queries para Responsividad */
+@media (max-width: 768px) {
+    .header-content h1 {
+        font-size: 36px; /* Reducir tamaño del título en pantallas pequeñas */
+    }
+
+    .header-button {
+        font-size: 16px; /* Reducir tamaño del botón en pantallas pequeñas */
+    }
+
+    .featured-title, .categories-title, .offers-title {
+        font-size: 36px; /* Reducir tamaño de los títulos en pantallas pequeñas */
+    }
+
+    .product-name {
+        font-size: 18px; /* Reducir tamaño del nombre del producto */
+    }
+
+    .product-price {
+        font-size: 16px; /* Reducir tamaño del precio */
+    }
+
+    .category-card {
+        width: 90%; /* Hacer que las tarjetas de categoría ocupen más espacio en pantallas pequeñas */
+        height: auto; /* Ajustar altura automáticamente */
+    }
+
+    .footer1 .grupo1 {
+        grid-template-columns: 1fr; /* Cambiar a una columna en pantallas pequeñas */
+    }
+}
+
+@media (max-width: 480px) {
+    .header-content h1 {
+        font-size: 28px; /* Reducir aún más el tamaño del título */
+    }
+
+    .header-button {
+        padding: 8px 16px; /* Ajustar el padding del botón */
+    }
+
+    .product img {
+        width: 100%; /* Asegurarse de que las imágenes se ajusten al contenedor */
+    }
+
+    .category-label {
+        font-size: 20px; /* Reducir tamaño de la etiqueta de categoría */
+    }
+}

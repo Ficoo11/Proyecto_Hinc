@@ -12,7 +12,19 @@
 </head>
 <body>
 
-    <video class="fondo-video" autoplay muted loop>
+    <div class="logo-form">
+        <a href="{% url 'index' %}" class="logo-form-boton"> 
+            <div class="logo-img">
+                <img src="{% static 'img/Hinc.png' %}" alt="" class="logo-img" />
+            </div>
+            
+            <div class="start">
+                <p class="start"> Volver al inicio </p>
+            </div>
+        </a>
+    </div>
+        
+        <video class="fondo-video" autoplay muted loop>
         <source src="{% static 'img/Hinc.mp4' %}" type="video/mp4">
     </video>
     
@@ -72,6 +84,14 @@
             </div>
         </div>
     </div>
+
+    <!-- footer -->
+    <footer class="footer1" id="Sobre-Nosotros">
+        <div class="footer2">
+            <small>&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</small>
+        </div>
+    </footer>
+
     
     <script src="{% static 'js/form-script.js' %}"></script>
 </body>
