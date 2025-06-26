@@ -1,0 +1,78 @@
+{% load static %}
+<html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/form-style.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title>Formularios Hinc</title>
+</head>
+<body>
+
+    <video class="fondo-video" autoplay muted loop>
+        <source src="{% static 'img/Hinc.mp4' %}" type="video/mp4">
+    </video>
+    
+    {% if messages %}
+    <div class="django-messages">
+        {% for message in messages %}
+            <div class="alert {{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="contenedor" id="contenedor">
+        <div class="formulario-contenedor registro">
+            <form method="POST" action="{% url 'register' %}">
+                {% csrf_token %}
+                <h1>Regístrate</h1>
+                <div class="iconos-sociales">
+                    <a href="#" class="icono"><i class="fa-brands fa-google"></i></a>
+                    <a href="#" class="icono"><i class="fa-brands fa-github"></i></a>
+                </div>
+                <span>O usa tu correo electrónico para registrarte</span>
+                <input type="text" placeholder="Usuario">
+                <input type="email" placeholder="Correo">
+                <input type="password" placeholder="Contraseña">
+                <button>Registrarse</button>
+            </form>
+        </div>
+        <div class="formulario-contenedor inicio-sesion">
+            <form method="POST" action="{% url 'login' %}">
+                {% csrf_token %}
+                <h1>Inicia sesión</h1>
+                <div class="iconos-sociales">
+                    <a href="#" class="icono"><i class="fa-brands fa-google"></i></a>
+                    <a href="#" class="icono"><i class="fa-brands fa-github"></i></a>
+                </div>
+                <span>O usa tu correo y contraseña</span>
+                <input type="email" placeholder="Correo o usuario">
+                <input type="password" placeholder="Contraseña">
+                <a href="#">¿Olvidaste tu contraseña?</a>
+                <button>Iniciar sesión</button>
+            </form>
+        </div>
+        <div class="cambio-contenedor">
+            <div class="cambio">
+                <div class="panel panel-izquierdo">
+                    <h1>¡Bienvenido de nuevo!</h1>
+                    <p>Ingresa tus datos personales para usar todas las funciones del sitio</p>
+                    <button class="oculto" id="iniciar">Iniciar sesión</button>
+                </div>
+                <div class="panel panel-derecho">
+                    <h1>¡Hola, amigo!</h1>
+                    <p>Regístrate con tus datos personales para usar todas las funciones del sitio</p>
+                    <button class="oculto" id="registrar">Registrarse</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{% static 'js/form-script.js' %}"></script>
+</body>
+</html>

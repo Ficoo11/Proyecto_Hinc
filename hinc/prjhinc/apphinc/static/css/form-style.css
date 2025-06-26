@@ -1,0 +1,296 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: sans-serif;
+}
+
+body {
+    background-color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+}
+
+.fondo-video {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+}
+
+.contenedor {
+    background-color: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(6px);
+    border-radius: 30px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+    width: 768px;
+    max-width: 100%;
+    min-height: 480px;
+    z-index: 2;
+}
+
+.contenedor p {
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.3px;
+    margin: 20px 0;
+}
+
+.contenedor span {
+    font-size: 12px;
+}
+
+.contenedor a {
+    color: #333;
+    font-size: 13px;
+    text-decoration: none;
+    margin: 15px 0 10px;
+}
+
+.contenedor button {
+    background-color: #000;
+    color: #fff;
+    font-size: 12px;
+    padding: 10px 45px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-top: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.contenedor button:hover {
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #000;
+}
+
+.contenedor button.oculto {
+    background-color: transparent;
+    border: 1px solid #fff;
+    color: #fff;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.contenedor button.oculto:hover {
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #000;
+}
+
+.contenedor form {
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 0 40px;
+    height: 100%;
+}
+
+.contenedor input {
+    background-color: rgba(255, 255, 255, 0.85);
+    border: 1px solid #ccc;
+    margin: 8px 0;
+    padding: 12px 15px;
+    font-size: 14px;
+    border-radius: 8px;
+    width: 100%;
+    outline: none;
+    color: #000;
+}
+
+.contenedor input::placeholder {
+    color: #333;
+}
+
+.mensaje-error {
+    font-size: 12px;
+    color: red;
+    margin-top: -5px;
+    margin-bottom: 10px;
+    display: none;
+}
+
+input.valido {
+    border: 2px solid green;
+}
+
+input.invalido {
+    border: 2px solid red;
+}
+
+.formulario-contenedor {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 50%;
+    transition: all 0.6s ease-in-out;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.inicio-sesion {
+    left: 0;
+    z-index: 2;
+    opacity: 1;
+    pointer-events: all;
+}
+
+.contenedor.activo .inicio-sesion {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.registro {
+    left: 0;
+    z-index: 1;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.contenedor.activo .registro {
+    transform: translateX(100%);
+    opacity: 1;
+    z-index: 3;
+    pointer-events: all;
+    animation: mover 0.6s;
+}
+
+@keyframes mover {
+    0%, 49.99% {
+        opacity: 0;
+        z-index: 1;
+    }
+    50%, 100% {
+        opacity: 1;
+        z-index: 5;
+    }
+}
+
+.iconos-sociales {
+    margin: 20px 0;
+}
+
+.iconos-sociales a {
+    border: 1px solid #ccc;
+    border-radius: 20%;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 3px;
+    width: 40px;
+    height: 40px;
+    color: #000;
+    transition: background-color 0.3s ease;
+}
+
+.iconos-sociales a:hover {
+    background-color: #000;
+    color: #fff;
+}
+
+.cambio-contenedor {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 50%;
+    height: 100%;
+    overflow: hidden;
+    transition: all 0.6s ease-in-out;
+    border-radius: 150px 0 0 100px;
+    z-index: 3;
+}
+
+.contenedor.activo .cambio-contenedor {
+    transform: translateX(-100%);
+    border-radius: 0 150px 100px 0;
+}
+
+.cambio {
+    background-color: #1a1a1a;
+    height: 100%;
+    color: #fff;
+    position: relative;
+    left: -100%;
+    width: 200%;
+    transform: translateX(0);
+    transition: all 0.6s ease-in-out;
+}
+
+.contenedor.activo .cambio {
+    transform: translateX(50%);
+}
+
+.panel {
+    position: absolute;
+    width: 50%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 0 30px;
+    text-align: center;
+    top: 0;
+    transform: translateX(0);
+    transition: all 0.6s ease-in-out;
+}
+
+.panel-izquierdo {
+    transform: translateX(-200%);
+}
+
+.contenedor.activo .panel-izquierdo {
+    transform: translateX(0);
+}
+
+.panel-derecho {
+    right: 0;
+    transform: translateX(0);
+}
+
+ .contenedor.activo .panel-derecho {
+    transform: translateX(200%);
+}
+
+/* Estilo para mensajes de Django */
+.django-messages {
+    position: absolute;
+    top: 20px;
+    width: 90%;
+    left: 5%;
+    z-index: 9999;
+    text-align: center;
+}
+
+.alert {
+    padding: 12px 20px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #800e0e;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.alert.success {
+    background-color: #198754;
+}
+
+.alert.error {
+    background-color: #dc3545;
+}

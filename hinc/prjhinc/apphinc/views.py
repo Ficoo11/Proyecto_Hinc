@@ -54,7 +54,41 @@ def register_view(request):
 
     return render(request, 'register.html')
 
-
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+def form_view(request):
+    if request.method == 'POST':
+        if 'name' in request.POST:
+            # Registro
+            name = request.POST.get('name')
+            email = request.POST.get('email')
+            password = request.POST.get('password')
+
+            if User.objects.filter(email=email).exists():
+                messages.error(request, "El correo ya está registrado.")
+            else:
+                username = email.split('@')[0]
+                user = User.objects.create_user(username=username, email=email, password=password, first_name=name)
+                user.save()
+                messages.success(request, "Registro exitoso. Ya puedes iniciar sesión.")
+
+        else:
+            # Login
+            email = request.POST.get('email')
+            password = request.POST.get('password')
+
+            try:
+                user = User.objects.get(email=email)
+                user_auth = authenticate(request, username=user.username, password=password)
+            except User.DoesNotExist:
+                user_auth = None
+
+            if user_auth is not None:
+                login(request, user_auth)
+                return redirect('index')
+            else:
+                messages.error(request, "Correo o contraseña incorrectos.")
+
+    return render(request, 'form.html')
