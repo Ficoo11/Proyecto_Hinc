@@ -4,11 +4,12 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="{% static 'css/style2.css' %}" />
-    <!-- <link rel="stylesheet" href="{% static 'css/style.css' %}" /> -->
-    <link rel="stylesheet" href="{% static 'css/fontAwesome.css' %}" />
     <link rel="shortcut icon" href="{% static 'img/Hinc.png' %}" type="image/x-icon" />
-    <link rel="stylesheet" href="{% static 'css/style1.css'%}"/>
+    <link rel="stylesheet" href="{% static 'css/style1.css' %}"/>
+    <!-- Añadimos Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Añadimos Font Awesome via CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <title>Hinc</title>
 </head>
 <body>
@@ -24,7 +25,22 @@
                 <a href="#Categorias" class="navbar-hombre">Categorias</a>
                 <a href="#Sobre-Nosotros" class="navbar-mujer">Sobre Nosotros</a>
             </div>
-            <a href="{% url 'form' %}" class="usuario">User<i class="fa-solid fa-user"></i></a>
+            {% if user.is_authenticated %}
+                <div class="relative">
+                    <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10">
+                        <i class="fa-solid fa-user"></i>
+                    </button>
+                    <div id="userMenu" class="hidden fixed right-4 top-20 w-48 bg-white rounded-lg shadow-xl z-[9999] border border-gray-200">
+                        <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg transition-colors duration-200">Configuración</a>
+                        <a href="{% url 'admin:index' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Panel</a>
+                        <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{% url 'form' %}" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10">
+                    <i class="fa-solid fa-user"></i>
+                </a>
+            {% endif %}
         </nav>
         <div class="header-content">
             <h1>Bienvenidos<br>a Hinc</h1>
@@ -152,6 +168,25 @@
     <!-- boton volver arriba -->
     <button id="backToTopBtn">&#8679;</button>
     <script src="{% static 'js/backToTop.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const userMenu = document.getElementById('userMenu');
 
+            if (userMenuBtn && userMenu) {
+                userMenuBtn.addEventListener('click', (event) => {
+                    event.preventDefault(); // Evita la redirección automática
+                    userMenu.classList.toggle('hidden');
+                });
+
+                // Cierra el menú al hacer clic fuera
+                document.addEventListener('click', (event) => {
+                    if (!userMenuBtn.contains(event.target) && !userMenu.contains(event.target)) {
+                        userMenu.classList.add('hidden');
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

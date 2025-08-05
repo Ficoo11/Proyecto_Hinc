@@ -40,6 +40,7 @@ body {
     align-items: center;
     justify-content: space-around;
     z-index: 3;
+    background-color: rgba(0, 0, 0, 0.6); /* Fondo oscuro semi-transparente para que el texto blanco sea visible */
 }
 
 .nav-navbar a {
@@ -61,20 +62,12 @@ body {
     text-decoration: underline;
 }
 
+/* Desactivamos .usuario ya que ahora usamos clases Tailwind directamente */
 .usuario {
-    font-size: 18px;
-    color: white;
-    text-decoration: none;
-    padding: 5px;
-    transition: color 0.3s ease, background-color 0.3s ease;
-    border-radius: 5px;
+    display: none; /* Opcional: lo desactivamos para evitar conflictos */
 }
 
-.usuario:hover {
-    color: black;
-    background-color: white;
-}
-
+/* Asegura que el hover no tenga problemas con el fondo */
 .logo {
     width: 18px;
     height: 30px;
