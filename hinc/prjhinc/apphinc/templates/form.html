@@ -1,5 +1,4 @@
 {% load static %}
-<html>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -11,20 +10,18 @@
     <title>Formularios Hinc</title>
 </head>
 <body>
-
     <div class="logo-form">
         <a href="{% url 'index' %}" class="logo-form-boton"> 
             <div class="logo-img">
                 <img src="{% static 'img/Hinc.png' %}" alt="" class="logo-img" />
             </div>
-            
             <div class="start">
                 <p class="start"> Volver al inicio </p>
             </div>
         </a>
     </div>
         
-        <video class="fondo-video" autoplay muted loop>
+    <video class="fondo-video" autoplay muted loop>
         <source src="{% static 'img/Hinc.mp4' %}" type="video/mp4">
     </video>
     
@@ -40,7 +37,7 @@
 
     <div class="contenedor" id="contenedor">
         <div class="formulario-contenedor registro">
-            <form method="POST" action="{% url 'register' %}">
+            <form method="POST" action="{% url 'form' %}" id="register-form">
                 {% csrf_token %}
                 <h1>Regístrate</h1>
                 <div class="iconos-sociales">
@@ -48,14 +45,12 @@
                     <a href="#" class="icono"><i class="fa-brands fa-github"></i></a>
                 </div>
                 <span>O usa tu correo electrónico para registrarte</span>
-                <input type="text" placeholder="Usuario">
-                <input type="email" placeholder="Correo">
-                <input type="password" placeholder="Contraseña">
-                <button>Registrarse</button>
+                {{ form.as_p }}
+                <button type="submit" name="register_submit">Registrarse</button>
             </form>
         </div>
         <div class="formulario-contenedor inicio-sesion">
-            <form method="POST" action="{% url 'login' %}">
+            <form method="POST" action="{% url 'form' %}" id="login-form">
                 {% csrf_token %}
                 <h1>Inicia sesión</h1>
                 <div class="iconos-sociales">
@@ -63,10 +58,9 @@
                     <a href="#" class="icono"><i class="fa-brands fa-github"></i></a>
                 </div>
                 <span>O usa tu correo y contraseña</span>
-                <input type="email" placeholder="Correo o usuario">
-                <input type="password" placeholder="Contraseña">
+                {{ form.as_p }}
                 <a href="#">¿Olvidaste tu contraseña?</a>
-                <button>Iniciar sesión</button>
+                <button type="submit" name="login_submit">Iniciar sesión</button>
             </form>
         </div>
         <div class="cambio-contenedor">
@@ -85,14 +79,116 @@
         </div>
     </div>
 
-    <!-- footer -->
     <footer class="footer1" id="Sobre-Nosotros">
         <div class="footer2">
             <small>&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</small>
         </div>
     </footer>
 
-    
     <script src="{% static 'js/form-script.js' %}"></script>
+    <script>
+        const contenedor = document.getElementById('contenedor');
+        const botonRegistrar = document.getElementById('registrar');
+        const botonIniciar = document.getElementById('iniciar');
+
+        botonRegistrar.addEventListener('click', () => {
+            contenedor.classList.add("activo");
+        });
+
+        botonIniciar.addEventListener('click', () => {
+            contenedor.classList.remove("activo");
+        });
+
+        // Ajuste para las validaciones con los formularios de Django
+        document.addEventListener('DOMContentLoaded', () => {
+            const registroForm = document.getElementById('register-form');
+            const loginForm = document.getElementById('login-form');
+            const inputs = registroForm.querySelectorAll('input') || [];
+
+            const validadores = {
+                'name': {
+                    test: valor => /^[a-zA-Z0-9\s]+$/.test(valor),
+                    mensaje: 'Solo letras, números y espacios permitidos.'
+                },
+                'email': {
+                    test: valor => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor),
+                    mensaje: 'Debe tener el formato ejemplo@correo.com.'
+                },
+                'password1': {
+                    test: valor => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(valor),
+                    mensaje: 'Mínimo 8 caracteres, una mayúscula, una minúscula y un número.'
+                }
+            };
+
+            inputs.forEach(input => {
+                let mensaje = document.createElement('div');
+                mensaje.className = 'mensaje-error';
+                input.insertAdjacentElement('afterend', mensaje);
+
+                input.addEventListener('input', () => {
+                    const placeholder = input.name; // Usamos 'name' en lugar de 'placeholder' para compatibilidad con Django
+                    const validador = validadores[placeholder];
+                    if (validador) {
+                        const esValido = validador.test(input.value);
+
+                        if (input.value === '') {
+                            input.classList.remove('valido', 'invalido');
+                            mensaje.style.display = 'none';
+                            return;
+                        }
+
+                        if (esValido) {
+                            input.classList.add('valido');
+                            input.classList.remove('invalido');
+                            mensaje.style.display = 'none';
+                        } else {
+                            input.classList.add('invalido');
+                            input.classList.remove('valido');
+                            mensaje.textContent = validador.mensaje;
+                            mensaje.style.display = 'block';
+                        }
+                    }
+                });
+            });
+
+            registroForm.addEventListener('submit', e => {
+                e.preventDefault();
+                let todosValidos = true;
+
+                inputs.forEach(input => {
+                    const placeholder = input.name;
+                    const validador = validadores[placeholder];
+                    if (validador) {
+                        const esValido = validador.test(input.value);
+                        if (!esValido) {
+                            input.classList.add('invalido');
+                            input.nextElementSibling.textContent = validador.mensaje;
+                            input.nextElementSibling.style.display = 'block';
+                            todosValidos = false;
+                        } else {
+                            input.classList.add('valido');
+                            input.nextElementSibling.style.display = 'none';
+                        }
+                    }
+                });
+
+                if (todosValidos) {
+                    registroForm.submit(); // Envía el formulario a Django
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Campos inválidos',
+                        text: 'Revisa los datos e inténtalo de nuevo',
+                        confirmButtonColor: '#000'
+                    });
+                }
+            });
+
+            loginForm.addEventListener('submit', e => {
+                e.preventDefault();
+                loginForm.submit(); // Envía directamente al servidor
+            });
+        });
+    </script>
 </body>
 </html>
