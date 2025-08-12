@@ -34,3 +34,6 @@ def form_view(request):
 def logout_view(request):
     logout(request)
     return redirect('form')
+
+def paneladmin_view(request):
+    return render(request, 'paneladmin.html')

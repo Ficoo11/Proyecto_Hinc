@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hinc - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="shortcut icon" href="Img/Hinc.png" type="image/x-icon">
+</head>
+<body class="bg-black font-sans">
+    <!-- Header -->
+    <header class="relative h-24 overflow-hidden z-10">
+        <video class="absolute w-full h-full object-cover z-0" autoplay muted loop>
+            <source src="Img/Hinc.mp4" type="video/mp4">
+        </video>
+        <nav class="absolute w-full h-full flex items-center justify-between px-6 z-20 bg-black/60 backdrop-blur-sm">
+            <a href="index.html"><img src="Img/Hinc.png" alt="Hinc Logo" class="w-6 h-10"></a>
+            <h1 class="text-2xl text-white font-bold absolute left-1/2 transform -translate-x-1/2">Panel Admin</h1>
+            <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300">
+                <i class="fa-solid fa-user"></i>
+            </button>
+        </nav>
+        <div id="userMenu" class="hidden fixed right-4 top-20 w-48 bg-white rounded-lg shadow-xl z-[9999] border border-gray-200">
+            <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg transition-colors duration-200">Configuración</a>
+            <a href="{% url 'index' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Volver al Inicio</a>
+            <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-[#1a1a1a] text-white p-6 z-0">
+            <ul>
+                <li>
+                    <button onclick="showPanel('dashboard')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300">Dashboard</button>
+                </li>
+                <li>
+                    <button onclick="showPanel('users')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300">Usuarios</button>
+                </li>
+                <li>
+                    <button onclick="showPanel('products')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300">Productos</button>
+                </li>
+                <li>
+                    <button onclick="showPanel('inventory')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300">Inventario</button>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Panel -->
+        <main class="flex-1 p-8 bg-white/85 backdrop-blur-sm z-0">
+            <div id="dashboardPanel" class="panel">
+                <h2 class="text-2xl font-bold text-black mb-4">Dashboard</h2>
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold text-black mb-2">Estadísticas</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="p-4 bg-gray-100 rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+                            <h4 class="font-semibold text-gray-800">Usuarios Activos</h4>
+                            <p class="text-2xl text-black">0</p>
+                        </div>
+                        <div class="p-4 bg-gray-100 rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+                            <h4 class="font-semibold text-gray-800">Ventas Totales</h4>
+                            <p class="text-2xl text-black">$0</p>
+                        </div>
+                        <div class="p-4 bg-gray-100 rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+                            <h4 class="font-semibold text-gray-800">Inventario Disponible</h4>
+                            <p class="text-2xl text-black">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-black mb-2">Distribución de Productos</h3>
+                    <div class="max-w-md mx-auto">
+                        <canvas id="productChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div id="usersPanel" class="panel hidden">
+                <h2 class="text-2xl font-bold text-black mb-4">Panel Usuarios</h2>
+                <p class="text-gray-600">Contenido provisional para la gestión de usuarios.</p>
+            </div>
+            <div id="productsPanel" class="panel hidden">
+                <h2 class="text-2xl font-bold text-black mb-4">Productos</h2>
+                <p class="text-gray-600">Contenido provisional para la gestión de productos.</p>
+            </div>
+            <div id="inventoryPanel" class="panel hidden">
+                <h2 class="text-2xl font-bold text-black mb-4">Inventario</h2>
+                <p class="text-gray-600">Contenido provisional para la gestión de inventario.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-black text-center py-4 z-0">
+        <p class="text-sm text-white">&copy; 2024 <b>CODECRAfters</b> - Todos los Derechos Reservados</p>
+    </footer>
+
+    <script>
+        // User Menu Dropdown
+        const userMenuBtn = document.getElementById('userMenuBtn');
+        const userMenu = document.getElementById('userMenu');
+        userMenuBtn.addEventListener('click', () => {
+            userMenu.classList.toggle('hidden');
+        });
+
+        // Panel Switching
+        function showPanel(panelId) {
+            document.querySelectorAll('.panel').forEach(panel => panel.classList.add('hidden'));
+            document.getElementById(`${panelId}Panel`).classList.remove('hidden');
+        }
+
+        // Pie Chart for Product Distribution
+        const ctx = document.getElementById('productChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Ropa de Mujer', 'Ropa de Hombre', 'Accesorios', 'Calzado'],
+                datasets: [{
+                    data: [1, 1, 1, 1],
+                    backgroundColor: [
+                        '#1a1a1a',
+                        '#4b4b4b',
+                        '#7a7a7a',
+                        '#b0b0b0'
+                    ],
+                    borderColor: '#ffffff',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#000000',
+                            font: {
+                                size: 14,
+                                family: 'sans-serif'
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
