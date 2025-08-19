@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,13 +10,16 @@
     <link rel="shortcut icon" href="Img/Hinc.png" type="image/x-icon">
 </head>
 <body class="bg-black font-sans">
+
     <!-- Header -->
     <header class="relative h-24 overflow-hidden z-10">
         <video class="absolute w-full h-full object-cover z-0" autoplay muted loop>
             <source src="Img/Hinc.mp4" type="video/mp4">
         </video>
         <nav class="absolute w-full h-full flex items-center justify-between px-6 z-20 bg-black/60 backdrop-blur-sm">
-            <a href="index.html"><img src="Img/Hinc.png" alt="Hinc Logo" class="w-6 h-10"></a>
+            <a href="{% url 'index' %}">
+                <img src="Img/Hinc.png" alt="Hinc Logo" class="w-6 h-10">
+            </a>
             <h1 class="text-2xl text-white font-bold absolute left-1/2 transform -translate-x-1/2">Panel Admin</h1>
             <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300">
                 <i class="fa-solid fa-user"></i>
@@ -77,14 +80,71 @@
                     </div>
                 </div>
             </div>
+
             <div id="usersPanel" class="panel hidden">
-                <h2 class="text-2xl font-bold text-black mb-4">Panel Usuarios</h2>
-                <p class="text-gray-600">Contenido provisional para la gestión de usuarios.</p>
+                <h2 class="text-2xl font-bold text-black mb-4">Usuarios</h2>
+                <button id="addUserBtn" class="mb-6 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-all duration-300">Agregar Nuevo Usuario</button>
+                <!-- Formulario para agregar usuario (oculto inicialmente) -->
+                <form id="addUserForm" method="post" action="{% url 'add_user' %}" class="mb-6 hidden">
+                    {% csrf_token %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700">Nombre</label>
+                            <input type="text" name="name" id="name" required class="mt-1 p-2 w-full border rounded-md">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700">Correo</label>
+                            <input type="email" name="email" id="email" required class="mt-1 p-2 w-full border rounded-md">
+                        </div>
+                        <div>
+                            <label for="role" class="block text-sm font-medium text-gray-700">Rol</label>
+                            <select name="role" id="role" required class="mt-1 p-2 w-full border rounded-md">
+                                <option value="usuario">Usuario</option>
+                                <option value="administrador">Administrador</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Usuario</button>
+                        </div>
+                    </div>
+                </form>
+                <!-- Tabla de usuarios -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white border border-gray-200">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="py-2 px-4 border-b text-left">Nombre</th>
+                                <th class="py-2 px-4 border-b text-left">Correo</th>
+                                <th class="py-2 px-4 border-b text-left">Rol</th>
+                                <th class="py-2 px-4 border-b text-left">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-2 px-4 border-b">{{ user.first_name }}</td>
+                                <td class="py-2 px-4 border-b">{{ user.email }}</td>
+                                <td class="py-2 px-4 border-b">{{ user.role }}</td>
+                                <td class="py-2 px-4 border-b">
+                                    <a href="{% url 'edit_user' user.id %}" class="text-blue-500 hover:underline">Editar</a>
+                                    <a href="{% url 'delete_user' user.id %}" class="text-red-500 hover:underline ml-4">Eliminar</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="py-2 px-4 border-b text-center">No hay usuarios registrados.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
+
             <div id="productsPanel" class="panel hidden">
                 <h2 class="text-2xl font-bold text-black mb-4">Productos</h2>
                 <p class="text-gray-600">Contenido provisional para la gestión de productos.</p>
             </div>
+
             <div id="inventoryPanel" class="panel hidden">
                 <h2 class="text-2xl font-bold text-black mb-4">Inventario</h2>
                 <p class="text-gray-600">Contenido provisional para la gestión de inventario.</p>
@@ -110,6 +170,13 @@
             document.querySelectorAll('.panel').forEach(panel => panel.classList.add('hidden'));
             document.getElementById(`${panelId}Panel`).classList.remove('hidden');
         }
+
+        // Toggle Form for Adding User
+        const addUserBtn = document.getElementById('addUserBtn');
+        const addUserForm = document.getElementById('addUserForm');
+        addUserBtn.addEventListener('click', () => {
+            addUserForm.classList.toggle('hidden');
+        });
 
         // Pie Chart for Product Distribution
         const ctx = document.getElementById('productChart').getContext('2d');
