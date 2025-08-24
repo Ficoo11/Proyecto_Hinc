@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hinc - Carrito de Compras</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="shortcut icon" href="{% static 'Img/Hinc.png' %}" type="image/x-icon">
+</head>
+<body class="bg-black font-sans">
+    <header class="relative h-24 overflow-hidden z-10">
+        <video class="absolute w-full h-full object-cover z-0" autoplay muted loop>
+            <source src="{% static 'Img/Hinc.mp4' %}" type="video/mp4">
+        </video>
+        <nav class="absolute w-full h-full flex items-center justify-between px-6 z-20 bg-black/60 backdrop-blur-sm">
+            <a href="{% url 'index' %}">
+                <img src="{% static 'Img/Hinc.png' %}" alt="Hinc Logo" class="w-6 h-10">
+            </a>
+            <h1 class="text-2xl text-white font-bold absolute left-1/2 transform -translate-x-1/2">Carrito de Compras</h1>
+            <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300">
+                <i class="fa-solid fa-user"></i>
+            </button>
+        </nav>
+        <div id="userMenu" class="hidden fixed right-4 top-20 w-48 bg-white rounded-lg shadow-xl z-[9999] border border-gray-200">
+            <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg transition-colors duration-200">Configuración</a>
+            <a href="{% url 'index' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Volver al Inicio</a>
+            <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
+        </div>
+    </header>
+    <main class="flex-1 p-8 text-white text-center">
+        <h2 class="text-3xl font-bold mb-4">Carrito de Compras</h2>
+        <p class="mb-4">Bienvenido, {{ user.username }}. Aquí puedes gestionar tu carrito.</p>
+    </main>
+    <footer class="bg-black text-center py-4 z-0">
+        <p class="text-sm text-white">&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</p>
+    </footer>
+    <script>
+        const userMenuBtn = document.getElementById('userMenuBtn');
+        const userMenu = document.getElementById('userMenu');
+        if (userMenuBtn && userMenu) {
+            userMenuBtn.addEventListener('click', () => {
+                userMenu.classList.toggle('hidden');
+            });
+        }
+    </script>
+</body>
+</html>

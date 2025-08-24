@@ -1,0 +1,145 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title>Iniciar Sesión Hinc</title>
+    <style>
+        body {
+            background-color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        .fondo-video {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+    <video class="fondo-video" autoplay muted loop>
+        <source src="{% static 'img/Hinc.mp4' %}" type="video/mp4">
+    </video>
+
+    {% if messages %}
+    <div class="absolute top-5 w-3/4 text-center z-50">
+        {% for message in messages %}
+            <div class="bg-{{ message.tags }}-500 text-white p-4 rounded-lg shadow-lg">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="relative bg-white/60 backdrop-blur-md rounded-3xl shadow-2xl p-8 w-full max-w-md z-10">
+        <div class="flex justify-center mb-6">
+            <img src="{% static 'img/Hinc.png' %}" alt="Hinc Logo" class="h-16">
+        </div>
+        <h1 class="text-2xl font-bold text-center mb-6">Inicia Sesión</h1>
+        <form method="POST" id="login-form">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label for="id_email" class="block text-sm font-medium text-gray-700">Correo</label>
+                <input type="email" name="email" id="id_email" required class="mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black">
+            </div>
+            <div class="mb-6">
+                <label for="id_password" class="block text-sm font-medium text-gray-700">Contraseña</label>
+                <input type="password" name="password" id="id_password" required class="mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black">
+            </div>
+            <a href="#" class="text-sm text-black hover:underline block text-center mb-4">¿Olvidaste tu contraseña?</a>
+            <button type="submit" class="w-full bg-black text-white p-3 rounded-lg font-semibold hover:bg-gray-800 transition">Iniciar Sesión</button>
+        </form>
+        <div class="mt-4 text-center">
+            <span class="text-sm">¿No tienes cuenta? <a href="{% url 'register' %}" class="text-black hover:underline">Regístrate</a></span>
+        </div>
+    </div>
+
+    <footer class="absolute bottom-0 w-full text-center py-4 text-white bg-black/50">
+        &copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados
+    </footer>
+
+    <script>
+        const loginForm = document.getElementById('login-form');
+        const inputs = loginForm.querySelectorAll('input');
+
+        const validadores = {
+            'email': {
+                test: valor => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor),
+                mensaje: 'Debe tener el formato ejemplo@correo.com.'
+            },
+            'password': {
+                test: valor => valor.length > 0,
+                mensaje: 'Ingresa tu contraseña.'
+            }
+        };
+
+        inputs.forEach(input => {
+            let mensaje = document.createElement('div');
+            mensaje.className = 'text-red-500 text-sm mt-1';
+            input.parentElement.appendChild(mensaje);
+
+            input.addEventListener('input', () => {
+                const name = input.name;
+                const validador = validadores[name];
+                if (validador) {
+                    const esValido = validador.test(input.value);
+
+                    if (input.value === '') {
+                        input.classList.remove('border-green-500', 'border-red-500');
+                        mensaje.style.display = 'none';
+                        return;
+                    }
+
+                    if (esValido) {
+                        input.classList.add('border-green-500');
+                        input.classList.remove('border-red-500');
+                        mensaje.style.display = 'none';
+                    } else {
+                        input.classList.add('border-red-500');
+                        input.classList.remove('border-green-500');
+                        mensaje.textContent = validador.mensaje;
+                        mensaje.style.display = 'block';
+                    }
+                }
+            });
+        });
+
+        loginForm.addEventListener('submit', e => {
+            let todosValidos = true;
+
+            inputs.forEach(input => {
+                const name = input.name;
+                const validador = validadores[name];
+                if (validador) {
+                    const esValido = validador.test(input.value);
+                    if (!esValido) {
+                        todosValidos = false;
+                    }
+                }
+            });
+
+            if (!todosValidos) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Campos inválidos',
+                    text: 'Revisa los datos e inténtalo de nuevo',
+                    confirmButtonColor: '#000'
+                });
+            }
+        });
+    </script>
+</body>
+</html>

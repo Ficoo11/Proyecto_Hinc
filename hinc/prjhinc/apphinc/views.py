@@ -5,18 +5,33 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .forms import CustomUserCreationForm, LoginForm
 from .models import CustomUser
+import logging
+
+# Configurar logging para depuración
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 def index(request):
     return render(request, 'index.html', {'user': request.user if request.user.is_authenticated else None})
 
 def register_view(request):
     if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
+        # Crear una copia de request.POST y añadir role y estado por defecto
+        post_data = request.POST.copy()
+        post_data['role'] = 'Usuario'  # Valor por defecto para role
+        post_data['estado'] = 'Habilitado'  # Valor por defecto para estado
+        form = CustomUserCreationForm(post_data)
+        logger.debug(f"Datos recibidos en registro: {post_data}")
         if form.is_valid():
-            user = form.save()
+            user = form.save(commit=False)
+            password = form.cleaned_data.get('password1')  # Obtener la contraseña del formulario
+            if password:  # Si se proporcionó una contraseña
+                user.set_password(password)
+            user.save()
             messages.success(request, "Registro exitoso. Ahora puedes iniciar sesión.")
             return redirect('login')
         else:
+            logger.debug(f"Errores de validación: {form.errors}")
             messages.error(request, "Error en el registro. Por favor, corrige los siguientes problemas:")
             for field, errors in form.errors.items():
                 for error in errors:
@@ -90,16 +105,25 @@ def edit_user(request, user_id):
     user = get_object_or_404(CustomUser, id=user_id)
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST, instance=user)
+        logger.debug(f"Datos recibidos: {request.POST}")
         if form.is_valid():
+            logger.debug(f"Datos validados: {form.cleaned_data}")
             user = form.save(commit=False)
             password = form.cleaned_data.get('password1')
             if password:  # Solo actualizar contraseña si se proporciona
                 user.set_password(password)
+            # Depurar y manejar los campos role y estado
+            try:
+                user.role = form.cleaned_data['role']
+                user.estado = form.cleaned_data['estado']
+            except KeyError as e:
+                messages.error(request, f"Error al procesar el campo '{e}'. Verifica el formulario. Datos validados: {form.cleaned_data}")
+                return render(request, 'paneladmin.html', {'users': CustomUser.objects.all(), 'action': 'edit', 'user': user})
             user.save()
-            messages.success(request, "Usuario actualizado exitosamente.")
+            messages.success(request, "Usuario actualizado exitoso.")
             return redirect('paneladmin')
         else:
-            messages.error(request, "Error al actualizar usuario. Verifica los datos.")
+            messages.error(request, f"Error al actualizar usuario. Verifica los datos. Errores: {form.errors}")
             for error in form.errors.values():
                 messages.error(request, error)
     return render(request, 'paneladmin.html', {'users': CustomUser.objects.all(), 'action': 'edit', 'user': user})

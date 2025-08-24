@@ -7,10 +7,12 @@ CustomUser = get_user_model()
 class CustomUserCreationForm(forms.ModelForm):
     password1 = forms.CharField(label="Contraseña", widget=forms.PasswordInput, required=False, help_text="Deje en blanco para no cambiar la contraseña. Debe tener al menos 8 caracteres si se modifica.")
     password2 = forms.CharField(label="Confirmar Contraseña", widget=forms.PasswordInput, required=False, help_text="Confirme la nueva contraseña o déjelo en blanco.")
+    role = forms.ChoiceField(choices=[('Admin', 'Admin'), ('Usuario', 'Usuario')], required=True)
+    estado = forms.ChoiceField(choices=[('Habilitado', 'Habilitado'), ('Inhabilitado', 'Inhabilitado')], required=True)
 
     class Meta:
         model = CustomUser
-        fields = ('username', 'email', 'password1', 'password2')
+        fields = ('username', 'email', 'password1', 'password2', 'role', 'estado')
 
     def clean_email(self):
         email = self.cleaned_data['email']
