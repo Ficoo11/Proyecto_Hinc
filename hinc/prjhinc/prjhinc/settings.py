@@ -70,7 +70,7 @@ WSGI_APPLICATION = 'prjhinc.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'hinc_db',
+        'NAME': 'Hinc',
         'USER': 'root',  # Usuario predeterminado de XAMPP
         'PASSWORD': '',  # Sin contraseña en XAMPP por defecto
         'HOST': 'localhost',
@@ -81,8 +81,8 @@ DATABASES = {
 # Authentication
 AUTH_USER_MODEL = 'apphinc.CustomUser'
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'apphinc.backends.EmailAuthBackend',
+    'apphinc.backends.EmailAuthBackend',  # Asegúrate de que la ruta sea correcta
+    'django.contrib.auth.backends.ModelBackend',  # Mantén el backend por defecto
 ]
 
 # Password validation

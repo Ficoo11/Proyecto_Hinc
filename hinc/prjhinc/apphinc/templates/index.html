@@ -31,15 +31,21 @@
                         <i class="fa-solid fa-user"></i>
                     </button>
                     <div id="userMenu" class="hidden fixed right-4 top-20 w-48 bg-white rounded-lg shadow-xl z-[9999] border border-gray-200">
-                        <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg transition-colors duration-200">Configuración</a>
-                        <a href="{% url 'paneladmin' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Panel</a>
+                        {% if user.role == 'Admin' %}
+                            <a href="{% url 'paneladmin' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg transition-colors duration-200">Panel Admin</a>
+                        {% else %}
+                            <a href="{% url 'user_dashboard' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg transition-colors duration-200">Carrito de Compras</a>
+                        {% endif %}
+                        <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Configuración</a>
                         <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
                     </div>
                 </div>
             {% else %}
-                <a href="{% url 'form' %}" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10">
-                    <i class="fa-solid fa-user"></i>
-                </a>
+                <div class="space-x-4">
+                    <a href="{% url 'register' %}" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </a>
+                </div>
             {% endif %}
         </nav>
         <div class="header-content">
@@ -154,9 +160,9 @@
             <div class="box">
                 <h2>SIGUENOS</h2>
                 <div class="red-social">
-                    <a href="#" class="Facebook"><i class="fa-brands fa-facebook">F</i></a>
-                    <a href="https://www.instagram.com/hinc_oficial/" class="Instagram"><i class="fa-brands fa-instagram">I</i></a>
-                    <a href="#" class="Whatsapp"><i class="fa-brands fa-whatsapp">W</i></a>
+                    <a href="#" class="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="https://www.instagram.com/hinc_oficial/" class="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" class="Whatsapp"><i class="fa-brands fa-whatsapp"></i></a>
                 </div>
             </div>
         </div>

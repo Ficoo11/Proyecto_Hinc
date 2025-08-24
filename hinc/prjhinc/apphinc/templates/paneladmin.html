@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,18 +8,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="shortcut icon" href="Img/Hinc.png" type="image/x-icon">
+    <link rel="shortcut icon" href="{% static 'Img/Hinc.png' %}" type="image/x-icon">
 </head>
 <body class="bg-black font-sans">
 
     <!-- Header -->
     <header class="relative h-24 overflow-hidden z-10">
         <video class="absolute w-full h-full object-cover z-0" autoplay muted loop>
-            <source src="Img/Hinc.mp4" type="video/mp4">
+            <source src="{% static 'Img/Hinc.mp4' %}" type="video/mp4">
         </video>
         <nav class="absolute w-full h-full flex items-center justify-between px-6 z-20 bg-black/60 backdrop-blur-sm">
             <a href="{% url 'index' %}">
-                <img src="Img/Hinc.png" alt="Hinc Logo" class="w-6 h-10">
+                <img src="{% static 'Img/Hinc.png' %}" alt="Hinc Logo" class="w-6 h-10">
             </a>
             <h1 class="text-2xl text-white font-bold absolute left-1/2 transform -translate-x-1/2">Panel Admin</h1>
             <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300">
@@ -54,6 +55,23 @@
 
         <!-- Main Panel -->
         <main class="flex-1 p-8 bg-white/85 backdrop-blur-sm z-0">
+            <!-- Mensajes -->
+            {% if messages %}
+                <div id="messages-container" class="mb-4">
+                    {% for message in messages %}
+                        {% if message.tags == 'success' %}
+                            <div class="p-4 bg-green-200 text-green-800 rounded-md">
+                                {{ message }}
+                            </div>
+                        {% else %}
+                            <div class="p-4 bg-red-200 text-red-800 rounded-md">
+                                {{ message }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
             <div id="dashboardPanel" class="panel">
                 <h2 class="text-2xl font-bold text-black mb-4">Dashboard</h2>
                 <div class="mb-6">
@@ -83,56 +101,128 @@
 
             <div id="usersPanel" class="panel hidden">
                 <h2 class="text-2xl font-bold text-black mb-4">Usuarios</h2>
-                <button id="addUserBtn" class="mb-6 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-all duration-300">Agregar Nuevo Usuario</button>
-                <!-- Formulario para agregar usuario (oculto inicialmente) -->
-                <form id="addUserForm" method="post" action="{% url 'add_user' %}" class="mb-6 hidden">
-                    {% csrf_token %}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700">Nombre</label>
-                            <input type="text" name="name" id="name" required class="mt-1 p-2 w-full border rounded-md">
+                {% if action == 'edit' and user %}
+                    <!-- Formulario para editar usuario -->
+                    <form method="post" action="{% url 'edit_user' user.id %}" class="mb-6">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="username" class="block text-sm font-medium text-gray-700">Usuario</label>
+                                <input type="text" name="username" id="username" value="{{ user.username }}" required class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700">Correo</label>
+                                <input type="email" name="email" id="email" value="{{ user.email }}" required class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div>
+                                <label for="password1" class="block text-sm font-medium text-gray-700">Nueva Contraseña (opcional)</label>
+                                <input type="password" name="password1" id="password1" class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div>
+                                <label for="password2" class="block text-sm font-medium text-gray-700">Confirmar Nueva Contraseña (opcional)</label>
+                                <input type="password" name="password2" id="password2" class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div>
+                                <label for="role" class="block text-sm font-medium text-gray-700">Rol</label>
+                                <select name="role" id="role" required class="mt-1 p-2 w-full border rounded-md">
+                                    <option value="Admin" {% if user.role == 'Admin' %}selected{% endif %}>Admin</option>
+                                    <option value="Usuario" {% if user.role == 'Usuario' %}selected{% endif %}>Usuario</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="estado" class="block text-sm font-medium text-gray-700">Estado</label>
+                                <select name="estado" id="estado" required class="mt-1 p-2 w-full border rounded-md">
+                                    <option value="Habilitado" {% if user.estado == 'Habilitado' %}selected{% endif %}>Habilitado</option>
+                                    <option value="Inhabilitado" {% if user.estado == 'Inhabilitado' %}selected{% endif %}>Inhabilitado</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Actualizar Usuario</button>
+                                <a href="{% url 'paneladmin' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+                            </div>
                         </div>
-                        <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700">Correo</label>
-                            <input type="email" name="email" id="email" required class="mt-1 p-2 w-full border rounded-md">
-                        </div>
-                        <div>
-                            <label for="role" class="block text-sm font-medium text-gray-700">Rol</label>
-                            <select name="role" id="role" required class="mt-1 p-2 w-full border rounded-md">
-                                <option value="usuario">Usuario</option>
-                                <option value="administrador">Administrador</option>
-                            </select>
-                        </div>
-                        <div class="md:col-span-2">
-                            <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Usuario</button>
-                        </div>
+                    </form>
+                {% elif action == 'delete' and user %}
+                    <!-- Confirmación para eliminar usuario -->
+                    <div class="mb-6 p-4 bg-red-100 rounded-md">
+                        <p class="text-red-700">¿Estás seguro de eliminar al usuario {{ user.username }}?</p>
+                        <form method="post" action="{% url 'delete_user' user.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="mt-4 bg-red-500 text-white p-2 rounded-md hover:bg-red-600">Eliminar</button>
+                            <a href="{% url 'paneladmin' %}" class="ml-4 text-blue-500 hover:underline">Cancelar</a>
+                        </form>
                     </div>
-                </form>
+                {% else %}
+                    <!-- Botón para agregar usuario -->
+                    <button id="addUserBtn" class="mb-6 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-all duration-300">Agregar Nuevo Usuario</button>
+                    <!-- Formulario para agregar usuario (oculto inicialmente) -->
+                    <form id="addUserForm" method="post" action="{% url 'add_user' %}" class="mb-6 hidden">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="username" class="block text-sm font-medium text-gray-700">Usuario</label>
+                                <input type="text" name="username" id="username" required class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700">Correo</label>
+                                <input type="email" name="email" id="email" required class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div>
+                                <label for="password1" class="block text-sm font-medium text-gray-700">Contraseña</label>
+                                <input type="password" name="password1" id="password1" required class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div>
+                                <label for="password2" class="block text-sm font-medium text-gray-700">Confirmar Contraseña</label>
+                                <input type="password" name="password2" id="password2" required class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div>
+                                <label for="role" class="block text-sm font-medium text-gray-700">Rol</label>
+                                <select name="role" id="role" required class="mt-1 p-2 w-full border rounded-md">
+                                    <option value="Admin">Admin</option>
+                                    <option value="Usuario">Usuario</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="estado" class="block text-sm font-medium text-gray-700">Estado</label>
+                                <select name="estado" id="estado" required class="mt-1 p-2 w-full border rounded-md">
+                                    <option value="Habilitado">Habilitado</option>
+                                    <option value="Inhabilitado">Inhabilitado</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Usuario</button>
+                                <a href="{% url 'paneladmin' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+                            </div>
+                        </div>
+                    </form>
+                {% endif %}
                 <!-- Tabla de usuarios -->
                 <div class="overflow-x-auto">
                     <table class="min-w-full bg-white border border-gray-200">
                         <thead>
                             <tr class="bg-gray-100">
-                                <th class="py-2 px-4 border-b text-left">Nombre</th>
+                                <th class="py-2 px-4 border-b text-left">Usuario</th>
                                 <th class="py-2 px-4 border-b text-left">Correo</th>
                                 <th class="py-2 px-4 border-b text-left">Rol</th>
+                                <th class="py-2 px-4 border-b text-left">Estado</th>
                                 <th class="py-2 px-4 border-b text-left">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for user in users %}
                             <tr class="hover:bg-gray-50">
-                                <td class="py-2 px-4 border-b">{{ user.first_name }}</td>
+                                <td class="py-2 px-4 border-b">{{ user.username }}</td>
                                 <td class="py-2 px-4 border-b">{{ user.email }}</td>
                                 <td class="py-2 px-4 border-b">{{ user.role }}</td>
+                                <td class="py-2 px-4 border-b">{{ user.estado }}</td>
                                 <td class="py-2 px-4 border-b">
-                                    <a href="{% url 'edit_user' user.id %}" class="text-blue-500 hover:underline">Editar</a>
-                                    <a href="{% url 'delete_user' user.id %}" class="text-red-500 hover:underline ml-4">Eliminar</a>
+                                    <a href="{% url 'paneladmin' %}?action=edit&user_id={{ user.id }}" class="text-blue-500 hover:underline">Editar</a>
+                                    <a href="{% url 'paneladmin' %}?action=delete&user_id={{ user.id }}" class="text-red-500 hover:underline ml-4">Eliminar</a>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="4" class="py-2 px-4 border-b text-center">No hay usuarios registrados.</td>
+                                <td colspan="5" class="py-2 px-4 border-b text-center">No hay usuarios registrados.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -154,7 +244,7 @@
 
     <!-- Footer -->
     <footer class="bg-black text-center py-4 z-0">
-        <p class="text-sm text-white">&copy; 2024 <b>CODECRAfters</b> - Todos los Derechos Reservados</p>
+        <p class="text-sm text-white">&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</p>
     </footer>
 
     <script>
@@ -174,9 +264,11 @@
         // Toggle Form for Adding User
         const addUserBtn = document.getElementById('addUserBtn');
         const addUserForm = document.getElementById('addUserForm');
-        addUserBtn.addEventListener('click', () => {
-            addUserForm.classList.toggle('hidden');
-        });
+        if (addUserBtn && addUserForm) {
+            addUserBtn.addEventListener('click', () => {
+                addUserForm.classList.toggle('hidden');
+            });
+        }
 
         // Pie Chart for Product Distribution
         const ctx = document.getElementById('productChart').getContext('2d');
@@ -210,6 +302,25 @@
                         }
                     }
                 }
+            }
+        });
+
+        // Ocultar mensajes automáticamente después de 5 segundos
+        setTimeout(() => {
+            const messagesContainer = document.getElementById('messages-container');
+            if (messagesContainer) {
+                messagesContainer.style.display = 'none';
+            }
+        }, 5000);
+
+        // Mostrar el panel de usuarios por defecto o basado en URL
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const panel = urlParams.get('panel');
+            if (panel) {
+                showPanel(panel);
+            } else {
+                showPanel('users'); // Por defecto, muestra el panel de usuarios
             }
         });
     </script>

@@ -45,7 +45,7 @@
                     <a href="#" class="icono"><i class="fa-brands fa-github"></i></a>
                 </div>
                 <span>O usa tu correo electrónico para registrarte</span>
-                {{ form.as_p }}
+                {{ form.as_p }}  <!-- Esto renderiza todos los campos del formulario -->
                 <button type="submit" name="register_submit">Registrarse</button>
             </form>
         </div>
@@ -103,7 +103,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const registroForm = document.getElementById('register-form');
             const loginForm = document.getElementById('login-form');
-            const inputs = registroForm.querySelectorAll('input') || [];
+            const inputs = registroForm.querySelectorAll('input');
 
             const validadores = {
                 'name': {
@@ -126,8 +126,8 @@
                 input.insertAdjacentElement('afterend', mensaje);
 
                 input.addEventListener('input', () => {
-                    const placeholder = input.name; // Usamos 'name' en lugar de 'placeholder' para compatibilidad con Django
-                    const validador = validadores[placeholder];
+                    const name = input.name; // Usa 'name' en lugar de 'placeholder' para compatibilidad con Django
+                    const validador = validadores[name];
                     if (validador) {
                         const esValido = validador.test(input.value);
 
@@ -156,8 +156,8 @@
                 let todosValidos = true;
 
                 inputs.forEach(input => {
-                    const placeholder = input.name;
-                    const validador = validadores[placeholder];
+                    const name = input.name;
+                    const validador = validadores[name];
                     if (validador) {
                         const esValido = validador.test(input.value);
                         if (!esValido) {
@@ -190,5 +190,4 @@
             });
         });
     </script>
-</body>
 </html>
