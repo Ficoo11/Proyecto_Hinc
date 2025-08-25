@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from .models import Producto
 
 CustomUser = get_user_model()
 
@@ -77,3 +78,8 @@ class LoginForm(forms.Form):
             elif user.estado != 'Habilitado':
                 raise ValidationError("El usuario está inhabilitado.")
         return cleaned_data
+    
+class ProductoForm(forms.ModelForm):
+    class Meta:
+        model = Producto
+        fields = ('nombre', 'precio', 'tallas', 'imagen', 'descripcion', 'categoria')

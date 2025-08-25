@@ -3,8 +3,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.backends import ModelBackend
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .forms import CustomUserCreationForm, LoginForm
-from .models import CustomUser
+from .forms import CustomUserCreationForm, LoginForm, ProductoForm  # Añadido ProductoForm aquí
+from .models import CustomUser, Producto
 import logging
 
 # Configurar logging para depuración
@@ -145,3 +145,66 @@ def user_dashboard(request):
     if request.user.role == 'Admin':
         return redirect('paneladmin')
     return render(request, 'user_dashboard.html', {'user': request.user})
+
+@login_required
+def productos_list(request):
+    if request.user.role != 'Admin':
+        messages.error(request, "No tienes permiso para acceder al panel de productos.")
+        return redirect('index')
+    productos = Producto.objects.all()
+    return render(request, 'paneladmin.html', {'productos': productos, 'action': 'list_productos'})
+
+@login_required
+def productos_create(request):
+    if request.user.role != 'Admin':
+        messages.error(request, "No tienes permiso para crear productos.")
+        return redirect('paneladmin')
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Producto agregado exitosamente.")
+            return redirect('paneladmin')
+        else:
+            messages.error(request, "Error al agregar producto. Verifica los datos.")
+            for error in form.errors.values():
+                messages.error(request, error)
+    else:
+        form = ProductoForm()
+    return render(request, 'paneladmin.html', {'form': form, 'action': 'create_productos'})
+
+@login_required
+def productos_update(request, producto_id):
+    if request.user.role != 'Admin':
+        messages.error(request, "No tienes permiso para editar productos.")
+        return redirect('paneladmin')
+    producto = get_object_or_404(Producto, id=producto_id)
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, request.FILES, instance=producto)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Producto actualizado exitosamente.")
+            return redirect('paneladmin')
+        else:
+            messages.error(request, "Error al actualizar producto. Verifica los datos.")
+            for error in form.errors.values():
+                messages.error(request, error)
+    else:
+        form = ProductoForm(instance=producto)
+    return render(request, 'paneladmin.html', {'form': form, 'action': 'update_productos', 'producto': producto})
+
+@login_required
+def productos_delete(request, producto_id):
+    if request.user.role != 'Admin':
+        messages.error(request, "No tienes permiso para eliminar productos.")
+        return redirect('paneladmin')
+    producto = get_object_or_404(Producto, id=producto_id)
+    if request.method == 'POST':
+        producto.delete()
+        messages.success(request, "Producto eliminado exitosamente.")
+        return redirect('paneladmin')
+    return render(request, 'paneladmin.html', {'action': 'delete_productos', 'producto': producto})
+
+def catalogo_view(request):
+    productos = Producto.objects.all()
+    return render(request, 'catalogo.html', {'productos': productos})

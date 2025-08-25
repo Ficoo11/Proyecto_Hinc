@@ -232,7 +232,170 @@
 
             <div id="productsPanel" class="panel hidden">
                 <h2 class="text-2xl font-bold text-black mb-4">Productos</h2>
-                <p class="text-gray-600">Contenido provisional para la gestión de productos.</p>
+                {% if action == 'create_productos' %}
+                    <form method="post" action="{% url 'productos_create' %}" class="mb-6" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+                                <input type="text" name="nombre" id="nombre" required class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div>
+                                <label for="precio" class="block text-sm font-medium text-gray-700">Precio</label>
+                                <input type="number" name="precio" id="precio" step="0.01" required class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div>
+                                <label for="tallas" class="block text-sm font-medium text-gray-700">Tallas</label>
+                                <input type="text" name="tallas" id="tallas" placeholder="S,M,L" required class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div>
+                                <label for="imagen" class="block text-sm font-medium text-gray-700">Imagen</label>
+                                <input type="file" name="imagen" id="imagen" class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="descripcion" class="block text-sm font-medium text-gray-700">Descripción</label>
+                                <textarea name="descripcion" id="descripcion" required class="mt-1 p-2 w-full border rounded-md"></textarea>
+                            </div>
+                            <div>
+                                <label for="categoria" class="block text-sm font-medium text-gray-700">Categoría</label>
+                                <select name="categoria" id="categoria" required class="mt-1 p-2 w-full border rounded-md">
+                                    <option value="Hombre">Hombre</option>
+                                    <option value="Mujer">Mujer</option>
+                                    <option value="Accesorios">Accesorios</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Producto</button>
+                                <a href="{% url 'paneladmin' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+                            </div>
+                        </div>
+                    </form>
+                {% elif action == 'update_productos' and producto %}
+                    <form method="post" action="{% url 'productos_update' producto.id %}" class="mb-6" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+                                <input type="text" name="nombre" id="nombre" value="{{ producto.nombre }}" required class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div>
+                                <label for="precio" class="block text-sm font-medium text-gray-700">Precio</label>
+                                <input type="number" name="precio" id="precio" value="{{ producto.precio }}" step="0.01" required class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div>
+                                <label for="tallas" class="block text-sm font-medium text-gray-700">Tallas</label>
+                                <input type="text" name="tallas" id="tallas" value="{{ producto.tallas }}" required class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div>
+                                <label for="imagen" class="block text-sm font-medium text-gray-700">Imagen</label>
+                                <input type="file" name="imagen" id="imagen" class="mt-1 p-2 w-full border rounded-md">
+                                {% if producto.imagen %}
+                                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="mt-2 w-full h-32 object-cover rounded-md">
+                                {% endif %}
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="descripcion" class="block text-sm font-medium text-gray-700">Descripción</label>
+                                <textarea name="descripcion" id="descripcion" required class="mt-1 p-2 w-full border rounded-md">{{ producto.descripcion }}</textarea>
+                            </div>
+                            <div>
+                                <label for="categoria" class="block text-sm font-medium text-gray-700">Categoría</label>
+                                <select name="categoria" id="categoria" required class="mt-1 p-2 w-full border rounded-md">
+                                    <option value="Hombre" {% if producto.categoria == 'Hombre' %}selected{% endif %}>Hombre</option>
+                                    <option value="Mujer" {% if producto.categoria == 'Mujer' %}selected{% endif %}>Mujer</option>
+                                    <option value="Accesorios" {% if producto.categoria == 'Accesorios' %}selected{% endif %}>Accesorios</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Actualizar Producto</button>
+                                <a href="{% url 'paneladmin' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+                            </div>
+                        </div>
+                    </form>
+                {% elif action == 'delete_productos' and producto %}
+                    <div class="mb-6 p-4 bg-red-100 rounded-md">
+                        <p class="text-red-700">¿Estás seguro de eliminar el producto {{ producto.nombre }}?</p>
+                        <form method="post" action="{% url 'productos_delete' producto.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="mt-4 bg-red-500 text-white p-2 rounded-md hover:bg-red-600">Eliminar</button>
+                            <a href="{% url 'paneladmin' %}" class="ml-4 text-blue-500 hover:underline">Cancelar</a>
+                        </form>
+                    </div>
+                {% else %}
+                    <!-- Botón para agregar producto -->
+                    <button id="addProductBtn" class="mb-6 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-all duration-300">Agregar Nuevo Producto</button>
+                    <!-- Formulario para agregar producto (oculto inicialmente) -->
+                    <form id="addProductForm" method="post" action="{% url 'productos_create' %}" class="mb-6 hidden" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+                                <input type="text" name="nombre" id="nombre" required class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div>
+                                <label for="precio" class="block text-sm font-medium text-gray-700">Precio</label>
+                                <input type="number" name="precio" id="precio" step="0.01" required class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div>
+                                <label for="tallas" class="block text-sm font-medium text-gray-700">Tallas</label>
+                                <input type="text" name="tallas" id="tallas" placeholder="S,M,L" required class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div>
+                                <label for="imagen" class="block text-sm font-medium text-gray-700">Imagen</label>
+                                <input type="file" name="imagen" id="imagen" class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="descripcion" class="block text-sm font-medium text-gray-700">Descripción</label>
+                                <textarea name="descripcion" id="descripcion" required class="mt-1 p-2 w-full border rounded-md"></textarea>
+                            </div>
+                            <div>
+                                <label for="categoria" class="block text-sm font-medium text-gray-700">Categoría</label>
+                                <select name="categoria" id="categoria" required class="mt-1 p-2 w-full border rounded-md">
+                                    <option value="Hombre">Hombre</option>
+                                    <option value="Mujer">Mujer</option>
+                                    <option value="Accesorios">Accesorios</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Producto</button>
+                                <a href="{% url 'paneladmin' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+                            </div>
+                        </div>
+                    </form>
+                    <!-- Tabla de productos -->
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border border-gray-200">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="py-2 px-4 border-b text-left">Nombre</th>
+                                    <th class="py-2 px-4 border-b text-left">Precio</th>
+                                    <th class="py-2 px-4 border-b text-left">Tallas</th>
+                                    <th class="py-2 px-4 border-b text-left">Descripción</th>
+                                    <th class="py-2 px-4 border-b text-left">Categoría</th>
+                                    <th class="py-2 px-4 border-b text-left">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for producto in productos %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="py-2 px-4 border-b">{{ producto.nombre }}</td>
+                                    <td class="py-2 px-4 border-b">${{ producto.precio }}</td>
+                                    <td class="py-2 px-4 border-b">{{ producto.tallas }}</td>
+                                    <td class="py-2 px-4 border-b">{{ producto.descripcion|truncatechars:30 }}</td>
+                                    <td class="py-2 px-4 border-b">{{ producto.categoria }}</td>
+                                    <td class="py-2 px-4 border-b">
+                                        <a href="{% url 'productos_update' producto.id %}" class="text-blue-500 hover:underline">Editar</a>
+                                        <a href="{% url 'productos_delete' producto.id %}" class="text-red-500 hover:underline ml-4">Eliminar</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="py-2 px-4 border-b text-center">No hay productos registrados.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
             </div>
 
             <div id="inventoryPanel" class="panel hidden">
@@ -267,6 +430,15 @@
         if (addUserBtn && addUserForm) {
             addUserBtn.addEventListener('click', () => {
                 addUserForm.classList.toggle('hidden');
+            });
+        }
+
+        // Toggle Form for Adding Product
+        const addProductBtn = document.getElementById('addProductBtn');
+        const addProductForm = document.getElementById('addProductForm');
+        if (addProductBtn && addProductForm) {
+            addProductBtn.addEventListener('click', () => {
+                addProductForm.classList.toggle('hidden');
             });
         }
 
