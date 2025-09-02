@@ -11,7 +11,6 @@
     <link rel="shortcut icon" href="{% static 'Img/Hinc.png' %}" type="image/x-icon">
 </head>
 <body class="bg-black font-sans">
-
     <!-- Header -->
     <header class="relative h-24 overflow-hidden z-10">
         <video class="absolute w-full h-full object-cover z-0" autoplay muted loop>
@@ -32,7 +31,6 @@
             <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
         </div>
     </header>
-
     <!-- Main Content -->
     <div class="flex min-h-screen">
         <!-- Sidebar -->
@@ -48,11 +46,13 @@
                     <button onclick="showPanel('products')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300">Productos</button>
                 </li>
                 <li>
+                    <button onclick="showPanel('categorias')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300">Categorías</button>
+                </li>
+                <li>
                     <button onclick="showPanel('inventory')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300">Inventario</button>
                 </li>
             </ul>
         </aside>
-
         <!-- Main Panel -->
         <main class="flex-1 p-8 bg-white/85 backdrop-blur-sm z-0">
             <!-- Mensajes -->
@@ -71,7 +71,6 @@
                     {% endfor %}
                 </div>
             {% endif %}
-
             <div id="dashboardPanel" class="panel">
                 <h2 class="text-2xl font-bold text-black mb-4">Dashboard</h2>
                 <div class="mb-6">
@@ -98,7 +97,6 @@
                     </div>
                 </div>
             </div>
-
             <div id="usersPanel" class="panel hidden">
                 <h2 class="text-2xl font-bold text-black mb-4">Usuarios</h2>
                 {% if action == 'edit' and user %}
@@ -229,7 +227,6 @@
                     </table>
                 </div>
             </div>
-
             <div id="productsPanel" class="panel hidden">
                 <h2 class="text-2xl font-bold text-black mb-4">Productos</h2>
                 {% if action == 'create_productos' %}
@@ -397,19 +394,114 @@
                     </div>
                 {% endif %}
             </div>
-
+            <div id="categoriasPanel" class="panel hidden">
+                <h2 class="text-2xl font-bold text-black mb-4">Categorías</h2>
+                {% if action == 'create_categorias' %}
+                    <form method="post" action="{% url 'categorias_create' %}" class="mb-6">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+                                <input type="text" name="nombre" id="nombre" required class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="descripcion" class="block text-sm font-medium text-gray-700">Descripción</label>
+                                <textarea name="descripcion" id="descripcion" required class="mt-1 p-2 w-full border rounded-md"></textarea>
+                            </div>
+                            <div class="md:col-span-2">
+                                <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Categoría</button>
+                                <a href="{% url 'paneladmin' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+                            </div>
+                        </div>
+                    </form>
+                {% elif action == 'update_categorias' and categoria %}
+                    <form method="post" action="{% url 'categorias_update' categoria.id %}" class="mb-6">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+                                <input type="text" name="nombre" id="nombre" value="{{ categoria.nombre }}" required class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="descripcion" class="block text-sm font-medium text-gray-700">Descripción</label>
+                                <textarea name="descripcion" id="descripcion" required class="mt-1 p-2 w-full border rounded-md">{{ categoria.descripcion }}</textarea>
+                            </div>
+                            <div class="md:col-span-2">
+                                <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Actualizar Categoría</button>
+                                <a href="{% url 'paneladmin' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+                            </div>
+                        </div>
+                    </form>
+                {% elif action == 'delete_categorias' and categoria %}
+                    <div class="mb-6 p-4 bg-red-100 rounded-md">
+                        <p class="text-red-700">¿Estás seguro de eliminar la categoría {{ categoria.nombre }}?</p>
+                        <form method="post" action="{% url 'categorias_delete' categoria.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="mt-4 bg-red-500 text-white p-2 rounded-md hover:bg-red-600">Eliminar</button>
+                            <a href="{% url 'paneladmin' %}" class="ml-4 text-blue-500 hover:underline">Cancelar</a>
+                        </form>
+                    </div>
+                {% else %}
+                    <!-- Botón para agregar categoría -->
+                    <button id="addCategoriaBtn" class="mb-6 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-all duration-300">Agregar Nueva Categoría</button>
+                    <!-- Formulario para agregar categoría (oculto inicialmente) -->
+                    <form id="addCategoriaForm" method="post" action="{% url 'categorias_create' %}" class="mb-6 hidden">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+                                <input type="text" name="nombre" id="nombre" required class="mt-1 p-2 w-full border rounded-md">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="descripcion" class="block text-sm font-medium text-gray-700">Descripción</label>
+                                <textarea name="descripcion" id="descripcion" required class="mt-1 p-2 w-full border rounded-md"></textarea>
+                            </div>
+                            <div class="md:col-span-2">
+                                <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Categoría</button>
+                                <a href="{% url 'paneladmin' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+                            </div>
+                        </div>
+                    </form>
+                    <!-- Tabla de categorías -->
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border border-gray-200">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="py-2 px-4 border-b text-left">Nombre</th>
+                                    <th class="py-2 px-4 border-b text-left">Descripción</th>
+                                    <th class="py-2 px-4 border-b text-left">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for categoria in categorias %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="py-2 px-4 border-b">{{ categoria.nombre }}</td>
+                                    <td class="py-2 px-4 border-b">{{ categoria.descripcion|truncatechars:30 }}</td>
+                                    <td class="py-2 px-4 border-b">
+                                        <a href="{% url 'categorias_update' categoria.id %}" class="text-blue-500 hover:underline">Editar</a>
+                                        <a href="{% url 'categorias_delete' categoria.id %}" class="text-red-500 hover:underline ml-4">Eliminar</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="py-2 px-4 border-b text-center">No hay categorías registradas.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </div>
             <div id="inventoryPanel" class="panel hidden">
                 <h2 class="text-2xl font-bold text-black mb-4">Inventario</h2>
                 <p class="text-gray-600">Contenido provisional para la gestión de inventario.</p>
             </div>
         </main>
     </div>
-
     <!-- Footer -->
     <footer class="bg-black text-center py-4 z-0">
         <p class="text-sm text-white">&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</p>
     </footer>
-
     <script>
         // User Menu Dropdown
         const userMenuBtn = document.getElementById('userMenuBtn');
@@ -417,13 +509,11 @@
         userMenuBtn.addEventListener('click', () => {
             userMenu.classList.toggle('hidden');
         });
-
         // Panel Switching
         function showPanel(panelId) {
             document.querySelectorAll('.panel').forEach(panel => panel.classList.add('hidden'));
             document.getElementById(`${panelId}Panel`).classList.remove('hidden');
         }
-
         // Toggle Form for Adding User
         const addUserBtn = document.getElementById('addUserBtn');
         const addUserForm = document.getElementById('addUserForm');
@@ -432,7 +522,6 @@
                 addUserForm.classList.toggle('hidden');
             });
         }
-
         // Toggle Form for Adding Product
         const addProductBtn = document.getElementById('addProductBtn');
         const addProductForm = document.getElementById('addProductForm');
@@ -441,7 +530,14 @@
                 addProductForm.classList.toggle('hidden');
             });
         }
-
+        // Toggle Form for Adding Categoria
+        const addCategoriaBtn = document.getElementById('addCategoriaBtn');
+        const addCategoriaForm = document.getElementById('addCategoriaForm');
+        if (addCategoriaBtn && addCategoriaForm) {
+            addCategoriaBtn.addEventListener('click', () => {
+                addCategoriaForm.classList.toggle('hidden');
+            });
+        }
         // Pie Chart for Product Distribution
         const ctx = document.getElementById('productChart').getContext('2d');
         new Chart(ctx, {
@@ -476,7 +572,6 @@
                 }
             }
         });
-
         // Ocultar mensajes automáticamente después de 5 segundos
         setTimeout(() => {
             const messagesContainer = document.getElementById('messages-container');
@@ -484,7 +579,6 @@
                 messagesContainer.style.display = 'none';
             }
         }, 5000);
-
         // Mostrar el panel de usuarios por defecto o basado en URL
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);

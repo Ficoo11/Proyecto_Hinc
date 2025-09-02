@@ -3,8 +3,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.backends import ModelBackend
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .forms import CustomUserCreationForm, LoginForm, ProductoForm  # Añadido ProductoForm aquí
-from .models import CustomUser, Producto
+from .forms import CustomUserCreationForm, LoginForm, ProductoForm, CategoriaForm  # Añadido CategoriaForm
+from .models import CustomUser, Producto, Categoria  # Añadido Categoria
 import logging
 
 # Configurar logging para depuración
@@ -67,10 +67,11 @@ def paneladmin_view(request):
     if request.user.role != 'Admin':
         messages.error(request, "No tienes permiso para acceder al panel de administración.")
         return redirect('index')
-    
+
     users = CustomUser.objects.all()
-    productos = Producto.objects.all()  # Agrega esta línea para consultar los productos de la DB
-    
+    productos = Producto.objects.all()
+    categorias = Categoria.objects.all()  # Añadido
+
     action = request.GET.get('action')
     user_id = request.GET.get('user_id')
     user = None
@@ -78,10 +79,11 @@ def paneladmin_view(request):
         user = get_object_or_404(CustomUser, id=user_id)
     elif action == 'delete' and user_id:
         user = get_object_or_404(CustomUser, id=user_id)
-    
+
     return render(request, 'paneladmin.html', {
         'users': users,
-        'productos': productos,  # Agrega esto al contexto
+        'productos': productos,
+        'categorias': categorias,  # Añadido
         'action': action,
         'user': user
     })
@@ -214,6 +216,58 @@ def productos_delete(request, producto_id):
         return redirect('paneladmin')
     return render(request, 'paneladmin.html', {'action': 'delete_productos', 'producto': producto})
 
+@login_required
+def categorias_create(request):
+    if request.user.role != 'Admin':
+        messages.error(request, "No tienes permiso para crear categorías.")
+        return redirect('paneladmin')
+    if request.method == 'POST':
+        form = CategoriaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Categoría agregada exitosamente.")
+            return redirect('paneladmin')
+        else:
+            messages.error(request, "Error al agregar categoría. Verifica los datos.")
+            for error in form.errors.values():
+                messages.error(request, error)
+    else:
+        form = CategoriaForm()
+    return render(request, 'paneladmin.html', {'form': form, 'action': 'create_categorias'})
+
+@login_required
+def categorias_update(request, categoria_id):
+    if request.user.role != 'Admin':
+        messages.error(request, "No tienes permiso para editar categorías.")
+        return redirect('paneladmin')
+    categoria = get_object_or_404(Categoria, id=categoria_id)
+    if request.method == 'POST':
+        form = CategoriaForm(request.POST, instance=categoria)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Categoría actualizada exitosamente.")
+            return redirect('paneladmin')
+        else:
+            messages.error(request, "Error al actualizar categoría. Verifica los datos.")
+            for error in form.errors.values():
+                messages.error(request, error)
+    else:
+        form = CategoriaForm(instance=categoria)
+    return render(request, 'paneladmin.html', {'form': form, 'action': 'update_categorias', 'categoria': categoria})
+
+@login_required
+def categorias_delete(request, categoria_id):
+    if request.user.role != 'Admin':
+        messages.error(request, "No tienes permiso para eliminar categorías.")
+        return redirect('paneladmin')
+    categoria = get_object_or_404(Categoria, id=categoria_id)
+    if request.method == 'POST':
+        categoria.delete()
+        messages.success(request, "Categoría eliminada exitosamente.")
+        return redirect('paneladmin')
+    return render(request, 'paneladmin.html', {'action': 'delete_categorias', 'categoria': categoria})
+
 def catalogo_view(request):
     productos = Producto.objects.all()
-    return render(request, 'catalogo.html', {'productos': productos})
+    categorias = Categoria.objects.all()  # Añadido
+    return render(request, 'catalogo.html', {'productos': productos, 'categorias': categorias})  # Añadido categorias
