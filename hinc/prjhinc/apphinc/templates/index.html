@@ -23,7 +23,7 @@
             <a href="{% url 'index' %}"><img src="{% static 'img/Hinc.png' %}" alt="" class="logo" /></a>
             <div class="nav-navbar">
                 <a href="#Categorias" class="navbar-hombre">Categorias</a>
-                <a href="#Sobre-Nosotros" class="navbar-mujer">Sobre Nosotros</a>
+                <a href="{% url 'catalogo' %}" class="navbar-mujer">Catalogo</a>
             </div>
             {% if user.is_authenticated %}
                 <div class="relative">
