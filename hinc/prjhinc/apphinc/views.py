@@ -67,7 +67,10 @@ def paneladmin_view(request):
     if request.user.role != 'Admin':
         messages.error(request, "No tienes permiso para acceder al panel de administración.")
         return redirect('index')
+    
     users = CustomUser.objects.all()
+    productos = Producto.objects.all()  # Agrega esta línea para consultar los productos de la DB
+    
     action = request.GET.get('action')
     user_id = request.GET.get('user_id')
     user = None
@@ -75,7 +78,13 @@ def paneladmin_view(request):
         user = get_object_or_404(CustomUser, id=user_id)
     elif action == 'delete' and user_id:
         user = get_object_or_404(CustomUser, id=user_id)
-    return render(request, 'paneladmin.html', {'users': users, 'action': action, 'user': user})
+    
+    return render(request, 'paneladmin.html', {
+        'users': users,
+        'productos': productos,  # Agrega esto al contexto
+        'action': action,
+        'user': user
+    })
 
 @login_required
 def add_user(request):
