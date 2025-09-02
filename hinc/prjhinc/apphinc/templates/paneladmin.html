@@ -7,10 +7,10 @@
     <title>Hinc - Admin Panel</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="shortcut icon" href="{% static 'Img/Hinc.png' %}" type="image/x-icon">
 </head>
 <body class="bg-black font-sans">
+
     <!-- Header -->
     <header class="relative h-24 overflow-hidden z-10">
         <video class="absolute w-full h-full object-cover z-0" autoplay muted loop>
@@ -31,28 +31,30 @@
             <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
         </div>
     </header>
+
     <!-- Main Content -->
     <div class="flex min-h-screen">
         <!-- Sidebar -->
         <aside class="w-64 bg-[#1a1a1a] text-white p-6 z-0">
             <ul>
                 <li>
-                    <button onclick="showPanel('dashboard')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300">Dashboard</button>
+                    <button onclick="showPanel('dashboard')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'dashboard' %}bg-black/80{% endif %}">Dashboard</button>
                 </li>
                 <li>
-                    <button onclick="showPanel('users')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300">Usuarios</button>
+                    <button onclick="showPanel('users')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'users' %}bg-black/80{% endif %}">Usuarios</button>
                 </li>
                 <li>
-                    <button onclick="showPanel('products')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300">Productos</button>
+                    <button onclick="showPanel('products')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'products' %}bg-black/80{% endif %}">Productos</button>
                 </li>
                 <li>
-                    <button onclick="showPanel('categorias')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300">Categorías</button>
+                    <button onclick="showPanel('categorias')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'categorias' %}bg-black/80{% endif %}">Categorías</button>
                 </li>
                 <li>
-                    <button onclick="showPanel('inventory')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300">Inventario</button>
+                    <button onclick="showPanel('inventory')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'inventory' %}bg-black/80{% endif %}">Inventario</button>
                 </li>
             </ul>
         </aside>
+
         <!-- Main Panel -->
         <main class="flex-1 p-8 bg-white/85 backdrop-blur-sm z-0">
             <!-- Mensajes -->
@@ -71,36 +73,34 @@
                     {% endfor %}
                 </div>
             {% endif %}
+
             <div id="dashboardPanel" class="panel">
-                <h2 class="text-2xl font-bold text-black mb-4">Dashboard</h2>
-                <div class="mb-6">
-                    <h3 class="text-xl font-semibold text-black mb-2">Estadísticas</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <div class="p-4 bg-gray-100 rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
-                            <h4 class="font-semibold text-gray-800">Usuarios Activos</h4>
-                            <p class="text-2xl text-black">0</p>
-                        </div>
-                        <div class="p-4 bg-gray-100 rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
-                            <h4 class="font-semibold text-gray-800">Ventas Totales</h4>
-                            <p class="text-2xl text-black">$0</p>
-                        </div>
-                        <div class="p-4 bg-gray-100 rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
-                            <h4 class="font-semibold text-gray-800">Inventario Disponible</h4>
-                            <p class="text-2xl text-black">0</p>
-                        </div>
+                <h2 class="text-2xl font-bold text-black mb-6">Dashboard</h2>
+                <div class="grid grid-cols-2 gap-6 mb-6">
+                    <!-- Estadísticas (2 arriba) -->
+                    <div class="p-6 bg-gray-100 rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+                        <h4 class="font-semibold text-gray-800 text-lg">Usuarios Activos</h4>
+                        <p class="text-4xl text-black mt-2">{{ users|length }}</p>
                     </div>
-                </div>
-                <div>
-                    <h3 class="text-xl font-semibold text-black mb-2">Distribución de Productos</h3>
-                    <div class="max-w-md mx-auto">
-                        <canvas id="productChart"></canvas>
+                    <div class="p-6 bg-gray-100 rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+                        <h4 class="font-semibold text-gray-800 text-lg">Productos</h4>
+                        <p class="text-4xl text-black mt-2">{{ productos|length }}</p>
+                    </div>
+                    <!-- Estadísticas (2 abajo) -->
+                    <div class="p-6 bg-gray-100 rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+                        <h4 class="font-semibold text-gray-800 text-lg">Categorías</h4>
+                        <p class="text-4xl text-black mt-2">{{ categorias|length }}</p>
+                    </div>
+                    <div class="p-6 bg-gray-100 rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+                        <h4 class="font-semibold text-gray-800 text-lg">Ventas Totales</h4>
+                        <p class="text-4xl text-black mt-2">$0.00</p> <!-- Placeholder, necesitarías un modelo de ventas -->
                     </div>
                 </div>
             </div>
+
             <div id="usersPanel" class="panel hidden">
                 <h2 class="text-2xl font-bold text-black mb-4">Usuarios</h2>
                 {% if action == 'edit' and user %}
-                    <!-- Formulario para editar usuario -->
                     <form method="post" action="{% url 'edit_user' user.id %}" class="mb-6">
                         {% csrf_token %}
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -136,24 +136,21 @@
                             </div>
                             <div class="md:col-span-2">
                                 <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Actualizar Usuario</button>
-                                <a href="{% url 'paneladmin' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+                                <a href="{% url 'paneladmin' %}?panel=users" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
                             </div>
                         </div>
                     </form>
                 {% elif action == 'delete' and user %}
-                    <!-- Confirmación para eliminar usuario -->
                     <div class="mb-6 p-4 bg-red-100 rounded-md">
                         <p class="text-red-700">¿Estás seguro de eliminar al usuario {{ user.username }}?</p>
                         <form method="post" action="{% url 'delete_user' user.id %}">
                             {% csrf_token %}
                             <button type="submit" class="mt-4 bg-red-500 text-white p-2 rounded-md hover:bg-red-600">Eliminar</button>
-                            <a href="{% url 'paneladmin' %}" class="ml-4 text-blue-500 hover:underline">Cancelar</a>
+                            <a href="{% url 'paneladmin' %}?panel=users" class="ml-4 text-blue-500 hover:underline">Cancelar</a>
                         </form>
                     </div>
                 {% else %}
-                    <!-- Botón para agregar usuario -->
                     <button id="addUserBtn" class="mb-6 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-all duration-300">Agregar Nuevo Usuario</button>
-                    <!-- Formulario para agregar usuario (oculto inicialmente) -->
                     <form id="addUserForm" method="post" action="{% url 'add_user' %}" class="mb-6 hidden">
                         {% csrf_token %}
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -189,12 +186,11 @@
                             </div>
                             <div class="md:col-span-2">
                                 <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Usuario</button>
-                                <a href="{% url 'paneladmin' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+                                <a href="{% url 'paneladmin' %}?panel=users" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
                             </div>
                         </div>
                     </form>
                 {% endif %}
-                <!-- Tabla de usuarios -->
                 <div class="overflow-x-auto">
                     <table class="min-w-full bg-white border border-gray-200">
                         <thead>
@@ -214,8 +210,8 @@
                                 <td class="py-2 px-4 border-b">{{ user.role }}</td>
                                 <td class="py-2 px-4 border-b">{{ user.estado }}</td>
                                 <td class="py-2 px-4 border-b">
-                                    <a href="{% url 'paneladmin' %}?action=edit&user_id={{ user.id }}" class="text-blue-500 hover:underline">Editar</a>
-                                    <a href="{% url 'paneladmin' %}?action=delete&user_id={{ user.id }}" class="text-red-500 hover:underline ml-4">Eliminar</a>
+                                    <a href="{% url 'paneladmin' %}?action=edit&user_id={{ user.id }}&panel=users" class="text-blue-500 hover:underline">Editar</a>
+                                    <a href="{% url 'paneladmin' %}?action=delete&user_id={{ user.id }}&panel=users" class="text-red-500 hover:underline ml-4">Eliminar</a>
                                 </td>
                             </tr>
                             {% empty %}
@@ -227,6 +223,7 @@
                     </table>
                 </div>
             </div>
+
             <div id="productsPanel" class="panel hidden">
                 <h2 class="text-2xl font-bold text-black mb-4">Productos</h2>
                 {% if action == 'create_productos' %}
@@ -263,7 +260,7 @@
                             </div>
                             <div class="md:col-span-2">
                                 <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Producto</button>
-                                <a href="{% url 'paneladmin' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+                                <a href="{% url 'paneladmin' %}?panel=products" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
                             </div>
                         </div>
                     </form>
@@ -304,7 +301,7 @@
                             </div>
                             <div class="md:col-span-2">
                                 <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Actualizar Producto</button>
-                                <a href="{% url 'paneladmin' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+                                <a href="{% url 'paneladmin' %}?panel=products" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
                             </div>
                         </div>
                     </form>
@@ -314,13 +311,11 @@
                         <form method="post" action="{% url 'productos_delete' producto.id %}">
                             {% csrf_token %}
                             <button type="submit" class="mt-4 bg-red-500 text-white p-2 rounded-md hover:bg-red-600">Eliminar</button>
-                            <a href="{% url 'paneladmin' %}" class="ml-4 text-blue-500 hover:underline">Cancelar</a>
+                            <a href="{% url 'paneladmin' %}?panel=products" class="ml-4 text-blue-500 hover:underline">Cancelar</a>
                         </form>
                     </div>
                 {% else %}
-                    <!-- Botón para agregar producto -->
                     <button id="addProductBtn" class="mb-6 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-all duration-300">Agregar Nuevo Producto</button>
-                    <!-- Formulario para agregar producto (oculto inicialmente) -->
                     <form id="addProductForm" method="post" action="{% url 'productos_create' %}" class="mb-6 hidden" enctype="multipart/form-data">
                         {% csrf_token %}
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -354,11 +349,10 @@
                             </div>
                             <div class="md:col-span-2">
                                 <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Producto</button>
-                                <a href="{% url 'paneladmin' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+                                <a href="{% url 'paneladmin' %}?panel=products" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
                             </div>
                         </div>
                     </form>
-                    <!-- Tabla de productos -->
                     <div class="overflow-x-auto">
                         <table class="min-w-full bg-white border border-gray-200">
                             <thead>
@@ -380,8 +374,8 @@
                                     <td class="py-2 px-4 border-b">{{ producto.descripcion|truncatechars:30 }}</td>
                                     <td class="py-2 px-4 border-b">{{ producto.categoria }}</td>
                                     <td class="py-2 px-4 border-b">
-                                        <a href="{% url 'productos_update' producto.id %}" class="text-blue-500 hover:underline">Editar</a>
-                                        <a href="{% url 'productos_delete' producto.id %}" class="text-red-500 hover:underline ml-4">Eliminar</a>
+                                        <a href="{% url 'productos_update' producto.id %}?panel=products" class="text-blue-500 hover:underline">Editar</a>
+                                        <a href="{% url 'productos_delete' producto.id %}?panel=products" class="text-red-500 hover:underline ml-4">Eliminar</a>
                                     </td>
                                 </tr>
                                 {% empty %}
@@ -394,6 +388,7 @@
                     </div>
                 {% endif %}
             </div>
+
             <div id="categoriasPanel" class="panel hidden">
                 <h2 class="text-2xl font-bold text-black mb-4">Categorías</h2>
                 {% if action == 'create_categorias' %}
@@ -410,7 +405,7 @@
                             </div>
                             <div class="md:col-span-2">
                                 <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Categoría</button>
-                                <a href="{% url 'paneladmin' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+                                <a href="{% url 'paneladmin' %}?panel=categorias" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
                             </div>
                         </div>
                     </form>
@@ -428,7 +423,7 @@
                             </div>
                             <div class="md:col-span-2">
                                 <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Actualizar Categoría</button>
-                                <a href="{% url 'paneladmin' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+                                <a href="{% url 'paneladmin' %}?panel=categorias" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
                             </div>
                         </div>
                     </form>
@@ -438,13 +433,11 @@
                         <form method="post" action="{% url 'categorias_delete' categoria.id %}">
                             {% csrf_token %}
                             <button type="submit" class="mt-4 bg-red-500 text-white p-2 rounded-md hover:bg-red-600">Eliminar</button>
-                            <a href="{% url 'paneladmin' %}" class="ml-4 text-blue-500 hover:underline">Cancelar</a>
+                            <a href="{% url 'paneladmin' %}?panel=categorias" class="ml-4 text-blue-500 hover:underline">Cancelar</a>
                         </form>
                     </div>
                 {% else %}
-                    <!-- Botón para agregar categoría -->
                     <button id="addCategoriaBtn" class="mb-6 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-all duration-300">Agregar Nueva Categoría</button>
-                    <!-- Formulario para agregar categoría (oculto inicialmente) -->
                     <form id="addCategoriaForm" method="post" action="{% url 'categorias_create' %}" class="mb-6 hidden">
                         {% csrf_token %}
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -458,11 +451,10 @@
                             </div>
                             <div class="md:col-span-2">
                                 <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Categoría</button>
-                                <a href="{% url 'paneladmin' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+                                <a href="{% url 'paneladmin' %}?panel=categorias" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
                             </div>
                         </div>
                     </form>
-                    <!-- Tabla de categorías -->
                     <div class="overflow-x-auto">
                         <table class="min-w-full bg-white border border-gray-200">
                             <thead>
@@ -478,8 +470,8 @@
                                     <td class="py-2 px-4 border-b">{{ categoria.nombre }}</td>
                                     <td class="py-2 px-4 border-b">{{ categoria.descripcion|truncatechars:30 }}</td>
                                     <td class="py-2 px-4 border-b">
-                                        <a href="{% url 'categorias_update' categoria.id %}" class="text-blue-500 hover:underline">Editar</a>
-                                        <a href="{% url 'categorias_delete' categoria.id %}" class="text-red-500 hover:underline ml-4">Eliminar</a>
+                                        <a href="{% url 'categorias_update' categoria.id %}?panel=categorias" class="text-blue-500 hover:underline">Editar</a>
+                                        <a href="{% url 'categorias_delete' categoria.id %}?panel=categorias" class="text-red-500 hover:underline ml-4">Eliminar</a>
                                     </td>
                                 </tr>
                                 {% empty %}
@@ -492,16 +484,19 @@
                     </div>
                 {% endif %}
             </div>
+
             <div id="inventoryPanel" class="panel hidden">
                 <h2 class="text-2xl font-bold text-black mb-4">Inventario</h2>
                 <p class="text-gray-600">Contenido provisional para la gestión de inventario.</p>
             </div>
         </main>
     </div>
+
     <!-- Footer -->
     <footer class="bg-black text-center py-4 z-0">
-        <p class="text-sm text-white">&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</p>
+        <p class="text-sm text-white">&copy; 2025 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</p>
     </footer>
+
     <script>
         // User Menu Dropdown
         const userMenuBtn = document.getElementById('userMenuBtn');
@@ -509,11 +504,14 @@
         userMenuBtn.addEventListener('click', () => {
             userMenu.classList.toggle('hidden');
         });
+
         // Panel Switching
         function showPanel(panelId) {
             document.querySelectorAll('.panel').forEach(panel => panel.classList.add('hidden'));
             document.getElementById(`${panelId}Panel`).classList.remove('hidden');
+            history.pushState({}, '', `?panel=${panelId}`);
         }
+
         // Toggle Form for Adding User
         const addUserBtn = document.getElementById('addUserBtn');
         const addUserForm = document.getElementById('addUserForm');
@@ -522,6 +520,7 @@
                 addUserForm.classList.toggle('hidden');
             });
         }
+
         // Toggle Form for Adding Product
         const addProductBtn = document.getElementById('addProductBtn');
         const addProductForm = document.getElementById('addProductForm');
@@ -530,6 +529,7 @@
                 addProductForm.classList.toggle('hidden');
             });
         }
+
         // Toggle Form for Adding Categoria
         const addCategoriaBtn = document.getElementById('addCategoriaBtn');
         const addCategoriaForm = document.getElementById('addCategoriaForm');
@@ -538,40 +538,7 @@
                 addCategoriaForm.classList.toggle('hidden');
             });
         }
-        // Pie Chart for Product Distribution
-        const ctx = document.getElementById('productChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: ['Ropa de Mujer', 'Ropa de Hombre', 'Accesorios', 'Calzado'],
-                datasets: [{
-                    data: [1, 1, 1, 1],
-                    backgroundColor: [
-                        '#1a1a1a',
-                        '#4b4b4b',
-                        '#7a7a7a',
-                        '#b0b0b0'
-                    ],
-                    borderColor: '#ffffff',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            color: '#000000',
-                            font: {
-                                size: 14,
-                                family: 'sans-serif'
-                            }
-                        }
-                    }
-                }
-            }
-        });
+
         // Ocultar mensajes automáticamente después de 5 segundos
         setTimeout(() => {
             const messagesContainer = document.getElementById('messages-container');
@@ -579,15 +546,12 @@
                 messagesContainer.style.display = 'none';
             }
         }, 5000);
-        // Mostrar el panel de usuarios por defecto o basado en URL
+
+        // Mostrar el panel predeterminado al cargar
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const panel = urlParams.get('panel');
-            if (panel) {
-                showPanel(panel);
-            } else {
-                showPanel('users'); // Por defecto, muestra el panel de usuarios
-            }
+            const panel = urlParams.get('panel') || 'dashboard'; // Dashboard como predeterminado
+            showPanel(panel);
         });
     </script>
 </body>

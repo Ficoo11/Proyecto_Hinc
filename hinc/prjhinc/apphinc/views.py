@@ -3,8 +3,9 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.backends import ModelBackend
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .forms import CustomUserCreationForm, LoginForm, ProductoForm, CategoriaForm  # Añadido CategoriaForm
-from .models import CustomUser, Producto, Categoria  # Añadido Categoria
+from .forms import CustomUserCreationForm, LoginForm, ProductoForm, CategoriaForm
+from .models import CustomUser, Producto, Categoria
+from django.urls import reverse
 import logging
 
 # Configurar logging para depuración
@@ -16,16 +17,15 @@ def index(request):
 
 def register_view(request):
     if request.method == 'POST':
-        # Crear una copia de request.POST y añadir role y estado por defecto
         post_data = request.POST.copy()
-        post_data['role'] = 'Usuario'  # Valor por defecto para role
-        post_data['estado'] = 'Habilitado'  # Valor por defecto para estado
+        post_data['role'] = 'Usuario'
+        post_data['estado'] = 'Habilitado'
         form = CustomUserCreationForm(post_data)
         logger.debug(f"Datos recibidos en registro: {post_data}")
         if form.is_valid():
             user = form.save(commit=False)
-            password = form.cleaned_data.get('password1')  # Obtener la contraseña del formulario
-            if password:  # Si se proporcionó una contraseña
+            password = form.cleaned_data.get('password1')
+            if password:
                 user.set_password(password)
             user.save()
             messages.success(request, "Registro exitoso. Ahora puedes iniciar sesión.")
@@ -70,7 +70,7 @@ def paneladmin_view(request):
 
     users = CustomUser.objects.all()
     productos = Producto.objects.all()
-    categorias = Categoria.objects.all()  # Añadido
+    categorias = Categoria.objects.all()
 
     action = request.GET.get('action')
     user_id = request.GET.get('user_id')
@@ -80,12 +80,14 @@ def paneladmin_view(request):
     elif action == 'delete' and user_id:
         user = get_object_or_404(CustomUser, id=user_id)
 
+    current_panel = request.GET.get('panel', 'dashboard')  # Predeterminado: dashboard
     return render(request, 'paneladmin.html', {
         'users': users,
         'productos': productos,
-        'categorias': categorias,  # Añadido
+        'categorias': categorias,
         'action': action,
-        'user': user
+        'user': user,
+        'current_panel': current_panel
     })
 
 @login_required
@@ -97,16 +99,16 @@ def add_user(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            if request.POST.get('password1'):  # Solo actualizar contraseña si se proporciona
+            if request.POST.get('password1'):
                 user.set_password(request.POST.get('password1'))
             user.save()
             messages.success(request, "Usuario agregado exitosamente.")
-            return redirect('paneladmin')
+            return redirect(reverse('paneladmin') + '?panel=users')
         else:
             messages.error(request, "Error al agregar usuario. Verifica los datos.")
             for error in form.errors.values():
                 messages.error(request, error)
-    return redirect('paneladmin')
+    return redirect(reverse('paneladmin') + '?panel=users')
 
 @login_required
 def edit_user(request, user_id):
@@ -121,23 +123,22 @@ def edit_user(request, user_id):
             logger.debug(f"Datos validados: {form.cleaned_data}")
             user = form.save(commit=False)
             password = form.cleaned_data.get('password1')
-            if password:  # Solo actualizar contraseña si se proporciona
+            if password:
                 user.set_password(password)
-            # Depurar y manejar los campos role y estado
             try:
                 user.role = form.cleaned_data['role']
                 user.estado = form.cleaned_data['estado']
             except KeyError as e:
                 messages.error(request, f"Error al procesar el campo '{e}'. Verifica el formulario. Datos validados: {form.cleaned_data}")
-                return render(request, 'paneladmin.html', {'users': CustomUser.objects.all(), 'action': 'edit', 'user': user})
+                return render(request, 'paneladmin.html', {'users': CustomUser.objects.all(), 'action': 'edit', 'user': user, 'current_panel': 'users'})
             user.save()
             messages.success(request, "Usuario actualizado exitoso.")
-            return redirect('paneladmin')
+            return redirect(reverse('paneladmin') + '?panel=users')
         else:
             messages.error(request, f"Error al actualizar usuario. Verifica los datos. Errores: {form.errors}")
             for error in form.errors.values():
                 messages.error(request, error)
-    return render(request, 'paneladmin.html', {'users': CustomUser.objects.all(), 'action': 'edit', 'user': user})
+    return render(request, 'paneladmin.html', {'users': CustomUser.objects.all(), 'action': 'edit', 'user': user, 'current_panel': 'users'})
 
 @login_required
 def delete_user(request, user_id):
@@ -148,8 +149,8 @@ def delete_user(request, user_id):
     if request.method == 'POST':
         user.delete()
         messages.success(request, "Usuario eliminado exitosamente.")
-        return redirect('paneladmin')
-    return redirect('paneladmin')
+        return redirect(reverse('paneladmin') + '?panel=users')
+    return redirect(reverse('paneladmin') + '?panel=users')
 
 @login_required
 def user_dashboard(request):
@@ -163,7 +164,7 @@ def productos_list(request):
         messages.error(request, "No tienes permiso para acceder al panel de productos.")
         return redirect('index')
     productos = Producto.objects.all()
-    return render(request, 'paneladmin.html', {'productos': productos, 'action': 'list_productos'})
+    return render(request, 'paneladmin.html', {'productos': productos, 'action': 'list_productos', 'current_panel': 'products'})
 
 @login_required
 def productos_create(request):
@@ -175,14 +176,14 @@ def productos_create(request):
         if form.is_valid():
             form.save()
             messages.success(request, "Producto agregado exitosamente.")
-            return redirect('paneladmin')
+            return redirect(reverse('paneladmin') + '?panel=products')
         else:
             messages.error(request, "Error al agregar producto. Verifica los datos.")
             for error in form.errors.values():
                 messages.error(request, error)
     else:
         form = ProductoForm()
-    return render(request, 'paneladmin.html', {'form': form, 'action': 'create_productos'})
+    return render(request, 'paneladmin.html', {'form': form, 'action': 'create_productos', 'current_panel': 'products'})
 
 @login_required
 def productos_update(request, producto_id):
@@ -195,14 +196,14 @@ def productos_update(request, producto_id):
         if form.is_valid():
             form.save()
             messages.success(request, "Producto actualizado exitosamente.")
-            return redirect('paneladmin')
+            return redirect(reverse('paneladmin') + '?panel=products')
         else:
             messages.error(request, "Error al actualizar producto. Verifica los datos.")
             for error in form.errors.values():
                 messages.error(request, error)
     else:
         form = ProductoForm(instance=producto)
-    return render(request, 'paneladmin.html', {'form': form, 'action': 'update_productos', 'producto': producto})
+    return render(request, 'paneladmin.html', {'form': form, 'action': 'update_productos', 'producto': producto, 'current_panel': 'products'})
 
 @login_required
 def productos_delete(request, producto_id):
@@ -213,8 +214,8 @@ def productos_delete(request, producto_id):
     if request.method == 'POST':
         producto.delete()
         messages.success(request, "Producto eliminado exitosamente.")
-        return redirect('paneladmin')
-    return render(request, 'paneladmin.html', {'action': 'delete_productos', 'producto': producto})
+        return redirect(reverse('paneladmin') + '?panel=products')
+    return render(request, 'paneladmin.html', {'action': 'delete_productos', 'producto': producto, 'current_panel': 'products'})
 
 @login_required
 def categorias_create(request):
@@ -226,14 +227,14 @@ def categorias_create(request):
         if form.is_valid():
             form.save()
             messages.success(request, "Categoría agregada exitosamente.")
-            return redirect('paneladmin')
+            return redirect(reverse('paneladmin') + '?panel=categorias')
         else:
             messages.error(request, "Error al agregar categoría. Verifica los datos.")
             for error in form.errors.values():
                 messages.error(request, error)
     else:
         form = CategoriaForm()
-    return render(request, 'paneladmin.html', {'form': form, 'action': 'create_categorias'})
+    return render(request, 'paneladmin.html', {'form': form, 'action': 'create_categorias', 'current_panel': 'categorias'})
 
 @login_required
 def categorias_update(request, categoria_id):
@@ -246,14 +247,14 @@ def categorias_update(request, categoria_id):
         if form.is_valid():
             form.save()
             messages.success(request, "Categoría actualizada exitosamente.")
-            return redirect('paneladmin')
+            return redirect(reverse('paneladmin') + '?panel=categorias')
         else:
             messages.error(request, "Error al actualizar categoría. Verifica los datos.")
             for error in form.errors.values():
                 messages.error(request, error)
     else:
         form = CategoriaForm(instance=categoria)
-    return render(request, 'paneladmin.html', {'form': form, 'action': 'update_categorias', 'categoria': categoria})
+    return render(request, 'paneladmin.html', {'form': form, 'action': 'update_categorias', 'categoria': categoria, 'current_panel': 'categorias'})
 
 @login_required
 def categorias_delete(request, categoria_id):
@@ -264,10 +265,10 @@ def categorias_delete(request, categoria_id):
     if request.method == 'POST':
         categoria.delete()
         messages.success(request, "Categoría eliminada exitosamente.")
-        return redirect('paneladmin')
-    return render(request, 'paneladmin.html', {'action': 'delete_categorias', 'categoria': categoria})
+        return redirect(reverse('paneladmin') + '?panel=categorias')
+    return render(request, 'paneladmin.html', {'action': 'delete_categorias', 'categoria': categoria, 'current_panel': 'categorias'})
 
 def catalogo_view(request):
     productos = Producto.objects.all()
-    categorias = Categoria.objects.all()  # Añadido
-    return render(request, 'catalogo.html', {'productos': productos, 'categorias': categorias})  # Añadido categorias
+    categorias = Categoria.objects.all()
+    return render(request, 'catalogo.html', {'productos': productos, 'categorias': categorias})
