@@ -4,8 +4,12 @@ from django.contrib.auth.backends import ModelBackend
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .forms import CustomUserCreationForm, LoginForm, ProductoForm, CategoriaForm
-from .models import CustomUser, Producto, Categoria
+from .models import CustomUser, Producto, Categoria, Carrito, ItemCarrito
 from django.urls import reverse
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+import json
 import logging
 
 # Configurar logging para depuración
@@ -13,7 +17,13 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 def index(request):
-    return render(request, 'index.html', {'user': request.user if request.user.is_authenticated else None})
+    # Obtener 4 productos destacados (puedes ajustar la lógica)
+    productos_destacados = Producto.objects.all()[:4]
+    
+    return render(request, 'index.html', {
+        'user': request.user if request.user.is_authenticated else None,
+        'productos_destacados': productos_destacados
+    })
 
 def register_view(request):
     if request.method == 'POST':
@@ -272,3 +282,127 @@ def catalogo_view(request):
     productos = Producto.objects.all()
     categorias = Categoria.objects.all()
     return render(request, 'catalogo.html', {'productos': productos, 'categorias': categorias})
+
+# Vistas para el carrito de compras
+@login_required
+@require_POST
+@csrf_exempt
+def agregar_al_carrito(request):
+    try:
+        data = json.loads(request.body)
+        producto_id = data.get('producto_id')
+        cantidad = data.get('cantidad', 1)
+        
+        producto = get_object_or_404(Producto, id=producto_id)
+        carrito, created = Carrito.objects.get_or_create(usuario=request.user)
+        
+        item, created = ItemCarrito.objects.get_or_create(
+            carrito=carrito,
+            producto=producto,
+            defaults={'cantidad': cantidad}
+        )
+        
+        if not created:
+            item.cantidad += cantidad
+            item.save()
+        
+        return JsonResponse({
+            'success': True,
+            'carrito': obtener_datos_carrito(carrito)
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+# Vistas del carrito
+@login_required
+@require_POST
+@csrf_exempt
+def agregar_al_carrito(request):
+    try:
+        data = json.loads(request.body)
+        producto_id = data.get('producto_id')
+        cantidad = data.get('cantidad', 1)
+        
+        producto = get_object_or_404(Producto, id=producto_id)
+        carrito, created = Carrito.objects.get_or_create(usuario=request.user)
+        
+        item, created = ItemCarrito.objects.get_or_create(
+            carrito=carrito,
+            producto=producto,
+            defaults={'cantidad': cantidad}
+        )
+        
+        if not created:
+            item.cantidad += cantidad
+            item.save()
+        
+        return JsonResponse({
+            'success': True,
+            'carrito': obtener_datos_carrito(carrito)
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+@require_POST
+@csrf_exempt
+def quitar_del_carrito(request):
+    try:
+        data = json.loads(request.body)
+        producto_id = data.get('producto_id')
+        
+        carrito = get_object_or_404(Carrito, usuario=request.user)
+        item = get_object_or_404(ItemCarrito, carrito=carrito, producto_id=producto_id)
+        item.delete()
+        
+        return JsonResponse({
+            'success': True,
+            'carrito': obtener_datos_carrito(carrito)
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def obtener_carrito(request):
+    try:
+        carrito, created = Carrito.objects.get_or_create(usuario=request.user)
+        return JsonResponse({
+            'success': True,
+            'carrito': obtener_datos_carrito(carrito)
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+def obtener_datos_carrito(carrito):
+    items = []
+    for item in carrito.items.all():
+        items.append({
+            'id_producto': item.producto.id,
+            'nombre': item.producto.nombre,
+            'precio': float(item.producto.precio),
+            'cantidad': item.cantidad,
+            'imagen': item.producto.imagen.url if item.producto.imagen else ''
+        })
+    
+    return {
+        'items': items,
+        'total': float(carrito.obtener_total()),
+        'cantidad_total': carrito.obtener_cantidad_total()
+    }
+
+@login_required
+def ver_carrito(request):
+    carrito, created = Carrito.objects.get_or_create(usuario=request.user)
+    return render(request, 'carrito.html', {'carrito': carrito})
+
+# Modificar la vista index para pasar productos
+def index(request):
+    productos_destacados = Producto.objects.all()[:4]
+    
+    return render(request, 'index.html', {
+        'user': request.user if request.user.is_authenticated else None,
+        'productos_destacados': productos_destacados
+    })

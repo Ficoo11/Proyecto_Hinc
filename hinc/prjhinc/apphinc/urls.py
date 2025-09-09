@@ -19,4 +19,8 @@ urlpatterns = [
     path('paneladmin/categorias/update/<int:categoria_id>/', views.categorias_update, name='categorias_update'),
     path('paneladmin/categorias/delete/<int:categoria_id>/', views.categorias_delete, name='categorias_delete'),
     path('catalogo/', views.catalogo_view, name='catalogo'),
+    path('carrito/agregar/', views.agregar_al_carrito, name='agregar_al_carrito'),
+    path('carrito/quitar/', views.quitar_del_carrito, name='quitar_del_carrito'),
+    path('carrito/obtener/', views.obtener_carrito, name='obtener_carrito'),
+    path('carrito/', views.ver_carrito, name='ver_carrito'),
 ]

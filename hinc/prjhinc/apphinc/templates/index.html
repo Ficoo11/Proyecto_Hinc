@@ -25,33 +25,66 @@
                 <a href="#Categorias" class="navbar-hombre">Categorias</a>
                 <a href="{% url 'catalogo' %}" class="navbar-mujer">Catalogo</a>
             </div>
-            {% if user.is_authenticated %}
-                <div class="relative">
-                    <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10">
-                        <i class="fa-solid fa-user"></i>
-                    </button>
-                    <div id="userMenu" class="hidden fixed right-4 top-20 w-48 bg-white rounded-lg shadow-xl z-[9999] border border-gray-200">
-                        {% if user.role == 'Admin' %}
-                            <a href="{% url 'paneladmin' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg transition-colors duration-200">Panel Admin</a>
-                        {% else %}
-                            <a href="{% url 'user_dashboard' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg transition-colors duration-200">Carrito de Compras</a>
-                        {% endif %}
-                        <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Configuración</a>
-                        <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
+            <div class="flex items-center space-x-2">
+                {% if user.is_authenticated %}
+                    <!-- Icono del Carrito -->
+                    <div class="cart-wrapper">
+                        <button onclick="abrirCarrito()" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10 relative">
+                            <i class="fa-solid fa-cart-shopping"></i>
+                            <span id="cart-count" class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                        </button>
                     </div>
-                </div>
-            {% else %}
-                <div class="space-x-4">
-                    <a href="{% url 'register' %}" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10">
-                        <i class="fa-solid fa-user-plus"></i>
-                    </a>
-                </div>
-            {% endif %}
+
+                    <!-- Icono del Usuario -->
+                    <div class="relative">
+                        <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10">
+                            <i class="fa-solid fa-user"></i>
+                        </button>
+                        <div id="userMenu" class="hidden absolute right-0 top-12 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-200">
+                            {% if user.role == 'Admin' %}
+                                <a href="{% url 'paneladmin' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg transition-colors duration-200">Panel Admin</a>
+                            {% else %}
+                                <a href="{% url 'user_dashboard' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Mi Cuenta</a>
+                            {% endif %}
+                            <a href="{% url 'ver_carrito' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Ver Carrito</a>
+                            <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Configuración</a>
+                            <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="space-x-4">
+                        <a href="{% url 'register' %}" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
         </nav>
         <div class="header-content">
             <h1>Bienvenidos<br>a Hinc</h1>
         </div>
     </header>
+
+    <!-- Sidebar Carrito -->
+    <div id="carritoSidebar" class="fixed top-0 right-0 h-full w-80 bg-white shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+        <div class="flex justify-between items-center p-4 border-b">
+            <h2 class="text-lg font-bold">Agregados al carrito</h2>
+            <button onclick="cerrarCarrito()" class="text-xl">&times;</button>
+        </div>
+        <div class="p-4">
+            <div class="bg-yellow-200 text-yellow-900 text-sm p-2 rounded mb-4">
+                <i class="fas fa-info-circle mr-2"></i> Los descuentos serán visualizados al seleccionar el método de pago
+            </div>
+            <div id="carritoContenido" class="text-center text-gray-500">
+                No tienes productos en tu carrito
+            </div>
+        </div>
+        <div class="absolute bottom-0 w-full p-4 border-t">
+            <p class="text-right font-semibold mb-2">Subtotal: <span id="subtotalCarrito">$0</span></p>
+            <a href="{% url 'ver_carrito' %}" class="block text-center bg-orange-500 hover:bg-orange-600 text-white py-2 rounded mb-2">Ver carrito / Ir a pagar</a>
+            <a href="#" onclick="cerrarCarrito()" class="block text-center text-blue-600 hover:underline">Seguir comprando</a>
+        </div>
+    </div>
 
     <!-- Productos destacados -->
     <section class="featured-products">
@@ -174,6 +207,15 @@
     <!-- boton volver arriba -->
     <button id="backToTopBtn">&#8679;</button>
     <script src="{% static 'js/backToTop.js' %}"></script>
+    
+    <!-- Scripts del carrito -->
+    <script>
+        const URL_AGREGAR_CARRITO = "{% url 'agregar_al_carrito' %}";
+        const URL_OBTENER_CARRITO = "{% url 'obtener_carrito' %}";
+        const URL_QUITAR_DEL_CARRITO = "{% url 'quitar_del_carrito' %}";
+    </script>
+    <script src="{% static 'js/carrito.js' %}"></script>
+    
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const userMenuBtn = document.getElementById('userMenuBtn');
@@ -181,18 +223,33 @@
 
             if (userMenuBtn && userMenu) {
                 userMenuBtn.addEventListener('click', (event) => {
-                    event.preventDefault(); // Evita la redirección automática
+                    event.preventDefault();
                     userMenu.classList.toggle('hidden');
                 });
 
-                // Cierra el menú al hacer clic fuera
                 document.addEventListener('click', (event) => {
                     if (!userMenuBtn.contains(event.target) && !userMenu.contains(event.target)) {
                         userMenu.classList.add('hidden');
                     }
                 });
             }
+
+            // Inicializar carrito al cargar la página
+            if (typeof fetchCarrito === 'function') {
+                fetchCarrito();
+            }
         });
+
+        // Funciones para abrir/cerrar carrito
+        function abrirCarrito() {
+            const carritoSidebar = document.getElementById("carritoSidebar");
+            if (carritoSidebar) carritoSidebar.classList.remove("translate-x-full");
+        }
+
+        function cerrarCarrito() {
+            const carritoSidebar = document.getElementById("carritoSidebar");
+            if (carritoSidebar) carritoSidebar.classList.add("translate-x-full");
+        }
     </script>
 </body>
 </html>

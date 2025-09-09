@@ -1,6 +1,7 @@
-# apphinc/models.py (modified)
+# apphinc/models.py
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.conf import settings  
 
 class CustomUser(AbstractUser):
     role = models.CharField(max_length=20, choices=[('Admin', 'Admin'), ('Usuario', 'Usuario')], default='Usuario')
@@ -31,3 +32,33 @@ class Categoria(models.Model):
 
     def __str__(self):
         return self.nombre
+
+# Modelos del carrito
+class Carrito(models.Model):
+    usuario = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='carrito')
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Carrito de {self.usuario.username}"
+
+    def obtener_total(self):
+        return sum(item.obtener_total() for item in self.items.all())
+
+    def obtener_cantidad_total(self):
+        return sum(item.cantidad for item in self.items.all())
+
+class ItemCarrito(models.Model):
+    carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE, related_name='items')
+    producto = models.ForeignKey('Producto', on_delete=models.CASCADE)
+    cantidad = models.PositiveIntegerField(default=1)
+    agregado_en = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.cantidad} x {self.producto.nombre}"
+
+    def obtener_total(self):
+        return self.producto.precio * self.cantidad
+
+    class Meta:
+        unique_together = ('carrito', 'producto')
