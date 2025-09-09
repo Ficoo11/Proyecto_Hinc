@@ -33,7 +33,6 @@ class Categoria(models.Model):
     def __str__(self):
         return self.nombre
 
-# Modelos del carrito
 class Carrito(models.Model):
     usuario = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='carrito')
     creado_en = models.DateTimeField(auto_now_add=True)
