@@ -1,0 +1,314 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo - Hinc</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="shortcut icon" href="{% static 'img/Hinc.png' %}" type="image/x-icon">
+    <style>
+        body {
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        .fondo-video {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+            filter: brightness(0.7);
+        }
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        /* Estilos para el carrito */
+        .cart-wrapper {
+            display: inline-block;
+            margin-right: 15px;
+        }
+        .header__button {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .header__button:hover {
+            background-color: white;
+            color: black;
+        }
+        #cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #f97316;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        .btn-agregar-carrito {
+            background-color: #f97316;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+            width: 100%;
+        }
+        .btn-agregar-carrito:hover {
+            background-color: #ea580c;
+        }
+        .cantidad-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        .cantidad-btn {
+            background: #f97316;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .cantidad-input {
+            width: 40px;
+            height: 30px;
+            text-align: center;
+            border: 1px solid #ddd;
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <video class="fondo-video" autoplay muted loop>
+        <source src="{% static 'img/Hinc.mp4' %}" type="video/mp4">
+    </video>
+    
+    <!-- Header -->
+    <header class="relative z-10 p-4 bg-black/60 backdrop-blur-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="{% url 'index' %}">
+                <img src="{% static 'img/Hinc.png' %}" alt="Hinc Logo" class="h-12">
+            </a>
+            
+            <div class="flex items-center space-x-4">
+                <!-- Icono del Carrito - Visible para TODOS -->
+                <div class="cart-wrapper">
+                    <button onclick="abrirCarrito()" class="header__button">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span id="cart-count" class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                    </button>
+                </div>
+
+                {% if user.is_authenticated %}
+                    <!-- Icono del Usuario -->
+                    <div class="relative">
+                        <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10">
+                            <i class="fa-solid fa-user"></i>
+                        </button>
+                        <div id="userMenu" class="hidden absolute right-0 top-12 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-200">
+                            {% if user.role == 'Admin' %}
+                                <a href="{% url 'paneladmin' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg transition-colors duration-200">Panel Admin</a>
+                            {% else %}
+                                <a href="{% url 'user_dashboard' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Mi Cuenta</a>
+                            {% endif %}
+                            <a href="{% url 'ver_carrito' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Ver Carrito</a>
+                            <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Configuración</a>
+                            <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="space-x-4">
+                        <a href="{% url 'login' %}" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10">
+                            <i class="fa-solid fa-sign-in-alt"></i>
+                        </a>
+                        <a href="{% url 'register' %}" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar Carrito -->
+    <div id="carritoSidebar" class="fixed top-0 right-0 h-full w-80 bg-white shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+        <div class="flex justify-between items-center p-4 border-b">
+            <h2 class="text-lg font-bold">Agregados al carrito</h2>
+            <button onclick="cerrarCarrito()" class="text-xl">&times;</button>
+        </div>
+        <div class="p-4">
+            <div class="bg-yellow-200 text-yellow-900 text-sm p-2 rounded mb-4">
+                <i class="fas fa-info-circle mr-2"></i> Los descuentos serán visualizados al seleccionar el método de pago
+            </div>
+            <div id="carritoContenido" class="text-center text-gray-500">
+                No tienes productos en tu carrito
+            </div>
+        </div>
+        <div class="absolute bottom-0 w-full p-4 border-t">
+            <p class="text-right font-semibold mb-2">Subtotal: <span id="subtotalCarrito">$0</span></p>
+            <a href="{% url 'ver_carrito' %}" class="block text-center bg-orange-500 hover:bg-orange-600 text-white py-2 rounded mb-2">Ver carrito / Ir a pagar</a>
+            <a href="#" onclick="cerrarCarrito()" class="block text-center text-blue-600 hover:underline">Seguir comprando</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container mx-auto py-8 flex-1 z-10">
+        <h1 class="text-3xl text-white font-bold mb-8 text-center">Catálogo de Productos</h1>
+        
+        <!-- Sección de Categorías -->
+        <h2 class="text-2xl text-white font-bold mb-4">Categorías</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {% for categoria in categorias %}
+                <div class="card bg-white/90 backdrop-blur-md p-4 rounded-lg shadow-lg cursor-pointer">
+                    <h3 class="text-xl font-bold text-black mb-2">{{ categoria.nombre }}</h3>
+                    <p class="text-gray-600">{{ categoria.descripcion|truncatechars:100 }}</p>
+                </div>
+            {% empty %}
+                <div class="col-span-full text-center text-white text-xl">
+                    No hay categorías disponibles.
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Catálogo de Productos -->
+        <h2 class="text-2xl text-white font-bold mb-4">Productos</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for producto in productos %}
+                <div class="card bg-white/90 backdrop-blur-md p-4 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-bold text-black mb-2">{{ producto.nombre }}</h3>
+                    <p class="text-gray-700 mb-2"><strong>Precio:</strong> ${{ producto.precio }}</p>
+                    <p class="text-gray-700 mb-2"><strong>Tallas:</strong> {{ producto.tallas }}</p>
+                    {% if producto.imagen %}
+                        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="w-full h-48 object-cover rounded-md mb-2">
+                    {% else %}
+                        <div class="w-full h-48 bg-gray-200 flex items-center justify-center rounded-md mb-2">Sin imagen</div>
+                    {% endif %}
+                    <p class="text-gray-600 mb-2">{{ producto.descripcion|truncatechars:100 }}</p>
+                    <p class="text-gray-700 mb-3"><strong>Categoría:</strong> {{ producto.categoria }}</p>
+                    
+                    <!-- Selector de cantidad y botón Agregar al Carrito -->
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center">
+                            <button class="cantidad-menos cantidad-btn">-</button>
+                            <input type="number" value="1" min="1" max="10" class="cantidad-input">
+                            <button class="cantidad-mas cantidad-btn">+</button>
+                        </div>
+                    </div>
+                    
+                    <button class="agregar-carrito btn-agregar-carrito" data-producto-id="{{ producto.id }}">
+                        <i class="fas fa-cart-plus mr-2"></i> Agregar al Carrito
+                    </button>
+                </div>
+            {% empty %}
+                <div class="col-span-full text-center text-white text-xl">
+                    No hay productos disponibles en el catálogo.
+                </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-black/80 text-center py-4 z-10">
+        <p class="text-sm text-white">&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        const URL_AGREGAR_CARRITO = "{% url 'agregar_al_carrito' %}";
+        const URL_OBTENER_CARRITO = "{% url 'obtener_carrito' %}";
+        const URL_QUITAR_DEL_CARRITO = "{% url 'quitar_del_carrito' %}";
+    </script>
+    <script src="{% static 'js/carrito.js' %}"></script>
+    
+    <script>
+        // Smooth scroll behavior
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Funciones para abrir/cerrar carrito
+        function abrirCarrito() {
+            const carritoSidebar = document.getElementById("carritoSidebar");
+            if (carritoSidebar) {
+                carritoSidebar.classList.remove("translate-x-full");
+                // Agregar overlay
+                const overlay = document.createElement('div');
+                overlay.id = 'carrito-overlay';
+                overlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-40';
+                overlay.onclick = cerrarCarrito;
+                document.body.appendChild(overlay);
+            }
+        }
+
+        function cerrarCarrito() {
+            const carritoSidebar = document.getElementById("carritoSidebar");
+            if (carritoSidebar) {
+                carritoSidebar.classList.add("translate-x-full");
+            }
+            // Remover overlay
+            const overlay = document.getElementById('carrito-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        // Manejar menú de usuario
+        document.addEventListener('DOMContentLoaded', () => {
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const userMenu = document.getElementById('userMenu');
+
+            if (userMenuBtn && userMenu) {
+                userMenuBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    userMenu.classList.toggle('hidden');
+                });
+
+                document.addEventListener('click', (event) => {
+                    if (!userMenuBtn.contains(event.target) && !userMenu.contains(event.target)) {
+                        userMenu.classList.add('hidden');
+                    }
+                });
+            }
+
+            // Inicializar carrito
+            if (typeof fetchCarrito === 'function') {
+                fetchCarrito();
+            }
+        });
+    </script>
+</body>
+</html>

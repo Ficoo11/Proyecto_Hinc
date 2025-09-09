@@ -40,7 +40,8 @@ body {
     align-items: center;
     justify-content: space-around;
     z-index: 3;
-    background-color: rgba(0, 0, 0, 0.6); /* Fondo oscuro semi-transparente para que el texto blanco sea visible */
+    background-color: rgba(0, 0, 0, 0.6);
+    /* Fondo oscuro semi-transparente para que el texto blanco sea visible */
 }
 
 .nav-navbar a {
@@ -64,7 +65,8 @@ body {
 
 /* Desactivamos .usuario ya que ahora usamos clases Tailwind directamente */
 .usuario {
-    display: none; /* Opcional: lo desactivamos para evitar conflictos */
+    display: none;
+    /* Opcional: lo desactivamos para evitar conflictos */
 }
 
 /* Asegura que el hover no tenga problemas con el fondo */
@@ -125,44 +127,56 @@ body {
     justify-content: center;
     gap: 20px;
     padding: 20px;
-    flex-wrap: wrap; /* Permitir que los productos se envuelvan en pantallas más pequeñas */
+    flex-wrap: wrap;
+    /* Permitir que los productos se envuelvan en pantallas más pequeñas */
 }
 
 .product {
     text-align: center;
     color: #333;
-    flex: 1 1 300px; /* Permitir que los productos crezcan y se reduzcan */
-    max-width: 400px; /* Ancho máximo para los productos */
-    margin: 10px; /* Espaciado entre productos */
+    flex: 1 1 300px;
+    /* Permitir que los productos crezcan y se reduzcan */
+    max-width: 400px;
+    /* Ancho máximo para los productos */
+    margin: 10px;
+    /* Espaciado entre productos */
 }
 
 .product img {
-    width: 300px; /* Ancho fijo para las imágenes */
-    height: 400px; /* Altura fija para las imágenes */
-    object-fit: cover; /* Mantener la proporción y cubrir el área */
+    width: 300px;
+    /* Ancho fijo para las imágenes */
+    height: 400px;
+    /* Altura fija para las imágenes */
+    object-fit: cover;
+    /* Mantener la proporción y cubrir el área */
     transition: transform 0.3s ease, opacity 0.3s ease;
     cursor: pointer;
 }
 
 .product img:hover {
-    transform: scale(1.05); /* Aumentar el tamaño de la imagen sin tapar el texto */
+    transform: scale(1.05);
+    /* Aumentar el tamaño de la imagen sin tapar el texto */
     opacity: 0.8;
 }
 
 .product-name {
-    font-size: 20px; /* Aumentar tamaño del nombre del producto */
+    font-size: 20px;
+    /* Aumentar tamaño del nombre del producto */
     margin: 10px 0 5px;
     font-weight: bold;
 }
 
 .product-price {
-    font-size: 18px; /* Aumentar tamaño del precio */
+    font-size: 18px;
+    /* Aumentar tamaño del precio */
     color: #666;
 }
 
 .price-old {
-    text-decoration: line-through; /* Estilo para el precio antiguo */
-    color: red; /* Color para el precio antiguo */
+    text-decoration: line-through;
+    /* Estilo para el precio antiguo */
+    color: red;
+    /* Color para el precio antiguo */
 }
 
 /* Categorías */
@@ -184,18 +198,22 @@ body {
     display: flex;
     justify-content: center;
     gap: 30px;
-    flex-wrap: wrap; /* Permitir que las categorías se envuelvan en pantallas más pequeñas */
+    flex-wrap: wrap;
+    /* Permitir que las categorías se envuelvan en pantallas más pequeñas */
 }
 
 .category-card {
     position: relative;
-    width: 300px; /* Ancho fijo para las tarjetas de categoría */
-    height: 400px; /* Altura fija para las tarjetas de categoría */
+    width: 300px;
+    /* Ancho fijo para las tarjetas de categoría */
+    height: 400px;
+    /* Altura fija para las tarjetas de categoría */
     overflow: hidden;
     border-radius: 15px;
     cursor: pointer;
     transition: transform 0.3s ease;
-    margin: 10px; /* Espaciado entre tarjetas */
+    margin: 10px;
+    /* Espaciado entre tarjetas */
 }
 
 .category-card:hover {
@@ -258,7 +276,8 @@ body {
     justify-content: center;
     gap: 20px;
     padding: 20px;
-    flex-wrap: wrap; /* Permitir que los productos se envuelvan en pantallas más pequeñas */
+    flex-wrap: wrap;
+    /* Permitir que los productos se envuelvan en pantallas más pequeñas */
 }
 
 /* footer  */
@@ -346,11 +365,161 @@ body {
     z-index: 100;
 }
 
+/* Estilos para el carrito */
+.cart-wrapper {
+    display: inline-block;
+    margin-right: 15px;
+}
+
+.header__button {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.header__button:hover {
+    background-color: white;
+    color: black;
+}
+
+#cart-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #f97316;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+/* Asegurar que el icono de Font Awesome se vea bien */
+.fa-cart-shopping {
+    font-size: 1.2rem;
+    color: white;
+}
+
+.header__button:hover .fa-cart-shopping {
+    color: black;
+}
+
+/* Sidebar del carrito */
+#carritoSidebar {
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-quitar-producto {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 5px;
+}
+
+.btn-quitar-producto:hover {
+    color: #dc2626;
+}
+
+/* Estilos adicionales para el carrito */
+.cart-wrapper {
+    display: inline-block;
+    margin-right: 15px;
+}
+
+.header__button {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.header__button:hover {
+    background-color: white;
+    color: black;
+}
+
+#cart-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #f97316;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.btn-agregar-carrito {
+    background-color: #f97316;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.btn-agregar-carrito:hover {
+    background-color: #ea580c;
+}
+
+.cantidad-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+.cantidad-btn {
+    background: #f97316;
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.cantidad-input {
+    width: 40px;
+    height: 30px;
+    text-align: center;
+    border: 1px solid #ddd;
+    margin: 0 5px;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -370,49 +539,63 @@ body {
 /* Media Queries para Responsividad */
 @media (max-width: 768px) {
     .header-content h1 {
-        font-size: 36px; /* Reducir tamaño del título en pantallas pequeñas */
+        font-size: 36px;
+        /* Reducir tamaño del título en pantallas pequeñas */
     }
 
     .header-button {
-        font-size: 16px; /* Reducir tamaño del botón en pantallas pequeñas */
+        font-size: 16px;
+        /* Reducir tamaño del botón en pantallas pequeñas */
     }
 
-    .featured-title, .categories-title, .offers-title {
-        font-size: 36px; /* Reducir tamaño de los títulos en pantallas pequeñas */
+    .featured-title,
+    .categories-title,
+    .offers-title {
+        font-size: 36px;
+        /* Reducir tamaño de los títulos en pantallas pequeñas */
     }
 
     .product-name {
-        font-size: 18px; /* Reducir tamaño del nombre del producto */
+        font-size: 18px;
+        /* Reducir tamaño del nombre del producto */
     }
 
     .product-price {
-        font-size: 16px; /* Reducir tamaño del precio */
+        font-size: 16px;
+        /* Reducir tamaño del precio */
     }
 
     .category-card {
-        width: 90%; /* Hacer que las tarjetas de categoría ocupen más espacio en pantallas pequeñas */
-        height: auto; /* Ajustar altura automáticamente */
+        width: 90%;
+        /* Hacer que las tarjetas de categoría ocupen más espacio en pantallas pequeñas */
+        height: auto;
+        /* Ajustar altura automáticamente */
     }
 
     .footer1 .grupo1 {
-        grid-template-columns: 1fr; /* Cambiar a una columna en pantallas pequeñas */
+        grid-template-columns: 1fr;
+        /* Cambiar a una columna en pantallas pequeñas */
     }
 }
 
 @media (max-width: 480px) {
     .header-content h1 {
-        font-size: 28px; /* Reducir aún más el tamaño del título */
+        font-size: 28px;
+        /* Reducir aún más el tamaño del título */
     }
 
     .header-button {
-        padding: 8px 16px; /* Ajustar el padding del botón */
+        padding: 8px 16px;
+        /* Ajustar el padding del botón */
     }
 
     .product img {
-        width: 100%; /* Asegurarse de que las imágenes se ajusten al contenedor */
+        width: 100%;
+        /* Asegurarse de que las imágenes se ajusten al contenedor */
     }
 
     .category-label {
-        font-size: 20px; /* Reducir tamaño de la etiqueta de categoría */
+        font-size: 20px;
+        /* Reducir tamaño de la etiqueta de categoría */
     }
 }

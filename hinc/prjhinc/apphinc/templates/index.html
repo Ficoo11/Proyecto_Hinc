@@ -11,6 +11,55 @@
     <!-- Añadimos Font Awesome via CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <title>Hinc</title>
+    <style>
+        /* Estilos para el carrito */
+        .cart-wrapper {
+            display: inline-block;
+            margin-right: 15px;
+        }
+        .header__button {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .header__button:hover {
+            background-color: white;
+            color: black;
+        }
+        #cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #f97316;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        /* Overlay para el carrito */
+        #carrito-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+        }
+    </style>
 </head>
 <body>
 
@@ -25,11 +74,14 @@
                 <a href="#Categorias" class="navbar-hombre">Categorias</a>
                 <a href="#Sobre-Nosotros" class="navbar-mujer">Sobre Nosotros</a>
             </div>
-            {% if user.is_authenticated %}
-                <div class="relative">
-                    <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10">
-                        <i class="fa-solid fa-user"></i>
+            <div class="flex items-center space-x-2">
+                <!-- Icono del Carrito - Visible para TODOS -->
+                <div class="cart-wrapper">
+                   <button onclick="abrirCarrito()" class="header__button">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span id="cart-count" class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
                     </button>
+<<<<<<< Updated upstream
                     <div id="userMenu" class="hidden fixed right-4 top-20 w-48 bg-white rounded-lg shadow-xl z-[9999] border border-gray-200">
                         <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg transition-colors duration-200">Configuración</a>
                         <a href="{% url 'paneladmin' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Panel</a>
@@ -41,13 +93,66 @@
                     <i class="fa-solid fa-user"></i>
                 </a>
             {% endif %}
+=======
+                </div>
+
+                {% if user.is_authenticated %}
+                    <!-- Icono del Usuario -->
+                    <div class="relative">
+                        <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10">
+                            <i class="fa-solid fa-user"></i>
+                        </button>
+                        <div id="userMenu" class="hidden absolute right-0 top-12 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-200">
+                            {% if user.role == 'Admin' %}
+                                <a href="{% url 'paneladmin' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg transition-colors duration-200">Panel Admin</a>
+                            {% else %}
+                                <a href="{% url 'user_dashboard' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Mi Cuenta</a>
+                            {% endif %}
+                            <a href="{% url 'ver_carrito' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Ver Carrito</a>
+                            <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Configuración</a>
+                            <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="space-x-4">
+                        <a href="{% url 'login' %}" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10">
+                            <i class="fa-solid fa-sign-in-alt"></i>
+                        </a>
+                        <a href="{% url 'register' %}" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+>>>>>>> Stashed changes
         </nav>
         <div class="header-content">
             <h1>Bienvenidos<br>a Hinc</h1>
         </div>
     </header>
 
-    <!-- Productos destacados -->
+    <!-- Sidebar Carrito -->
+    <div id="carritoSidebar" class="fixed top-0 right-0 h-full w-80 bg-white shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+        <div class="flex justify-between items-center p-4 border-b">
+            <h2 class="text-lg font-bold">Agregados al carrito</h2>
+            <button onclick="cerrarCarrito()" class="text-xl">&times;</button>
+        </div>
+        <div class="p-4">
+            <div class="bg-yellow-200 text-yellow-900 text-sm p-2 rounded mb-4">
+                <i class="fas fa-info-circle mr-2"></i> Los descuentos serán visualizados al seleccionar el método de pago
+            </div>
+            <div id="carritoContenido" class="text-center text-gray-500">
+                No tienes productos en tu carrito
+            </div>
+        </div>
+        <div class="absolute bottom-0 w-full p-4 border-t">
+            <p class="text-right font-semibold mb-2">Subtotal: <span id="subtotalCarrito">$0</span></p>
+            <a href="{% url 'ver_carrito' %}" class="block text-center bg-orange-500 hover:bg-orange-600 text-white py-2 rounded mb-2">Ver carrito / Ir a pagar</a>
+            <a href="#" onclick="cerrarCarrito()" class="block text-center text-blue-600 hover:underline">Seguir comprando</a>
+        </div>
+    </div>
+
+    <!-- Productos destacados (SIN botones de carrito) -->
     <section class="featured-products">
         <h2 class="featured-title">Productos Destacados</h2>
         <div class="products-section">
@@ -101,7 +206,7 @@
         </div>
     </section>
 
-    <!-- Ofertas -->
+    <!-- Ofertas (SIN botones de carrito) -->
     <section class="offers">
         <h2 class="offers-title">Ofertas</h2>
         <div class="products-section">
@@ -168,6 +273,15 @@
     <!-- boton volver arriba -->
     <button id="backToTopBtn">&#8679;</button>
     <script src="{% static 'js/backToTop.js' %}"></script>
+    
+    <!-- Scripts del carrito -->
+    <script>
+        const URL_AGREGAR_CARRITO = "{% url 'agregar_al_carrito' %}";
+        const URL_OBTENER_CARRITO = "{% url 'obtener_carrito' %}";
+        const URL_QUITAR_DEL_CARRITO = "{% url 'quitar_del_carrito' %}";
+    </script>
+    <script src="{% static 'js/carrito.js' %}"></script>
+    
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const userMenuBtn = document.getElementById('userMenuBtn');
@@ -175,18 +289,42 @@
 
             if (userMenuBtn && userMenu) {
                 userMenuBtn.addEventListener('click', (event) => {
-                    event.preventDefault(); // Evita la redirección automática
+                    event.preventDefault();
                     userMenu.classList.toggle('hidden');
                 });
 
-                // Cierra el menú al hacer clic fuera
                 document.addEventListener('click', (event) => {
                     if (!userMenuBtn.contains(event.target) && !userMenu.contains(event.target)) {
                         userMenu.classList.add('hidden');
                     }
                 });
             }
+
+            // Inicializar carrito al cargar la página (solo si autenticado)
+            if (typeof fetchCarrito === 'function') {
+                fetchCarrito();
+            }
         });
+
+        // Funciones para abrir/cerrar carrito
+        function abrirCarrito() {
+            // Verificar si el usuario está autenticado (simulado, el backend lo maneja)
+            if (typeof fetchCarrito === 'function') {
+                fetchCarrito(); // Intentar cargar carrito, si falla con 403, mostrar mensaje
+            }
+        }
+
+        function cerrarCarrito() {
+            const carritoSidebar = document.getElementById("carritoSidebar");
+            if (carritoSidebar) {
+                carritoSidebar.classList.add("translate-x-full");
+            }
+            // Remover overlay
+            const overlay = document.getElementById('carrito-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
     </script>
 </body>
 </html>
