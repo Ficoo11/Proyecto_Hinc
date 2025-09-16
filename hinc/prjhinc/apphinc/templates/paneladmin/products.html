@@ -1,0 +1,125 @@
+{% extends 'paneladmin/base.html' %}
+{% block content %}
+    <div>
+        <h2 class="text-2xl font-bold text-black mb-4">Productos</h2>
+        {% if action == 'create_productos' %}
+            <form method="post" action="{% url 'productos_create' %}" class="mb-6" enctype="multipart/form-data" id="productForm">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Producto</button>
+                <a href="{% url 'paneladmin' %}?panel=products" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+            </form>
+        {% elif action == 'update_productos' and producto %}
+            <form method="post" action="{% url 'productos_update' producto.id %}" class="mb-6" enctype="multipart/form-data" id="productForm">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Actualizar Producto</button>
+                <a href="{% url 'paneladmin' %}?panel=products" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+            </form>
+        {% elif action == 'delete_productos' and producto %}
+            <div class="mb-6 p-4 bg-red-100 rounded-md">
+                <p class="text-red-700">¿Estás seguro de eliminar el producto {{ producto.nombre }}?</p>
+                <form method="post" action="{% url 'productos_delete' producto.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="mt-4 bg-red-500 text-white p-2 rounded-md hover:bg-red-600">Eliminar</button>
+                    <a href="{% url 'paneladmin' %}?panel=products" class="ml-4 text-blue-500 hover:underline">Cancelar</a>
+                </form>
+            </div>
+        {% else %}
+            <button id="addProductBtn" class="mb-6 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-all duration-300">Agregar Nuevo Producto</button>
+            <form id="addProductForm" method="post" action="{% url 'productos_create' %}" class="mb-6 hidden" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Producto</button>
+                <a href="{% url 'paneladmin' %}?panel=products" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+            </form>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border border-gray-200">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="py-2 px-4 border-b text-left">Nombre</th>
+                            <th class="py-2 px-4 border-b text-left">Precio</th>
+                            <th class="py-2 px-4 border-b text-left">Tallas</th>
+                            <th class="py-2 px-4 border-b text-left">Descripción</th>
+                            <th class="py-2 px-4 border-b text-left">Categoría</th>
+                            <th class="py-2 px-4 border-b text-left">Stock</th>
+                            <th class="py-2 px-4 border-b text-left">Descuento</th>
+                            <th class="py-2 px-4 border-b text-left">Estado</th>
+                            <th class="py-2 px-4 border-b text-left">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto in productos %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="py-2 px-4 border-b">{{ producto.nombre }}</td>
+                            <td class="py-2 px-4 border-b">${{ producto.precio }}</td>
+                            <td class="py-2 px-4 border-b">{{ producto.tallas }}</td>
+                            <td class="py-2 px-4 border-b">{{ producto.descripcion|truncatechars:30 }}</td>
+                            <td class="py-2 px-4 border-b">{{ producto.categoria }}</td>
+                            <td class="py-2 px-4 border-b">{{ producto.stock }}</td>
+                            <td class="py-2 px-4 border-b">{{ producto.descuento }}%</td>
+                            <td class="py-2 px-4 border-b">{{ producto.estado }}</td>
+                            <td class="py-2 px-4 border-b">
+                                <a href="{% url 'productos_update' producto.id %}?panel=products" class="text-blue-500 hover:underline">Editar</a>
+                                <a href="{% url 'productos_delete' producto.id %}?panel=products" class="text-red-500 hover:underline ml-4">Eliminar</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="py-2 px-4 border-b text-center">No hay productos registrados.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+    <script>
+        // Toggle Form for Adding Product
+        const addProductBtn = document.getElementById('addProductBtn');
+        const addProductForm = document.getElementById('addProductForm');
+        if (addProductBtn && addProductForm) {
+            addProductBtn.addEventListener('click', () => {
+                addProductForm.classList.toggle('hidden');
+            });
+        }
+        // Validaciones en tiempo real para Productos
+        const productForms = document.querySelectorAll('#addProductForm, #productForm');
+        productForms.forEach(form => {
+            const precioInput = form.querySelector('input[name="precio"]');
+            const stockInput = form.querySelector('input[name="stock"]');
+            const imagenInput = form.querySelector('input[name="imagen"]');
+            if (precioInput) {
+                precioInput.addEventListener('input', () => {
+                    if (parseFloat(precioInput.value) < 0 && precioInput.value !== '') {
+                        precioInput.classList.add('border-red-500');
+                        precioInput.classList.remove('border-green-500');
+                    } else {
+                        precioInput.classList.add('border-green-500');
+                        precioInput.classList.remove('border-red-500');
+                    }
+                });
+            }
+            if (stockInput) {
+                stockInput.addEventListener('input', () => {
+                    if (parseInt(stockInput.value) < 0 && stockInput.value !== '') {
+                        stockInput.classList.add('border-red-500');
+                        stockInput.classList.remove('border-green-500');
+                    } else {
+                        stockInput.classList.add('border-green-500');
+                        stockInput.classList.remove('border-red-500');
+                    }
+                });
+            }
+            if (imagenInput) {
+                imagenInput.addEventListener('change', () => {
+                    const file = imagenInput.files[0];
+                    if (file && !file.name.toLowerCase().endswith(('.jpg', '.jpeg', '.png', '.gif'))) {
+                        alert('Solo se permiten imágenes (jpg, jpeg, png, gif).');
+                        imagenInput.value = '';
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock %}

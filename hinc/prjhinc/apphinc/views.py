@@ -17,9 +17,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 def index(request):
-    # Obtener 4 productos destacados (puedes ajustar la lógica)
-    productos_destacados = Producto.objects.all()[:4]
-    
+    productos_destacados = Producto.objects.filter(estado='Habilitado', stock__gt=0)[:4]
     return render(request, 'index.html', {
         'user': request.user if request.user.is_authenticated else None,
         'productos_destacados': productos_destacados
@@ -77,26 +75,53 @@ def paneladmin_view(request):
     if request.user.role != 'Admin':
         messages.error(request, "No tienes permiso para acceder al panel de administración.")
         return redirect('index')
-
     users = CustomUser.objects.all()
     productos = Producto.objects.all()
     categorias = Categoria.objects.all()
-
     action = request.GET.get('action')
     user_id = request.GET.get('user_id')
+    producto_id = request.GET.get('producto_id')
+    categoria_id = request.GET.get('categoria_id')
     user = None
+    producto = None
+    categoria = None
+    user_form = CustomUserCreationForm()
+    producto_form = ProductoForm()
+    categoria_form = CategoriaForm()
     if action == 'edit' and user_id:
         user = get_object_or_404(CustomUser, id=user_id)
+        user_form = CustomUserCreationForm(instance=user)
     elif action == 'delete' and user_id:
         user = get_object_or_404(CustomUser, id=user_id)
-
+    elif action == 'edit' and producto_id:
+        producto = get_object_or_404(Producto, id=producto_id)
+        producto_form = ProductoForm(instance=producto, initial={'tallas': producto.tallas.split(',') if producto.tallas else []})
+    elif action == 'delete' and producto_id:
+        producto = get_object_or_404(Producto, id=producto_id)
+    elif action == 'edit' and categoria_id:
+        categoria = get_object_or_404(Categoria, id=categoria_id)
+        categoria_form = CategoriaForm(instance=categoria)
+    elif action == 'delete' and categoria_id:
+        categoria = get_object_or_404(Categoria, id=categoria_id)
     current_panel = request.GET.get('panel', 'dashboard')  # Predeterminado: dashboard
-    return render(request, 'paneladmin.html', {
+    template_map = {
+        'dashboard': 'paneladmin/dashboard.html',
+        'users': 'paneladmin/users.html',
+        'products': 'paneladmin/products.html',
+        'inventory': 'paneladmin/inventory.html',
+    }
+    template = template_map.get(current_panel, 'paneladmin/dashboard.html')
+    return render(request, template, {
         'users': users,
         'productos': productos,
         'categorias': categorias,
         'action': action,
         'user': user,
+        'producto': producto,
+        'categoria': categoria,
+        'user_form': user_form,
+        'producto_form': producto_form,
+        'categoria_form': categoria_form,
         'current_panel': current_panel
     })
 
@@ -112,7 +137,7 @@ def add_user(request):
             if request.POST.get('password1'):
                 user.set_password(request.POST.get('password1'))
             user.save()
-            messages.success(request, "Usuario agregado exitosamente.")
+            messages.success(request, "Usuario agregado exitoso.")
             return redirect(reverse('paneladmin') + '?panel=users')
         else:
             messages.error(request, "Error al agregar usuario. Verifica los datos.")
@@ -140,7 +165,7 @@ def edit_user(request, user_id):
                 user.estado = form.cleaned_data['estado']
             except KeyError as e:
                 messages.error(request, f"Error al procesar el campo '{e}'. Verifica el formulario. Datos validados: {form.cleaned_data}")
-                return render(request, 'paneladmin.html', {'users': CustomUser.objects.all(), 'action': 'edit', 'user': user, 'current_panel': 'users'})
+                return render(request, 'paneladmin/users.html', {'users': CustomUser.objects.all(), 'action': 'edit', 'user': user, 'current_panel': 'users'})
             user.save()
             messages.success(request, "Usuario actualizado exitoso.")
             return redirect(reverse('paneladmin') + '?panel=users')
@@ -148,7 +173,7 @@ def edit_user(request, user_id):
             messages.error(request, f"Error al actualizar usuario. Verifica los datos. Errores: {form.errors}")
             for error in form.errors.values():
                 messages.error(request, error)
-    return render(request, 'paneladmin.html', {'users': CustomUser.objects.all(), 'action': 'edit', 'user': user, 'current_panel': 'users'})
+    return render(request, 'paneladmin/users.html', {'users': CustomUser.objects.all(), 'action': 'edit', 'user': user, 'current_panel': 'users'})
 
 @login_required
 def delete_user(request, user_id):
@@ -158,7 +183,7 @@ def delete_user(request, user_id):
     user = get_object_or_404(CustomUser, id=user_id)
     if request.method == 'POST':
         user.delete()
-        messages.success(request, "Usuario eliminado exitosamente.")
+        messages.success(request, "Usuario eliminado exitoso.")
         return redirect(reverse('paneladmin') + '?panel=users')
     return redirect(reverse('paneladmin') + '?panel=users')
 
@@ -174,7 +199,7 @@ def productos_list(request):
         messages.error(request, "No tienes permiso para acceder al panel de productos.")
         return redirect('index')
     productos = Producto.objects.all()
-    return render(request, 'paneladmin.html', {'productos': productos, 'action': 'list_productos', 'current_panel': 'products'})
+    return render(request, 'paneladmin/products.html', {'productos': productos, 'action': 'list_productos', 'current_panel': 'products'})
 
 @login_required
 def productos_create(request):
@@ -193,7 +218,7 @@ def productos_create(request):
                 messages.error(request, error)
     else:
         form = ProductoForm()
-    return render(request, 'paneladmin.html', {'form': form, 'action': 'create_productos', 'current_panel': 'products'})
+    return render(request, 'paneladmin/products.html', {'form': form, 'action': 'create_productos', 'current_panel': 'products'})
 
 @login_required
 def productos_update(request, producto_id):
@@ -212,8 +237,8 @@ def productos_update(request, producto_id):
             for error in form.errors.values():
                 messages.error(request, error)
     else:
-        form = ProductoForm(instance=producto)
-    return render(request, 'paneladmin.html', {'form': form, 'action': 'update_productos', 'producto': producto, 'current_panel': 'products'})
+        form = ProductoForm(instance=producto, initial={'tallas': producto.tallas.split(',') if producto.tallas else []})
+    return render(request, 'paneladmin/products.html', {'form': form, 'action': 'update_productos', 'producto': producto, 'current_panel': 'products'})
 
 @login_required
 def productos_delete(request, producto_id):
@@ -225,7 +250,7 @@ def productos_delete(request, producto_id):
         producto.delete()
         messages.success(request, "Producto eliminado exitosamente.")
         return redirect(reverse('paneladmin') + '?panel=products')
-    return render(request, 'paneladmin.html', {'action': 'delete_productos', 'producto': producto, 'current_panel': 'products'})
+    return render(request, 'paneladmin/products.html', {'action': 'delete_productos', 'producto': producto, 'current_panel': 'products'})
 
 @login_required
 def categorias_create(request):
@@ -237,14 +262,14 @@ def categorias_create(request):
         if form.is_valid():
             form.save()
             messages.success(request, "Categoría agregada exitosamente.")
-            return redirect(reverse('paneladmin') + '?panel=categorias')
+            return redirect(reverse('paneladmin') + '?panel=dashboard')
         else:
             messages.error(request, "Error al agregar categoría. Verifica los datos.")
             for error in form.errors.values():
                 messages.error(request, error)
     else:
         form = CategoriaForm()
-    return render(request, 'paneladmin.html', {'form': form, 'action': 'create_categorias', 'current_panel': 'categorias'})
+    return render(request, 'paneladmin/dashboard.html', {'form': form, 'action': 'create_categorias', 'current_panel': 'dashboard'})
 
 @login_required
 def categorias_update(request, categoria_id):
@@ -257,14 +282,14 @@ def categorias_update(request, categoria_id):
         if form.is_valid():
             form.save()
             messages.success(request, "Categoría actualizada exitosamente.")
-            return redirect(reverse('paneladmin') + '?panel=categorias')
+            return redirect(reverse('paneladmin') + '?panel=dashboard')
         else:
             messages.error(request, "Error al actualizar categoría. Verifica los datos.")
             for error in form.errors.values():
                 messages.error(request, error)
     else:
         form = CategoriaForm(instance=categoria)
-    return render(request, 'paneladmin.html', {'form': form, 'action': 'update_categorias', 'categoria': categoria, 'current_panel': 'categorias'})
+    return render(request, 'paneladmin/dashboard.html', {'form': form, 'action': 'update_categorias', 'categoria': categoria, 'current_panel': 'dashboard'})
 
 @login_required
 def categorias_delete(request, categoria_id):
@@ -275,8 +300,8 @@ def categorias_delete(request, categoria_id):
     if request.method == 'POST':
         categoria.delete()
         messages.success(request, "Categoría eliminada exitosamente.")
-        return redirect(reverse('paneladmin') + '?panel=categorias')
-    return render(request, 'paneladmin.html', {'action': 'delete_categorias', 'categoria': categoria, 'current_panel': 'categorias'})
+        return redirect(reverse('paneladmin') + '?panel=dashboard')
+    return render(request, 'paneladmin/dashboard.html', {'action': 'delete_categorias', 'categoria': categoria, 'current_panel': 'dashboard'})
 
 def catalogo_view(request):
     productos = Producto.objects.all()
@@ -292,56 +317,25 @@ def agregar_al_carrito(request):
         data = json.loads(request.body)
         producto_id = data.get('producto_id')
         cantidad = data.get('cantidad', 1)
-        
+       
         producto = get_object_or_404(Producto, id=producto_id)
         carrito, created = Carrito.objects.get_or_create(usuario=request.user)
-        
+       
         item, created = ItemCarrito.objects.get_or_create(
             carrito=carrito,
             producto=producto,
             defaults={'cantidad': cantidad}
         )
-        
+       
         if not created:
             item.cantidad += cantidad
             item.save()
-        
+       
         return JsonResponse({
             'success': True,
             'carrito': obtener_datos_carrito(carrito)
         })
-        
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
-
-# Vistas del carrito
-@login_required
-@require_POST
-@csrf_exempt
-def agregar_al_carrito(request):
-    try:
-        data = json.loads(request.body)
-        producto_id = data.get('producto_id')
-        cantidad = data.get('cantidad', 1)
-        
-        producto = get_object_or_404(Producto, id=producto_id)
-        carrito, created = Carrito.objects.get_or_create(usuario=request.user)
-        
-        item, created = ItemCarrito.objects.get_or_create(
-            carrito=carrito,
-            producto=producto,
-            defaults={'cantidad': cantidad}
-        )
-        
-        if not created:
-            item.cantidad += cantidad
-            item.save()
-        
-        return JsonResponse({
-            'success': True,
-            'carrito': obtener_datos_carrito(carrito)
-        })
-        
+       
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
@@ -352,16 +346,16 @@ def quitar_del_carrito(request):
     try:
         data = json.loads(request.body)
         producto_id = data.get('producto_id')
-        
+       
         carrito = get_object_or_404(Carrito, usuario=request.user)
         item = get_object_or_404(ItemCarrito, carrito=carrito, producto_id=producto_id)
         item.delete()
-        
+       
         return JsonResponse({
             'success': True,
             'carrito': obtener_datos_carrito(carrito)
         })
-        
+       
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
@@ -386,7 +380,7 @@ def obtener_datos_carrito(carrito):
             'cantidad': item.cantidad,
             'imagen': item.producto.imagen.url if item.producto.imagen else ''
         })
-    
+   
     return {
         'items': items,
         'total': float(carrito.obtener_total()),
@@ -398,11 +392,13 @@ def ver_carrito(request):
     carrito, created = Carrito.objects.get_or_create(usuario=request.user)
     return render(request, 'carrito.html', {'carrito': carrito})
 
-# Modificar la vista index para pasar productos
-def index(request):
-    productos_destacados = Producto.objects.all()[:4]
-    
-    return render(request, 'index.html', {
+def index2(request):
+    productos_destacados = Producto.objects.filter(estado='Habilitado', stock__gt=0)[:4]
+    categorias = Categoria.objects.all()
+    ofertas = Producto.objects.filter(descuento__gt=0, estado='Habilitado', stock__gt=0)[:4]
+    return render(request, 'index2.html', {
         'user': request.user if request.user.is_authenticated else None,
-        'productos_destacados': productos_destacados
+        'productos_destacados': productos_destacados,
+        'categorias': categorias,
+        'ofertas': ofertas
     })

@@ -1,0 +1,93 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hinc - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="shortcut icon" href="{% static 'Img/Hinc.png' %}" type="image/x-icon">
+</head>
+<body class="bg-black font-sans">
+    <!-- Header -->
+    <header class="relative h-24 overflow-hidden z-10">
+        <video class="absolute w-full h-full object-cover z-0" autoplay muted loop>
+            <source src="{% static 'Img/Hinc.mp4' %}" type="video/mp4">
+        </video>
+        <nav class="absolute w-full h-full flex items-center justify-between px-6 z-20 bg-black/60 backdrop-blur-sm">
+            <a href="{% url 'index' %}">
+                <img src="{% static 'Img/Hinc.png' %}" alt="Hinc Logo" class="w-6 h-10">
+            </a>
+            <h1 class="text-2xl text-white font-bold absolute left-1/2 transform -translate-x-1/2">Panel Admin</h1>
+            <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300">
+                <i class="fa-solid fa-user"></i>
+            </button>
+        </nav>
+        <div id="userMenu" class="hidden fixed right-4 top-20 w-48 bg-white rounded-lg shadow-xl z-[9999] border border-gray-200">
+            <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg transition-colors duration-200">Configuración</a>
+            <a href="{% url 'index' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Volver al Inicio</a>
+            <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
+        </div>
+    </header>
+    <!-- Main Content -->
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-[#1a1a1a] text-white p-6 z-0">
+            <ul>
+                <li>
+                    <a href="?panel=dashboard" class="w-full block text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'dashboard' %}bg-black/80{% endif %}">Dashboard</a>
+                </li>
+                <li>
+                    <a href="?panel=users" class="w-full block text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'users' %}bg-black/80{% endif %}">Usuarios</a>
+                </li>
+                <li>
+                    <a href="?panel=products" class="w-full block text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'products' %}bg-black/80{% endif %}">Productos</a>
+                </li>
+                <li>
+                    <a href="?panel=inventory" class="w-full block text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'inventory' %}bg-black/80{% endif %}">Inventario</a>
+                </li>
+            </ul>
+        </aside>
+        <!-- Main Panel -->
+        <main class="flex-1 p-8 bg-white/85 backdrop-blur-sm sm z-0">
+            <!-- Mensajes -->
+            {% if messages %}
+                <div id="messages-container" class="mb-4">
+                    {% for message in messages %}
+                        {% if message.tags == 'success' %}
+                            <div class="p-4 bg-green-200 text-green-800 rounded-md">
+                                {{ message }}
+                            </div>
+                        {% else %}
+                            <div class="p-4 bg-red-200 text-red-800 rounded-md">
+                                {{ message }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    <!-- Footer -->
+    <footer class="bg-black text-center py-4 z-0">
+        <p class="text-sm text-white">&copy; 2025 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</p>
+    </footer>
+    <script>
+        // User Menu Dropdown
+        const userMenuBtn = document.getElementById('userMenuBtn');
+        const userMenu = document.getElementById('userMenu');
+        userMenuBtn.addEventListener('click', () => {
+            userMenu.classList.toggle('hidden');
+        });
+        // Ocultar mensajes automáticamente después de 5 segundos
+        setTimeout(() => {
+            const messagesContainer = document.getElementById('messages-container');
+            if (messagesContainer) {
+                messagesContainer.style.display = 'none';
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

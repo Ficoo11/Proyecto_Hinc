@@ -1,0 +1,169 @@
+{% extends 'paneladmin/base.html' %}
+{% block content %}
+    <div>
+        <h2 class="text-2xl font-bold text-black mb-4">Usuarios</h2>
+        {% if action == 'edit' and user %}
+            <form method="post" action="{% url 'edit_user' user.id %}" class="mb-6" id="editUserForm">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700">Usuario</label>
+                        <input type="text" name="username" id="username" value="{{ user.username }}" required class="mt-1 p-2 w-full border rounded-md">
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">Correo</label>
+                        <input type="email" name="email" id="email" value="{{ user.email }}" required class="mt-1 p-2 w-full border rounded-md">
+                    </div>
+                    <div>
+                        <label for="password1" class="block text-sm font-medium text-gray-700">Nueva Contraseña (opcional)</label>
+                        <input type="password" name="password1" id="password1" class="mt-1 p-2 w-full border rounded-md">
+                    </div>
+                    <div>
+                        <label for="password2" class="block text-sm font-medium text-gray-700">Confirmar Nueva Contraseña (opcional)</label>
+                        <input type="password" name="password2" id="password2" class="mt-1 p-2 w-full border rounded-md">
+                    </div>
+                    <div>
+                        <label for="role" class="block text-sm font-medium text-gray-700">Rol</label>
+                        <select name="role" id="role" required class="mt-1 p-2 w-full border rounded-md">
+                            <option value="Admin" {% if user.role == 'Admin' %}selected{% endif %}>Admin</option>
+                            <option value="Usuario" {% if user.role == 'Usuario' %}selected{% endif %}>Usuario</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="estado" class="block text-sm font-medium text-gray-700">Estado</label>
+                        <select name="estado" id="estado" required class="mt-1 p-2 w-full border rounded-md">
+                            <option value="Habilitado" {% if user.estado == 'Habilitado' %}selected{% endif %}>Habilitado</option>
+                            <option value="Inhabilitado" {% if user.estado == 'Inhabilitado' %}selected{% endif %}>Inhabilitado</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Actualizar Usuario</button>
+                        <a href="{% url 'paneladmin' %}?panel=users" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+                    </div>
+                </div>
+            </form>
+        {% elif action == 'delete' and user %}
+            <div class="mb-6 p-4 bg-red-100 rounded-md">
+                <p class="text-red-700">¿Estás seguro de eliminar al usuario {{ user.username }}?</p>
+                <form method="post" action="{% url 'delete_user' user.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="mt-4 bg-red-500 text-white p-2 rounded-md hover:bg-red-600">Eliminar</button>
+                    <a href="{% url 'paneladmin' %}?panel=users" class="ml-4 text-blue-500 hover:underline">Cancelar</a>
+                </form>
+            </div>
+        {% else %}
+            <button id="addUserBtn" class="mb-6 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-all duration-300">Agregar Nuevo Usuario</button>
+            <form id="addUserForm" method="post" action="{% url 'add_user' %}" class="mb-6 hidden">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700">Usuario</label>
+                        <input type="text" name="username" id="username" required class="mt-1 p-2 w-full border rounded-md">
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">Correo</label>
+                        <input type="email" name="email" id="email" required class="mt-1 p-2 w-full border rounded-md">
+                    </div>
+                    <div>
+                        <label for="password1" class="block text-sm font-medium text-gray-700">Contraseña</label>
+                        <input type="password" name="password1" id="password1" required class="mt-1 p-2 w-full border rounded-md">
+                    </div>
+                    <div>
+                        <label for="password2" class="block text-sm font-medium text-gray-700">Confirmar Contraseña</label>
+                        <input type="password" name="password2" id="password2" required class="mt-1 p-2 w-full border rounded-md">
+                    </div>
+                    <div>
+                        <label for="role" class="block text-sm font-medium text-gray-700">Rol</label>
+                        <select name="role" id="role" required class="mt-1 p-2 w-full border rounded-md">
+                            <option value="Admin">Admin</option>
+                            <option value="Usuario">Usuario</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="estado" class="block text-sm font-medium text-gray-700">Estado</label>
+                        <select name="estado" id="estado" required class="mt-1 p-2 w-full border rounded-md">
+                            <option value="Habilitado">Habilitado</option>
+                            <option value="Inhabilitado">Inhabilitado</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Usuario</button>
+                        <a href="{% url 'paneladmin' %}?panel=users" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+                    </div>
+                </div>
+            </form>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border border-gray-200">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="py-2 px-4 border-b text-left">Usuario</th>
+                            <th class="py-2 px-4 border-b text-left">Correo</th>
+                            <th class="py-2 px-4 border-b text-left">Rol</th>
+                            <th class="py-2 px-4 border-b text-left">Estado</th>
+                            <th class="py-2 px-4 border-b text-left">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="py-2 px-4 border-b">{{ user.username }}</td>
+                            <td class="py-2 px-4 border-b">{{ user.email }}</td>
+                            <td class="py-2 px-4 border-b">{{ user.role }}</td>
+                            <td class="py-2 px-4 border-b">{{ user.estado }}</td>
+                            <td class="py-2 px-4 border-b">
+                                <a href="{% url 'paneladmin' %}?action=edit&user_id={{ user.id }}&panel=users" class="text-blue-500 hover:underline">Editar</a>
+                                <a href="{% url 'paneladmin' %}?action=delete&user_id={{ user.id }}&panel=users" class="text-red-500 hover:underline ml-4">Eliminar</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="py-2 px-4 border-b text-center">No hay usuarios registrados.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+    <script>
+        // Toggle Form for Adding User
+        const addUserBtn = document.getElementById('addUserBtn');
+        const addUserForm = document.getElementById('addUserForm');
+        if (addUserBtn && addUserForm) {
+            addUserBtn.addEventListener('click', () => {
+                addUserForm.classList.toggle('hidden');
+            });
+        }
+        // Validaciones en tiempo real para Usuarios
+        const userForms = document.querySelectorAll('#addUserForm, #editUserForm');
+        userForms.forEach(form => {
+            const emailInput = form.querySelector('input[name="email"]');
+            const password1 = form.querySelector('input[name="password1"]');
+            const password2 = form.querySelector('input[name="password2"]');
+            if (emailInput) {
+                emailInput.addEventListener('input', () => {
+                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value) && emailInput.value !== '') {
+                        emailInput.classList.add('border-red-500');
+                        emailInput.classList.remove('border-green-500');
+                    } else {
+                        emailInput.classList.add('border-green-500');
+                        emailInput.classList.remove('border-red-500');
+                    }
+                });
+            }
+            if (password1 && password2) {
+                const checkPasswords = () => {
+                    if (password1.value !== password2.value && password2.value !== '') {
+                        password2.classList.add('border-red-500');
+                        password2.classList.remove('border-green-500');
+                    } else if (password1.value.length >= 8 || password1.value === '') {
+                        password2.classList.add('border-green-500');
+                        password2.classList.remove('border-red-500');
+                    }
+                };
+                password1.addEventListener('input', checkPasswords);
+                password2.addEventListener('input', checkPasswords);
+            }
+        });
+    </script>
+{% endblock %}

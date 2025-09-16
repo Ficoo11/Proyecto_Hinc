@@ -1,0 +1,47 @@
+{% extends 'paneladmin/base.html' %}
+{% block content %}
+    <div>
+        <h2 class="text-2xl font-bold text-black mb-4">Inventario</h2>
+        <p class="text-gray-600 mb-4">Gestión de stock, descuentos y estados de productos. Productos con stock bajo o agotados destacados en rojo.</p>
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-200">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="py-2 px-4 border-b text-left">Nombre</th>
+                        <th class="py-2 px-4 border-b text-left">Stock</th>
+                        <th class="py-2 px-4 border-b text-left">Descuento</th>
+                        <th class="py-2 px-4 border-b text-left">Estado</th>
+                        <th class="py-2 px-4 border-b text-left">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for producto in productos %}
+                    <tr class="{% if producto.stock <= 0 or producto.estado == 'Agotado' %}bg-red-100{% else %}hover:bg-gray-50{% endif %}">
+                        <td class="py-2 px-4 border-b">{{ producto.nombre }}</td>
+                        <td class="py-2 px-4 border-b">{{ producto.stock }}</td>
+                        <td class="py-2 px-4 border-b">{{ producto.descuento }}%</td>
+                        <td class="py-2 px-4 border-b">{{ producto.estado }}</td>
+                        <td class="py-2 px-4 border-b">
+                            <a href="{% url 'productos_update' producto.id %}?panel=inventory" class="text-blue-500 hover:underline">Editar</a>
+                            <a href="{% url 'productos_delete' producto.id %}?panel=inventory" class="text-red-500 hover:underline ml-4">Eliminar</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="py-2 px-4 border-b text-center">No hay productos en inventario.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        // Validaciones en tiempo real para edición en inventario (usando el mismo form de products)
+        const inventoryLinks = document.querySelectorAll('a[href*="productos_update"]');
+        inventoryLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                // El form de products.html manejará las validaciones
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,7 +1,7 @@
 # apphinc/models.py
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.conf import settings  
+from django.conf import settings
 
 class CustomUser(AbstractUser):
     role = models.CharField(max_length=20, choices=[('Admin', 'Admin'), ('Usuario', 'Usuario')], default='Usuario')
@@ -22,9 +22,22 @@ class Producto(models.Model):
     descripcion = models.TextField()
     categoria = models.CharField(max_length=50, choices=[('Hombre', 'Hombre'), ('Mujer', 'Mujer'), ('Accesorios', 'Accesorios')], default='Hombre')
     created_at = models.DateTimeField(auto_now_add=True)
+    stock = models.IntegerField(default=0)  # Nuevo campo: stock
+    descuento = models.IntegerField(
+        choices=[(i, f"{i}%") for i in range(0, 101, 5)],
+        default=0
+    )  # Nuevo campo: descuento en porcentajes de 5 en 5
+    estado = models.CharField(
+        max_length=20,
+        choices=[('Habilitado', 'Habilitado'), ('Inhabilitado', 'Inhabilitado'), ('Agotado', 'Agotado')],
+        default='Habilitado'
+    )  # Nuevo campo: estado
 
     def __str__(self):
         return self.nombre
+
+    def precio_con_descuento(self):
+        return self.precio * (1 - self.descuento / 100)
 
 class Categoria(models.Model):
     nombre = models.CharField(max_length=100)

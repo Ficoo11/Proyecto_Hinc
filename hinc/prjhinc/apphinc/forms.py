@@ -68,7 +68,6 @@ class LoginForm(forms.Form):
         cleaned_data = super().clean()
         email = cleaned_data.get('email')
         password = cleaned_data.get('password')
-
         if email and password:
             user = CustomUser.objects.filter(email=email).first()
             if not user:
@@ -78,13 +77,55 @@ class LoginForm(forms.Form):
             elif user.estado != 'Habilitado':
                 raise ValidationError("El usuario está inhabilitado.")
         return cleaned_data
-    
+
 class ProductoForm(forms.ModelForm):
+    TALLAS_CHOICES = [
+        ('XS', 'XS'),
+        ('S', 'S'),
+        ('M', 'M'),
+        ('L', 'L'),
+        ('XL', 'XL'),
+        ('XXL', 'XXL'),
+    ]
+    tallas = forms.MultipleChoiceField(choices=TALLAS_CHOICES, widget=forms.CheckboxSelectMultiple, required=False)
+
     class Meta:
         model = Producto
-        fields = ('nombre', 'precio', 'tallas', 'imagen', 'descripcion', 'categoria')
+        fields = ('nombre', 'precio', 'tallas', 'imagen', 'descripcion', 'categoria', 'stock', 'descuento', 'estado')
+
+    def clean_precio(self):
+        precio = self.cleaned_data.get('precio')
+        if precio < 0:
+            raise ValidationError("El precio no puede ser negativo.")
+        return precio
+
+    def clean_stock(self):
+        stock = self.cleaned_data.get('stock')
+        if stock < 0:
+            raise ValidationError("El stock no puede ser negativo.")
+        return stock
+
+    def clean_imagen(self):
+        imagen = self.cleaned_data.get('imagen')
+        if imagen:
+            if not imagen.name.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                raise ValidationError("Solo se permiten archivos de imagen (jpg, jpeg, png, gif).")
+        return imagen
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.tallas = ','.join(self.cleaned_data['tallas'])  # Guardar como comma-separated
+        if commit:
+            instance.save()
+        return instance
 
 class CategoriaForm(forms.ModelForm):
     class Meta:
         model = Categoria
         fields = ('nombre', 'descripcion')
+
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get('nombre')
+        if not nombre:
+            raise ValidationError("El nombre no puede estar vacío.")
+        return nombre
