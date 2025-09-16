@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>{% block head_title %}Hinc{% endblock %}</title>
+    {% block extrahead %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    {% block content %}
+    <!-- Aquí va el contenido principal -->
+    {% endblock %}
+</body>
+</html>

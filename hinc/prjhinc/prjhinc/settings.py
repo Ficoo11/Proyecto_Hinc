@@ -35,8 +35,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'apphinc.apps.ApphincConfig',
+    'django.contrib.sites',  # Requerido para allauth
+    'allauth',
+    'apphinc',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',  # Proveedor de Google
 ]
+
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -46,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'prjhinc.urls'
@@ -82,9 +90,32 @@ DATABASES = {
 # Authentication
 AUTH_USER_MODEL = 'apphinc.CustomUser'
 AUTHENTICATION_BACKENDS = [
-    'apphinc.backends.EmailAuthBackend',  # Asegúrate de que la ruta sea correcta
-    'django.contrib.auth.backends.ModelBackend',  # Mantén el backend por defecto
+    'apphinc.backends.EmailAuthBackend',  # Si usas un backend personalizado para login por email
+    'django.contrib.auth.backends.ModelBackend',  # Backend por defecto
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
+
+# Configuración específica de Google
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': '155654323432-g7krkaja65mdrk4mfc0n0surn8n52jj4.apps.googleusercontent.com',  # Reemplaza con el tuyo
+            'secret': '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'  # Reemplaza con el tuyo
+        }
+    }
+}
+
+# URLs de login/logout
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/'  # Redirigir a home después de login
+LOGOUT_REDIRECT_URL = '/'  # Redirigir a home después de logout
+
+# Config Allauth (actualizado)
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+SOCIALACCOUNT_QUERY_EMAIL = True
+SOCIALACCOUNT_STORE_TOKENS = True
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
