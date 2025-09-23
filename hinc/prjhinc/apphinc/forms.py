@@ -1,3 +1,4 @@
+# apphinc/forms.py (modified)
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -88,10 +89,11 @@ class ProductoForm(forms.ModelForm):
         ('XXL', 'XXL'),
     ]
     tallas = forms.MultipleChoiceField(choices=TALLAS_CHOICES, widget=forms.CheckboxSelectMultiple, required=False)
+    categoria = forms.ModelChoiceField(queryset=Categoria.objects.all(), required=False)
 
     class Meta:
         model = Producto
-        fields = ('nombre', 'precio', 'tallas', 'imagen', 'descripcion', 'categoria', 'stock', 'descuento', 'estado')
+        fields = ('nombre', 'precio', 'tallas', 'imagen', 'descripcion', 'categoria', 'stock', 'descuento', 'estado', 'is_destacado')
 
     def clean_precio(self):
         precio = self.cleaned_data.get('precio')
@@ -122,10 +124,17 @@ class ProductoForm(forms.ModelForm):
 class CategoriaForm(forms.ModelForm):
     class Meta:
         model = Categoria
-        fields = ('nombre', 'descripcion')
+        fields = ('nombre', 'descripcion', 'imagen')
 
     def clean_nombre(self):
         nombre = self.cleaned_data.get('nombre')
         if not nombre:
             raise ValidationError("El nombre no puede estar vacío.")
         return nombre
+
+    def clean_imagen(self):
+        imagen = self.cleaned_data.get('imagen')
+        if imagen:
+            if not imagen.name.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                raise ValidationError("Solo se permiten archivos de imagen (jpg, jpeg, png, gif).")
+        return imagen

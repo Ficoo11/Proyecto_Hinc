@@ -1,4 +1,6 @@
+<!-- templates/index2.html (modified) -->
 {% load static %}
+{% load custom_filters %} <!-- Asumiendo que creas el templatetag para currency -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -112,7 +114,7 @@
         <div class="absolute bottom-0 w-full p-4 border-t">
             <p class="text-right font-semibold mb-2">Subtotal: <span id="subtotalCarrito">$0</span></p>
             <a href="{% url 'ver_carrito' %}" class="block text-center bg-orange-500 hover:bg-orange-600 text-white py-2 rounded mb-2">Ver carrito / Ir a pagar</a>
-            <a href="#" onclick="cerrarCarrito()" class="block text-center text-blue-600 hover:underline">Seguir comprando</a>
+            <a href="#" class="block text-center text-blue-600 hover:underline">Seguir comprando</a>
         </div>
     </div>
     <!-- Productos destacados -->
@@ -127,9 +129,9 @@
                 <div class="text-xl font-bold mt-2">{{ producto.nombre }}</div>
                 <div class="text-lg text-gray-600">
                     {% if producto.descuento > 0 %}
-                        <span class="price-old">${{ producto.precio }}</span> ${{ producto.precio_con_descuento }}
+                        <span class="price-old">{{ producto.precio|currency }}</span> {{ producto.precio_con_descuento|currency }}
                     {% else %}
-                        ${{ producto.precio }}
+                        {{ producto.precio|currency }}
                     {% endif %}
                 </div>
             </div>
@@ -144,7 +146,7 @@
         <div class="flex justify-center gap-8 flex-wrap">
             {% for categoria in categorias %}
             <a href="#" class="relative w-[300px] h-[400px] overflow-hidden rounded-xl cursor-pointer transition-transform hover:scale-105">
-                <img src="{% static 'img/default-categoria.jpg' %}" alt="{{ categoria.nombre }}" class="w-full h-full object-cover transition-transform" />
+                <img src="{{ categoria.imagen.url|default:'{% static "img/default-categoria.jpg" %}' }}" alt="{{ categoria.nombre }}" class="w-full h-full object-cover transition-transform" />
                 <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-black/50 opacity-0 transition-opacity">
                     <p class="text-2xl text-white font-bold uppercase">{{ categoria.nombre }}</p>
                 </div>
@@ -165,7 +167,7 @@
                 </a>
                 <div class="text-xl font-bold mt-2">{{ oferta.nombre }}</div>
                 <div class="text-lg text-gray-600">
-                    <span class="price-old">${{ oferta.precio }}</span> ${{ oferta.precio_con_descuento }}
+                    <span class="price-old">{{ oferta.precio|currency }}</span> {{ oferta.precio_con_descuento|currency }}
                 </div>
             </div>
             {% empty %}

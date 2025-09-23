@@ -1,4 +1,6 @@
+<!-- templates/login.html (modified) -->
 {% load static %}
+{% load socialaccount %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -65,7 +67,9 @@
             <span class="text-sm">¿No tienes cuenta? <a href="{% url 'register' %}" class="text-black hover:underline">Regístrate</a></span>
         </div>
 
-        <a href="{% url 'google_login' %}">Iniciar sesión con Google</a>
+        <a href="{% provider_login_url 'google' %}" class="block mt-4 text-center bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700">
+            <i class="fab fa-google mr-2"></i>Iniciar sesión con Google
+        </a>
 
     </div>
 

@@ -1,7 +1,8 @@
-# apphinc/models.py
+# apphinc/models.py (modified)
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
+from decimal import Decimal
 
 class CustomUser(AbstractUser):
     role = models.CharField(max_length=20, choices=[('Admin', 'Admin'), ('Usuario', 'Usuario')], default='Usuario')
@@ -14,13 +15,21 @@ class CustomUser(AbstractUser):
     class Meta:
         db_table = 'usuario'
 
+class Categoria(models.Model):
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField()
+    imagen = models.ImageField(upload_to='categorias/', blank=True, null=True)
+
+    def __str__(self):
+        return self.nombre
+
 class Producto(models.Model):
     nombre = models.CharField(max_length=100)
     precio = models.DecimalField(max_digits=10, decimal_places=2)
     tallas = models.CharField(max_length=100, help_text="Tallas separadas por comas, e.g., 'S,M,L'")
     imagen = models.ImageField(upload_to='productos/', blank=True, null=True)
     descripcion = models.TextField()
-    categoria = models.CharField(max_length=50, choices=[('Hombre', 'Hombre'), ('Mujer', 'Mujer'), ('Accesorios', 'Accesorios')], default='Hombre')
+    categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     stock = models.IntegerField(default=0)  # Nuevo campo: stock
     descuento = models.IntegerField(
@@ -32,19 +41,13 @@ class Producto(models.Model):
         choices=[('Habilitado', 'Habilitado'), ('Inhabilitado', 'Inhabilitado'), ('Agotado', 'Agotado')],
         default='Habilitado'
     )  # Nuevo campo: estado
+    is_destacado = models.BooleanField(default=False)  # Nuevo campo: producto destacado
 
     def __str__(self):
         return self.nombre
 
     def precio_con_descuento(self):
-        return self.precio * (1 - self.descuento / 100)
-
-class Categoria(models.Model):
-    nombre = models.CharField(max_length=100)
-    descripcion = models.TextField()
-
-    def __str__(self):
-        return self.nombre
+        return self.precio * Decimal(1 - self.descuento / 100)
 
 class Carrito(models.Model):
     usuario = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='carrito')

@@ -1,50 +1,24 @@
-{% extends 'paneladmin/base.html' %}
-{% block content %}
-    <div>
-        <h2 class="text-2xl font-bold text-black mb-6">Dashboard</h2>
-        <div class="grid grid-cols-2 gap-6 mb-6">
-            <!-- Estadísticas (2 arriba) -->
-            <div class="p-6 bg-gray-100 rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
-                <h4 class="font-semibold text-gray-800 text-lg">Usuarios Activos</h4>
-                <p class="text-4xl text-black mt-2">{{ users|length }}</p>
-            </div>
-            <div class="p-6 bg-gray-100 rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
-                <h4 class="font-semibold text-gray-800 text-lg">Productos</h4>
-                <p class="text-4xl text-black mt-2">{{ productos|length }}</p>
-            </div>
-            <!-- Estadísticas (2 abajo) -->
-            <div class="p-6 bg-gray-100 rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
-                <h4 class="font-semibold text-gray-800 text-lg">Categorías</h4>
-                <p class="text-4xl text-black mt-2">{{ categorias|length }}</p>
-            </div>
-            <div class="p-6 bg-gray-100 rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
-                <h4 class="font-semibold text-gray-800 text-lg">Ventas Totales</h4>
-                <p class="text-4xl text-black mt-2">$0.00</p> <!-- Placeholder, necesitarías un modelo de ventas -->
-            </div>
+<!-- templates/paneladmin/dashboard.html (modified) -->
+<div>
+    <h2 class="text-2xl font-bold text-black mb-6">Dashboard</h2>
+    <div class="grid grid-cols-2 gap-6 mb-6">
+        <!-- Estadísticas (2 arriba) -->
+        <div class="p-6 bg-gray-100 rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+            <h4 class="font-semibold text-gray-800 text-lg">Usuarios Activos</h4>
+            <p class="text-4xl text-black mt-2">{{ users|length }}</p>
         </div>
-        {% if action == 'create_categorias' %}
-            <form method="post" action="{% url 'categorias_create' %}" class="mb-6" id="categoriaForm">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Categoría</button>
-                <a href="{% url 'paneladmin' %}?panel=dashboard" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
-            </form>
-        {% elif action == 'update_categorias' and categoria %}
-            <form method="post" action="{% url 'categorias_update' categoria.id %}" class="mb-6" id="categoriaForm">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Actualizar Categoría</button>
-                <a href="{% url 'paneladmin' %}?panel=dashboard" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
-            </form>
-        {% elif action == 'delete_categorias' and categoria %}
-            <div class="mb-6 p-4 bg-red-100 rounded-md">
-                <p class="text-red-700">¿Estás seguro de eliminar la categoría {{ categoria.nombre }}?</p>
-                <form method="post" action="{% url 'categorias_delete' categoria.id %}">
-                    {% csrf_token %}
-                    <button type="submit" class="mt-4 bg-red-500 text-white p-2 rounded-md hover:bg-red-600">Eliminar</button>
-                    <a href="{% url 'paneladmin' %}?panel=dashboard" class="ml-4 text-blue-500 hover:underline">Cancelar</a>
-                </form>
-            </div>
-        {% endif %}
+        <div class="p-6 bg-gray-100 rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+            <h4 class="font-semibold text-gray-800 text-lg">Productos</h4>
+            <p class="text-4xl text-black mt-2">{{ productos|length }}</p>
+        </div>
+        <!-- Estadísticas (2 abajo) -->
+        <div class="p-6 bg-gray-100 rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+            <h4 class="font-semibold text-gray-800 text-lg">Categorías</h4>
+            <p class="text-4xl text-black mt-2">{{ categorias|length }}</p>
+        </div>
+        <div class="p-6 bg-gray-100 rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+            <h4 class="font-semibold text-gray-800 text-lg">Ventas Totales</h4>
+            <p class="text-4xl text-black mt-2">$0.00</p> <!-- Placeholder, necesitarías un modelo de ventas -->
+        </div>
     </div>
-{% endblock %}
+</div>

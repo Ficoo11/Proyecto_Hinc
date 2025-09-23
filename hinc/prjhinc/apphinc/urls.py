@@ -1,3 +1,4 @@
+# apphinc/urls.py (modified)
 from django.urls import path
 from . import views
 
@@ -15,6 +16,7 @@ urlpatterns = [
     path('paneladmin/productos/create/', views.productos_create, name='productos_create'),
     path('paneladmin/productos/update/<int:producto_id>/', views.productos_update, name='productos_update'),
     path('paneladmin/productos/delete/<int:producto_id>/', views.productos_delete, name='productos_delete'),
+    path('paneladmin/categorias/', views.categorias_list, name='categorias_list'),
     path('paneladmin/categorias/create/', views.categorias_create, name='categorias_create'),
     path('paneladmin/categorias/update/<int:categoria_id>/', views.categorias_update, name='categorias_update'),
     path('paneladmin/categorias/delete/<int:categoria_id>/', views.categorias_delete, name='categorias_delete'),

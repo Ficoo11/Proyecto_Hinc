@@ -1,0 +1,82 @@
+<!-- templates/paneladmin/categories.html (new file) -->
+{% load static %}
+<div>
+    <h2 class="text-2xl font-bold text-black mb-4">Categorías</h2>
+    {% if action == 'create_categorias' %}
+        <form method="post" action="{% url 'categorias_create' %}" class="mb-6" enctype="multipart/form-data" id="categoriaForm">
+            {% csrf_token %}
+            {{ categoria_form.as_p }}
+            <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Categoría</button>
+            <a href="{% url 'paneladmin' %}?panel=categorias" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+        </form>
+    {% elif action == 'update_categorias' and categoria %}
+        <form method="post" action="{% url 'categorias_update' categoria.id %}" class="mb-6" enctype="multipart/form-data" id="categoriaForm">
+            {% csrf_token %}
+            {{ categoria_form.as_p }}
+            <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Actualizar Categoría</button>
+            <a href="{% url 'paneladmin' %}?panel=categorias" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+        </form>
+    {% elif action == 'delete_categorias' and categoria %}
+        <div class="mb-6 p-4 bg-red-100 rounded-md">
+            <p class="text-red-700">¿Estás seguro de eliminar la categoría {{ categoria.nombre }}?</p>
+            <form method="post" action="{% url 'categorias_delete' categoria.id %}">
+                {% csrf_token %}
+                <button type="submit" class="mt-4 bg-red-500 text-white p-2 rounded-md hover:bg-red-600">Eliminar</button>
+                <a href="{% url 'paneladmin' %}?panel=categorias" class="ml-4 text-blue-500 hover:underline">Cancelar</a>
+            </form>
+        </div>
+    {% else %}
+        <button id="addCategoriaBtn" class="mb-6 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-all duration-300">Agregar Nueva Categoría</button>
+        <form id="addCategoriaForm" method="post" action="{% url 'categorias_create' %}" class="mb-6 hidden" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ categoria_form.as_p }}
+            <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Categoría</button>
+            <a href="{% url 'paneladmin' %}?panel=categorias" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+        </form>
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-200">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="py-2 px-4 border-b text-left">Nombre</th>
+                        <th class="py-2 px-4 border-b text-left">Descripción</th>
+                        <th class="py-2 px-4 border-b text-left">Imagen</th>
+                        <th class="py-2 px-4 border-b text-left">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for categoria in categorias %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-2 px-4 border-b">{{ categoria.nombre }}</td>
+                        <td class="py-2 px-4 border-b">{{ categoria.descripcion|truncatechars:30 }}</td>
+                        <td class="py-2 px-4 border-b">
+                            {% if categoria.imagen %}
+                                <img src="{{ categoria.imagen.url }}" alt="{{ categoria.nombre }}" class="w-20 h-20 object-cover">
+                            {% else %}
+                                Sin imagen
+                            {% endif %}
+                        </td>
+                        <td class="py-2 px-4 border-b">
+                            <a href="{% url 'paneladmin' %}?action=edit&categoria_id={{ categoria.id }}&panel=categorias" class="text-blue-500 hover:underline">Editar</a>
+                            <a href="{% url 'paneladmin' %}?action=delete&categoria_id={{ categoria.id }}&panel=categorias" class="text-red-500 hover:underline ml-4">Eliminar</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="py-2 px-4 border-b text-center">No hay categorías registradas.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+<script>
+    // Toggle Form for Adding Categoria
+    const addCategoriaBtn = document.getElementById('addCategoriaBtn');
+    const addCategoriaForm = document.getElementById('addCategoriaForm');
+    if (addCategoriaBtn && addCategoriaForm) {
+        addCategoriaBtn.addEventListener('click', () => {
+            addCategoriaForm.classList.toggle('hidden');
+        });
+    }
+</script>
