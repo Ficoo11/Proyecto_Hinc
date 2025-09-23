@@ -1,4 +1,3 @@
-# apphinc/models.py (modified)
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
@@ -31,17 +30,17 @@ class Producto(models.Model):
     descripcion = models.TextField()
     categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    stock = models.IntegerField(default=0)  # Nuevo campo: stock
+    stock = models.IntegerField(default=0)
     descuento = models.IntegerField(
         choices=[(i, f"{i}%") for i in range(0, 101, 5)],
         default=0
-    )  # Nuevo campo: descuento en porcentajes de 5 en 5
+    )
     estado = models.CharField(
         max_length=20,
         choices=[('Habilitado', 'Habilitado'), ('Inhabilitado', 'Inhabilitado'), ('Agotado', 'Agotado')],
         default='Habilitado'
-    )  # Nuevo campo: estado
-    is_destacado = models.BooleanField(default=False)  # Nuevo campo: producto destacado
+    )
+    is_destacado = models.BooleanField(default=False)
 
     def __str__(self):
         return self.nombre

@@ -36,16 +36,19 @@
         <aside class="w-64 bg-[#1a1a1a] text-white p-6 z-0">
             <ul>
                 <li>
-                    <a href="?panel=dashboard" class="w-full block text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'dashboard' %}bg-black/80{% endif %}">Dashboard</a>
+                    <button onclick="showPanel('dashboard')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'dashboard' %}bg-black/80{% endif %}">Dashboard</button>
                 </li>
                 <li>
-                    <a href="?panel=users" class="w-full block text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'users' %}bg-black/80{% endif %}">Usuarios</a>
+                    <button onclick="showPanel('users')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'users' %}bg-black/80{% endif %}">Usuarios</button>
                 </li>
                 <li>
-                    <a href="?panel=products" class="w-full block text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'products' %}bg-black/80{% endif %}">Productos</a>
+                    <button onclick="showPanel('products')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'products' %}bg-black/80{% endif %}">Productos</button>
                 </li>
                 <li>
-                    <a href="?panel=inventory" class="w-full block text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'inventory' %}bg-black/80{% endif %}">Inventario</a>
+                    <button onclick="showPanel('categorias')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'categorias' %}bg-black/80{% endif %}">Categorías</button>
+                </li>
+                <li>
+                    <button onclick="showPanel('inventory')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'inventory' %}bg-black/80{% endif %}">Inventario</button>
                 </li>
             </ul>
         </aside>
@@ -67,7 +70,21 @@
                     {% endfor %}
                 </div>
             {% endif %}
-            {% block content %}{% endblock %}
+            <div id="dashboardPanel" class="panel {% if current_panel != 'dashboard' %}hidden{% endif %}">
+                {% include 'paneladmin/dashboard.html' %}
+            </div>
+            <div id="usersPanel" class="panel {% if current_panel != 'users' %}hidden{% endif %}">
+                {% include 'paneladmin/users.html' %}
+            </div>
+            <div id="productsPanel" class="panel {% if current_panel != 'products' %}hidden{% endif %}">
+                {% include 'paneladmin/products.html' %}
+            </div>
+            <div id="categoriasPanel" class="panel {% if current_panel != 'categorias' %}hidden{% endif %}">
+                {% include 'paneladmin/categories.html' %}
+            </div>
+            <div id="inventoryPanel" class="panel {% if current_panel != 'inventory' %}hidden{% endif %}">
+                {% include 'paneladmin/inventory.html' %}
+            </div>
         </main>
     </div>
     <!-- Footer -->
@@ -81,6 +98,36 @@
         userMenuBtn.addEventListener('click', () => {
             userMenu.classList.toggle('hidden');
         });
+        // Panel Switching
+        function showPanel(panelId) {
+            document.querySelectorAll('.panel').forEach(panel => panel.classList.add('hidden'));
+            document.getElementById(`${panelId}Panel`).classList.remove('hidden');
+            history.pushState({}, '', `?panel=${panelId}`);
+        }
+        // Toggle Form for Adding User
+        const addUserBtn = document.getElementById('addUserBtn');
+        const addUserForm = document.getElementById('addUserForm');
+        if (addUserBtn && addUserForm) {
+            addUserBtn.addEventListener('click', () => {
+                addUserForm.classList.toggle('hidden');
+            });
+        }
+        // Toggle Form for Adding Product
+        const addProductBtn = document.getElementById('addProductBtn');
+        const addProductForm = document.getElementById('addProductForm');
+        if (addProductBtn && addProductForm) {
+            addProductBtn.addEventListener('click', () => {
+                addProductForm.classList.toggle('hidden');
+            });
+        }
+        // Toggle Form for Adding Categoria
+        const addCategoriaBtn = document.getElementById('addCategoriaBtn');
+        const addCategoriaForm = document.getElementById('addCategoriaForm');
+        if (addCategoriaBtn && addCategoriaForm) {
+            addCategoriaBtn.addEventListener('click', () => {
+                addCategoriaForm.classList.toggle('hidden');
+            });
+        }
         // Ocultar mensajes automáticamente después de 5 segundos
         setTimeout(() => {
             const messagesContainer = document.getElementById('messages-container');
@@ -88,6 +135,112 @@
                 messagesContainer.style.display = 'none';
             }
         }, 5000);
+        // Mostrar el panel predeterminado al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const panel = urlParams.get('panel') || 'dashboard'; // Dashboard como predeterminado
+            showPanel(panel);
+        });
+        // Validaciones en tiempo real para forms (Usuarios, Productos, Categorías)
+        document.addEventListener('DOMContentLoaded', () => {
+            // Para Usuarios (add/edit)
+            const userForms = document.querySelectorAll('#addUserForm, #editUserForm');
+            userForms.forEach(form => {
+                const emailInput = form.querySelector('input[name="email"]');
+                const password1 = form.querySelector('input[name="password1"]');
+                const password2 = form.querySelector('input[name="password2"]');
+                if (emailInput) {
+                    emailInput.addEventListener('input', () => {
+                        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value) && emailInput.value !== '') {
+                            emailInput.classList.add('border-red-500');
+                            emailInput.classList.remove('border-green-500');
+                        } else {
+                            emailInput.classList.add('border-green-500');
+                            emailInput.classList.remove('border-red-500');
+                        }
+                    });
+                }
+                if (password1 && password2) {
+                    const checkPasswords = () => {
+                        if (password1.value !== password2.value && password2.value !== '') {
+                            password2.classList.add('border-red-500');
+                            password2.classList.remove('border-green-500');
+                        } else if (password1.value.length >= 8 || password1.value === '') {
+                            password2.classList.add('border-green-500');
+                            password2.classList.remove('border-red-500');
+                        }
+                    };
+                    password1.addEventListener('input', checkPasswords);
+                    password2.addEventListener('input', checkPasswords);
+                }
+            });
+
+            // Para Productos (add/update)
+            const productForms = document.querySelectorAll('#addProductForm, #productForm');
+            productForms.forEach(form => {
+                const precioInput = form.querySelector('input[name="precio"]');
+                const stockInput = form.querySelector('input[name="stock"]');
+                const imagenInput = form.querySelector('input[name="imagen"]');
+                if (precioInput) {
+                    precioInput.addEventListener('input', () => {
+                        if (parseFloat(precioInput.value) < 0 && precioInput.value !== '') {
+                            precioInput.classList.add('border-red-500');
+                            precioInput.classList.remove('border-green-500');
+                        } else {
+                            precioInput.classList.add('border-green-500');
+                            precioInput.classList.remove('border-red-500');
+                        }
+                    });
+                }
+                if (stockInput) {
+                    stockInput.addEventListener('input', () => {
+                        if (parseInt(stockInput.value) < 0 && stockInput.value !== '') {
+                            stockInput.classList.add('border-red-500');
+                            stockInput.classList.remove('border-green-500');
+                        } else {
+                            stockInput.classList.add('border-green-500');
+                            stockInput.classList.remove('border-red-500');
+                        }
+                    });
+                }
+                if (imagenInput) {
+                    imagenInput.addEventListener('change', () => {
+                        const file = imagenInput.files[0];
+                        if (file && !file.name.toLowerCase().endswith(('.jpg', '.jpeg', '.png', '.gif'))) {
+                            alert('Solo se permiten imágenes (jpg, jpeg, png, gif).');
+                            imagenInput.value = '';
+                        }
+                    });
+                }
+            });
+
+            // Para Categorías (add/update)
+            const categoriaForms = document.querySelectorAll('#addCategoriaForm, #categoriaForm');
+            categoriaForms.forEach(form => {
+                const nombreInput = form.querySelector('input[name="nombre"]');
+                const imagenInput = form.querySelector('input[name="imagen"]');
+                if (nombreInput) {
+                    nombreInput.addEventListener('input', () => {
+                        if (nombreInput.value.trim() === '') {
+                            nombreInput.classList.add('border-red-500');
+                            nombreInput.classList.remove('border-green-500');
+                        } else {
+                            nombreInput.classList.add('border-green-500');
+                            nombreInput.classList.remove('border-red-500');
+                        }
+                    });
+                }
+                if (imagenInput) {
+                    imagenInput.addEventListener('change', () => {
+                        const file = imagenInput.files[0];
+                        if (file && !file.name.toLowerCase().endswith(('.jpg', '.jpeg', '.png', '.gif'))) {
+                            alert('Solo se permiten imágenes (jpg, jpeg, png, gif).');
+                            imagenInput.value = '';
+                        }
+                    });
+                }
+            });
+        });
     </script>
 </body>
 </html>

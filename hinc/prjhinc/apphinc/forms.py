@@ -1,4 +1,3 @@
-# apphinc/forms.py (modified)
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -89,7 +88,7 @@ class ProductoForm(forms.ModelForm):
         ('XXL', 'XXL'),
     ]
     tallas = forms.MultipleChoiceField(choices=TALLAS_CHOICES, widget=forms.CheckboxSelectMultiple, required=False)
-    categoria = forms.ModelChoiceField(queryset=Categoria.objects.all(), required=False)
+    categoria = forms.ModelChoiceField(queryset=Categoria.objects.all(), required=False, empty_label="Seleccionar categoría")
 
     class Meta:
         model = Producto
@@ -138,3 +137,14 @@ class CategoriaForm(forms.ModelForm):
             if not imagen.name.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
                 raise ValidationError("Solo se permiten archivos de imagen (jpg, jpeg, png, gif).")
         return imagen
+
+class InventoryForm(forms.ModelForm):
+    class Meta:
+        model = Producto
+        fields = ('stock', 'descuento', 'estado')
+
+    def clean_stock(self):
+        stock = self.cleaned_data.get('stock')
+        if stock < 0:
+            raise ValidationError("El stock no puede ser negativo.")
+        return stock

@@ -1,12 +1,8 @@
-# apphinc/templatetags/custom_filters.py (new file)
+# apphinc/templatetags/custom_filters.py
 from django import template
 
 register = template.Library()
 
 @register.filter
-def currency(value):
-    try:
-        formatted = '{:,.0f}'.format(float(value)).replace(',', '.')
-        return f'${formatted}'
-    except (ValueError, TypeError):
-        return value
+def add_class(field, css_class):
+    return field.as_widget(attrs={"class": css_class})

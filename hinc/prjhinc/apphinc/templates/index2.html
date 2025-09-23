@@ -1,51 +1,25 @@
-<!-- templates/index2.html (modified) -->
 {% load static %}
-{% load custom_filters %} <!-- Asumiendo que creas el templatetag para currency -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="shortcut icon" href="{% static 'img/Hinc.png' %}" type="image/x-icon" />
-    <!-- Tailwind CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <title>Hinc</title>
     <style>
-        /* Estilos similares al CSS original, adaptados a Tailwind */
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background-color: #DDDDDD;
-        }
-        .header-video {
-            object-fit: cover;
-        }
-        .nav-navbar a:hover {
-            color: black;
-            background-color: white;
-            border: 2px solid white;
-            border-radius: 5px;
-            text-decoration: underline;
-        }
-        .product img:hover {
-            transform: scale(1.05);
-            opacity: 0.8;
-        }
-        .category-card:hover .category-image {
-            transform: scale(1.1);
-        }
-        .category-card:hover .category-overlay {
-            opacity: 1;
-        }
-        .price-old {
-            text-decoration: line-through;
-            color: red;
-        }
+        body { font-family: 'Montserrat', sans-serif; background-color: #DDDDDD; }
+        .header-video { object-fit: cover; }
+        .nav-navbar a:hover { color: black; background-color: white; border: 2px solid white; border-radius: 5px; text-decoration: underline; }
+        .product img:hover { transform: scale(1.05); opacity: 0.8; }
+        .category-card:hover .category-image { transform: scale(1.1); }
+        .category-card:hover .category-overlay { opacity: 1; }
+        .price-old { text-decoration: line-through; color: red; }
     </style>
 </head>
 <body>
-    <!-- Header -->
+    <!-- Header (mismo que original) -->
     <header class="relative h-[500px] overflow-hidden">
         <video class="absolute w-full h-full object-cover" autoplay muted loop>
             <source src="{% static 'img/Hinc.mp4' %}" type="video/mp4" />
@@ -58,14 +32,12 @@
             </div>
             <div class="flex items-center space-x-2">
                 {% if user.is_authenticated %}
-                    <!-- Icono del Carrito -->
                     <div class="relative">
                         <button onclick="abrirCarrito()" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all flex items-center justify-center w-10 h-10">
                             <i class="fa-solid fa-cart-shopping"></i>
                             <span id="cart-count" class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
                         </button>
                     </div>
-                    <!-- Icono del Usuario -->
                     <div class="relative">
                         <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all flex items-center justify-center w-10 h-10">
                             <i class="fa-solid fa-user"></i>
@@ -97,7 +69,7 @@
             <h1 class="text-5xl text-white font-bold">Bienvenidos<br>a Hinc</h1>
         </div>
     </header>
-    <!-- Sidebar Carrito -->
+    <!-- Sidebar Carrito (mismo que original) -->
     <div id="carritoSidebar" class="fixed top-0 right-0 h-full w-80 bg-white shadow-lg transform translate-x-full transition-transform duration-300 z-50">
         <div class="flex justify-between items-center p-4 border-b">
             <h2 class="text-lg font-bold">Agregados al carrito</h2>
@@ -114,7 +86,7 @@
         <div class="absolute bottom-0 w-full p-4 border-t">
             <p class="text-right font-semibold mb-2">Subtotal: <span id="subtotalCarrito">$0</span></p>
             <a href="{% url 'ver_carrito' %}" class="block text-center bg-orange-500 hover:bg-orange-600 text-white py-2 rounded mb-2">Ver carrito / Ir a pagar</a>
-            <a href="#" class="block text-center text-blue-600 hover:underline">Seguir comprando</a>
+            <a href="#" onclick="cerrarCarrito()" class="block text-center text-blue-600 hover:underline">Seguir comprando</a>
         </div>
     </div>
     <!-- Productos destacados -->
@@ -124,14 +96,14 @@
             {% for producto in productos_destacados %}
             <div class="text-center text-gray-800 flex-1 max-w-xs m-2">
                 <a href="#">
-                    <img src="{{ producto.imagen.url|default:'{% static "img/default.jpg" %}' }}" alt="{{ producto.nombre }}" class="w-[300px] h-[400px] object-cover transition-all cursor-pointer" />
+                    {% if producto.imagen %}<img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="w-[300px] h-[400px] object-cover transition-all cursor-pointer" />{% else %}<img src="{% static 'img/default.jpg' %}" alt="{{ producto.nombre }}" class="w-[300px] h-[400px] object-cover transition-all cursor-pointer" />{% endif %}
                 </a>
                 <div class="text-xl font-bold mt-2">{{ producto.nombre }}</div>
                 <div class="text-lg text-gray-600">
                     {% if producto.descuento > 0 %}
-                        <span class="price-old">{{ producto.precio|currency }}</span> {{ producto.precio_con_descuento|currency }}
+                        <span class="price-old">{{ producto.precio|floatformat:0|add:"."|slice:".2:"|join:"" }}</span> {{ producto.precio_con_descuento|floatformat:0|add:"."|slice:".2:"|join:"" }}
                     {% else %}
-                        {{ producto.precio|currency }}
+                        {{ producto.precio|floatformat:0|add:"."|slice:".2:"|join:"" }}
                     {% endif %}
                 </div>
             </div>
@@ -146,8 +118,8 @@
         <div class="flex justify-center gap-8 flex-wrap">
             {% for categoria in categorias %}
             <a href="#" class="relative w-[300px] h-[400px] overflow-hidden rounded-xl cursor-pointer transition-transform hover:scale-105">
-                <img src="{{ categoria.imagen.url|default:'{% static "img/default-categoria.jpg" %}' }}" alt="{{ categoria.nombre }}" class="w-full h-full object-cover transition-transform" />
-                <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-black/50 opacity-0 transition-opacity">
+                {% if categoria.imagen %}<img src="{{ categoria.imagen.url }}" alt="{{ categoria.nombre }}" class="w-full h-full object-cover transition-transform category-image" />{% else %}<img src="{% static 'img/default-categoria.jpg' %}" alt="{{ categoria.nombre }}" class="w-full h-full object-cover transition-transform category-image" />{% endif %}
+                <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-black/50 opacity-0 transition-opacity category-overlay">
                     <p class="text-2xl text-white font-bold uppercase">{{ categoria.nombre }}</p>
                 </div>
             </a>
@@ -163,11 +135,11 @@
             {% for oferta in ofertas %}
             <div class="text-center text-gray-800 flex-1 max-w-xs m-2">
                 <a href="#">
-                    <img src="{{ oferta.imagen.url|default:'{% static "img/default.jpg" %}' }}" alt="{{ oferta.nombre }}" class="w-[300px] h-[400px] object-cover transition-all cursor-pointer" />
+                    {% if oferta.imagen %}<img src="{{ oferta.imagen.url }}" alt="{{ oferta.nombre }}" class="w-[300px] h-[400px] object-cover transition-all cursor-pointer" />{% else %}<img src="{% static 'img/default.jpg' %}" alt="{{ oferta.nombre }}" class="w-[300px] h-[400px] object-cover transition-all cursor-pointer" />{% endif %}
                 </a>
                 <div class="text-xl font-bold mt-2">{{ oferta.nombre }}</div>
                 <div class="text-lg text-gray-600">
-                    <span class="price-old">{{ oferta.precio|currency }}</span> {{ oferta.precio_con_descuento|currency }}
+                    <span class="price-old">{{ oferta.precio|floatformat:0|add:"."|slice:".2:"|join:"" }}</span> {{ oferta.precio_con_descuento|floatformat:0|add:"."|slice:".2:"|join:"" }}
                 </div>
             </div>
             {% empty %}
@@ -175,7 +147,7 @@
             {% endfor %}
         </div>
     </section>
-    <!-- footer -->
+    <!-- Footer (mismo que original) -->
     <footer class="bg-black py-10">
         <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 px-4 text-white">
             <div class="flex justify-center items-center">
@@ -199,10 +171,10 @@
             <small>&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</small>
         </div>
     </footer>
-    <!-- boton volver arriba -->
+    <!-- Botón volver arriba (mismo que original) -->
     <button id="backToTopBtn" class="fixed bottom-5 right-5 bg-[#800E0E] text-white p-4 rounded-full text-2xl cursor-pointer hidden">&#8679;</button>
     <script>
-        // Back to top
+        // Back to top (mismo que original)
         const backToTopBtn = document.getElementById('backToTopBtn');
         window.onscroll = () => {
             if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
@@ -216,13 +188,7 @@
             document.documentElement.scrollTop = 0;
         });
 
-        // Carrito scripts (similar al original)
-        const URL_AGREGAR_CARRITO = "{% url 'agregar_al_carrito' %}";
-        const URL_OBTENER_CARRITO = "{% url 'obtener_carrito' %}";
-        const URL_QUITAR_DEL_CARRITO = "{% url 'quitar_del_carrito' %}";
-        // ... (agrega el contenido de carrito.js aquí si es necesario)
-
-        // User Menu
+        // User Menu y carrito (mismo que original)
         document.addEventListener('DOMContentLoaded', () => {
             const userMenuBtn = document.getElementById('userMenuBtn');
             const userMenu = document.getElementById('userMenu');
@@ -237,12 +203,10 @@
                     }
                 });
             }
-            // Inicializar carrito
             if (typeof fetchCarrito === 'function') {
                 fetchCarrito();
             }
         });
-        // Funciones carrito
         function abrirCarrito() {
             document.getElementById("carritoSidebar").classList.remove("translate-x-full");
         }

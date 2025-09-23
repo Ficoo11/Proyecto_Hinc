@@ -1,4 +1,3 @@
-<!-- templates/paneladmin.html (modified) -->
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
@@ -10,7 +9,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="shortcut icon" href="{% static 'Img/Hinc.png' %}" type="image/x-icon">
 </head>
-<body class="bg-black font-sans">
+<body class="bg-gray-900 font-sans text-white">
+    <!-- Header -->
     <header class="relative h-24 overflow-hidden z-10">
         <video class="absolute w-full h-full object-cover z-0" autoplay muted loop>
             <source src="{% static 'Img/Hinc.mp4' %}" type="video/mp4">
@@ -19,88 +19,91 @@
             <a href="{% url 'index' %}">
                 <img src="{% static 'Img/Hinc.png' %}" alt="Hinc Logo" class="w-6 h-10">
             </a>
-            <h1 class="text-2xl text-white font-bold absolute left-1/2 transform -translate-x-1/2">Panel Admin</h1>
-            <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300">
+            <h1 class="text-2xl font-bold absolute left-1/2 transform -translate-x-1/2">Panel Admin</h1>
+            <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-gray-200 hover:text-black rounded-md transition-all duration-300">
                 <i class="fa-solid fa-user"></i>
             </button>
         </nav>
-        <div id="userMenu" class="hidden fixed right-4 top-20 w-48 bg-white rounded-lg shadow-xl z-[9999] border border-gray-200">
-            <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg transition-colors duration-200">Configuración</a>
-            <a href="{% url 'index' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Volver al Inicio</a>
-            <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
+        <div id="userMenu" class="hidden fixed right-4 top-20 w-48 bg-gray-800 rounded-lg shadow-xl z-[9999] border border-gray-700">
+            <a href="#" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-t-lg transition-colors duration-200">Configuración</a>
+            <a href="{% url 'index' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 transition-colors duration-200">Volver al Inicio</a>
+            <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
         </div>
     </header>
+    <!-- Main Content -->
     <div class="flex min-h-screen">
-        <aside class="w-64 bg-[#1a1a1a] text-white p-6 z-0">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-800 p-6 z-0">
             <ul>
                 <li>
-                    <button onclick="showPanel('dashboard')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'dashboard' %}bg-black/80{% endif %}">Dashboard</button>
+                    <a href="{% url 'paneladmin' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/' %}bg-gray-700{% endif %}">Dashboard</a>
                 </li>
                 <li>
-                    <button onclick="showPanel('users')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'users' %}bg-black/80{% endif %}">Usuarios</button>
+                    <a href="{% url 'usuarios' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/usuarios/' %}bg-gray-700{% endif %}">Usuarios</a>
                 </li>
                 <li>
-                    <button onclick="showPanel('products')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'products' %}bg-black/80{% endif %}">Productos</button>
+                    <a href="{% url 'productos' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/productos/' %}bg-gray-700{% endif %}">Productos</a>
                 </li>
                 <li>
-                    <button onclick="showPanel('categorias')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'categorias' %}bg-black/80{% endif %}">Categorías</button>
+                    <a href="{% url 'categorias' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/categorias/' %}bg-gray-700{% endif %}">Categorías</a>
                 </li>
                 <li>
-                    <button onclick="showPanel('inventory')" class="w-full text-left py-2 px-4 hover:bg-black/80 rounded-md transition-all duration-300 {% if current_panel == 'inventory' %}bg-black/80{% endif %}">Inventario</button>
+                    <a href="{% url 'inventario' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/inventario/' %}bg-gray-700{% endif %}">Inventario</a>
                 </li>
             </ul>
         </aside>
-        <main class="flex-1 p-8 bg-white/85 backdrop-blur-sm sm z-0">
+        <!-- Main Panel -->
+        <main class="flex-1 p-8 bg-gray-100 text-black">
+            <!-- Mensajes -->
             {% if messages %}
                 <div id="messages-container" class="mb-4">
                     {% for message in messages %}
                         {% if message.tags == 'success' %}
-                            <div class="p-4 bg-green-200 text-green-800 rounded-md">
+                            <div class="p-4 bg-green-100 text-green-800 rounded-md border border-green-300">
                                 {{ message }}
                             </div>
                         {% else %}
-                            <div class="p-4 bg-red-200 text-red-800 rounded-md">
+                            <div class="p-4 bg-red-100 text-red-800 rounded-md border border-red-300">
                                 {{ message }}
                             </div>
                         {% endif %}
                     {% endfor %}
                 </div>
             {% endif %}
-            <div id="dashboardPanel" class="panel {% if current_panel != 'dashboard' %}hidden{% endif %}">
-                {% include 'paneladmin/dashboard.html' %}
-            </div>
-            <div id="usersPanel" class="panel {% if current_panel != 'users' %}hidden{% endif %}">
-                {% include 'paneladmin/users.html' %}
-            </div>
-            <div id="productsPanel" class="panel {% if current_panel != 'products' %}hidden{% endif %}">
-                {% include 'paneladmin/products.html' %}
-            </div>
-            <div id="categoriasPanel" class="panel {% if current_panel != 'categorias' %}hidden{% endif %}">
-                {% include 'paneladmin/categories.html' %}
-            </div>
-            <div id="inventoryPanel" class="panel {% if current_panel != 'inventory' %}hidden{% endif %}">
-                {% include 'paneladmin/inventory.html' %}
+            <!-- Dashboard Content -->
+            <h2 class="text-2xl font-bold mb-6">Dashboard</h2>
+            <div class="grid grid-cols-2 gap-6 mb-6">
+                <div class="p-6 bg-white rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <h4 class="font-semibold text-gray-800 text-lg">Usuarios Activos</h4>
+                    <p class="text-4xl text-black mt-2">{{ users|length }}</p>
+                </div>
+                <div class="p-6 bg-white rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <h4 class="font-semibold text-gray-800 text-lg">Productos</h4>
+                    <p class="text-4xl text-black mt-2">{{ productos|length }}</p>
+                </div>
+                <div class="p-6 bg-white rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <h4 class="font-semibold text-gray-800 text-lg">Categorías</h4>
+                    <p class="text-4xl text-black mt-2">{{ categorias|length }}</p>
+                </div>
+                <div class="p-6 bg-white rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <h4 class="font-semibold text-gray-800 text-lg">Ventas Totales</h4>
+                    <p class="text-4xl text-black mt-2">$0.00</p>
+                </div>
             </div>
         </main>
     </div>
-    <footer class="bg-black text-center py-4 z-0">
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-center py-4 z-0">
         <p class="text-sm text-white">&copy; 2025 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</p>
     </footer>
     <script>
         // User Menu Dropdown
         const userMenuBtn = document.getElementById('userMenuBtn');
         const userMenu = document.getElementById('userMenu');
-        if (userMenuBtn && userMenu) {
-            userMenuBtn.addEventListener('click', () => {
-                userMenu.classList.toggle('hidden');
-            });
-        }
-        // Panel Switching
-        function showPanel(panelId) {
-            document.querySelectorAll('.panel').forEach(panel => panel.classList.add('hidden'));
-            document.getElementById(`${panelId}Panel`).classList.remove('hidden');
-            history.pushState({}, '', `?panel=${panelId}`);
-        }
+        userMenuBtn.addEventListener('click', () => {
+            userMenu.classList.toggle('hidden');
+        });
+
         // Ocultar mensajes automáticamente después de 5 segundos
         setTimeout(() => {
             const messagesContainer = document.getElementById('messages-container');
@@ -108,112 +111,6 @@
                 messagesContainer.style.display = 'none';
             }
         }, 5000);
-        // Mostrar el panel predeterminado al cargar
-        document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const panel = urlParams.get('panel') || 'dashboard'; // Dashboard como predeterminado
-            showPanel(panel);
-        });
-        // Validaciones en tiempo real para forms (Usuarios, Productos, Categorías)
-        document.addEventListener('DOMContentLoaded', () => {
-            // Para Usuarios (add/edit)
-            const userForms = document.querySelectorAll('#addUserForm, #editUserForm');
-            userForms.forEach(form => {
-                const emailInput = form.querySelector('input[name="email"]');
-                const password1 = form.querySelector('input[name="password1"]');
-                const password2 = form.querySelector('input[name="password2"]');
-                if (emailInput) {
-                    emailInput.addEventListener('input', () => {
-                        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value) && emailInput.value !== '') {
-                            emailInput.classList.add('border-red-500');
-                            emailInput.classList.remove('border-green-500');
-                        } else {
-                            emailInput.classList.add('border-green-500');
-                            emailInput.classList.remove('border-red-500');
-                        }
-                    });
-                }
-                if (password1 && password2) {
-                    const checkPasswords = () => {
-                        if (password1.value !== password2.value && password2.value !== '') {
-                            password2.classList.add('border-red-500');
-                            password2.classList.remove('border-green-500');
-                        } else if (password1.value.length >= 8 || password1.value === '') {
-                            password2.classList.add('border-green-500');
-                            password2.classList.remove('border-red-500');
-                        }
-                    };
-                    password1.addEventListener('input', checkPasswords);
-                    password2.addEventListener('input', checkPasswords);
-                }
-            });
-
-            // Para Productos (add/update)
-            const productForms = document.querySelectorAll('#addProductForm, #productForm');
-            productForms.forEach(form => {
-                const precioInput = form.querySelector('input[name="precio"]');
-                const stockInput = form.querySelector('input[name="stock"]');
-                const imagenInput = form.querySelector('input[name="imagen"]');
-                if (precioInput) {
-                    precioInput.addEventListener('input', () => {
-                        if (parseFloat(precioInput.value) < 0 && precioInput.value !== '') {
-                            precioInput.classList.add('border-red-500');
-                            precioInput.classList.remove('border-green-500');
-                        } else {
-                            precioInput.classList.add('border-green-500');
-                            precioInput.classList.remove('border-red-500');
-                        }
-                    });
-                }
-                if (stockInput) {
-                    stockInput.addEventListener('input', () => {
-                        if (parseInt(stockInput.value) < 0 && stockInput.value !== '') {
-                            stockInput.classList.add('border-red-500');
-                            stockInput.classList.remove('border-green-500');
-                        } else {
-                            stockInput.classList.add('border-green-500');
-                            stockInput.classList.remove('border-red-500');
-                        }
-                    });
-                }
-                if (imagenInput) {
-                    imagenInput.addEventListener('change', () => {
-                        const file = imagenInput.files[0];
-                        if (file && !file.name.toLowerCase().endswith(('.jpg', '.jpeg', '.png', '.gif'))) {
-                            alert('Solo se permiten imágenes (jpg, jpeg, png, gif).');
-                            imagenInput.value = '';
-                        }
-                    });
-                }
-            });
-
-            // Para Categorías (add/update)
-            const categoriaForms = document.querySelectorAll('#addCategoriaForm, #categoriaForm');
-            categoriaForms.forEach(form => {
-                const nombreInput = form.querySelector('input[name="nombre"]');
-                const imagenInput = form.querySelector('input[name="imagen"]');
-                if (nombreInput) {
-                    nombreInput.addEventListener('input', () => {
-                        if (nombreInput.value.trim() === '') {
-                            nombreInput.classList.add('border-red-500');
-                            nombreInput.classList.remove('border-green-500');
-                        } else {
-                            nombreInput.classList.add('border-green-500');
-                            nombreInput.classList.remove('border-red-500');
-                        }
-                    });
-                }
-                if (imagenInput) {
-                    imagenInput.addEventListener('change', () => {
-                        const file = imagenInput.files[0];
-                        if (file && !file.name.toLowerCase().endswith(('.jpg', '.jpeg', '.png', '.gif'))) {
-                            alert('Solo se permiten imágenes (jpg, jpeg, png, gif).');
-                            imagenInput.value = '';
-                        }
-                    });
-                }
-            });
-        });
     </script>
 </body>
 </html>

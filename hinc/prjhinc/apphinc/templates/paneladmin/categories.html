@@ -1,18 +1,16 @@
-<!-- templates/paneladmin/categories.html (new file) -->
-{% load static %}
 <div>
     <h2 class="text-2xl font-bold text-black mb-4">Categorías</h2>
     {% if action == 'create_categorias' %}
         <form method="post" action="{% url 'categorias_create' %}" class="mb-6" enctype="multipart/form-data" id="categoriaForm">
             {% csrf_token %}
-            {{ categoria_form.as_p }}
+            {{ form.as_p }}
             <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Categoría</button>
             <a href="{% url 'paneladmin' %}?panel=categorias" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
         </form>
     {% elif action == 'update_categorias' and categoria %}
         <form method="post" action="{% url 'categorias_update' categoria.id %}" class="mb-6" enctype="multipart/form-data" id="categoriaForm">
             {% csrf_token %}
-            {{ categoria_form.as_p }}
+            {{ form.as_p }}
             <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Actualizar Categoría</button>
             <a href="{% url 'paneladmin' %}?panel=categorias" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
         </form>
@@ -29,7 +27,7 @@
         <button id="addCategoriaBtn" class="mb-6 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-all duration-300">Agregar Nueva Categoría</button>
         <form id="addCategoriaForm" method="post" action="{% url 'categorias_create' %}" class="mb-6 hidden" enctype="multipart/form-data">
             {% csrf_token %}
-            {{ categoria_form.as_p }}
+            {{ form.as_p }}
             <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Categoría</button>
             <a href="{% url 'paneladmin' %}?panel=categorias" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
         </form>
@@ -79,4 +77,18 @@
             addCategoriaForm.classList.toggle('hidden');
         });
     }
+    // Validaciones para imagen
+    const categoriaForms = document.querySelectorAll('#addCategoriaForm, #categoriaForm');
+    categoriaForms.forEach(form => {
+        const imagenInput = form.querySelector('input[name="imagen"]');
+        if (imagenInput) {
+            imagenInput.addEventListener('change', () => {
+                const file = imagenInput.files[0];
+                if (file && !file.name.toLowerCase().endswith(('.jpg', '.jpeg', '.png', '.gif'))) {
+                    alert('Solo se permiten imágenes (jpg, jpeg, png, gif).');
+                    imagenInput.value = '';
+                }
+            });
+        }
+    });
 </script>

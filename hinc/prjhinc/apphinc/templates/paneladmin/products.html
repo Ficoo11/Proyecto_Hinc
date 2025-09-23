@@ -1,18 +1,16 @@
-<!-- templates/paneladmin/products.html (modified) -->
-{% load static %}
 <div>
     <h2 class="text-2xl font-bold text-black mb-4">Productos</h2>
     {% if action == 'create_productos' %}
         <form method="post" action="{% url 'productos_create' %}" class="mb-6" enctype="multipart/form-data" id="productForm">
             {% csrf_token %}
-            {{ producto_form.as_p }}
+            {{ form.as_p }}
             <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Producto</button>
             <a href="{% url 'paneladmin' %}?panel=products" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
         </form>
     {% elif action == 'update_productos' and producto %}
         <form method="post" action="{% url 'productos_update' producto.id %}" class="mb-6" enctype="multipart/form-data" id="productForm">
             {% csrf_token %}
-            {{ producto_form.as_p }}
+            {{ form.as_p }}
             <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Actualizar Producto</button>
             <a href="{% url 'paneladmin' %}?panel=products" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
         </form>
@@ -29,7 +27,7 @@
         <button id="addProductBtn" class="mb-6 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-all duration-300">Agregar Nuevo Producto</button>
         <form id="addProductForm" method="post" action="{% url 'productos_create' %}" class="mb-6 hidden" enctype="multipart/form-data">
             {% csrf_token %}
-            {{ producto_form.as_p }}
+            {{ form.as_p }}
             <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Guardar Producto</button>
             <a href="{% url 'paneladmin' %}?panel=products" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
         </form>
@@ -45,7 +43,6 @@
                         <th class="py-2 px-4 border-b text-left">Stock</th>
                         <th class="py-2 px-4 border-b text-left">Descuento</th>
                         <th class="py-2 px-4 border-b text-left">Estado</th>
-                        <th class="py-2 px-4 border-b text-left">Destacado</th>
                         <th class="py-2 px-4 border-b text-left">Acciones</th>
                     </tr>
                 </thead>
@@ -56,11 +53,10 @@
                         <td class="py-2 px-4 border-b">${{ producto.precio }}</td>
                         <td class="py-2 px-4 border-b">{{ producto.tallas }}</td>
                         <td class="py-2 px-4 border-b">{{ producto.descripcion|truncatechars:30 }}</td>
-                        <td class="py-2 px-4 border-b">{{ producto.categoria.nombre|default:'Sin categoría' }}</td>
+                        <td class="py-2 px-4 border-b">{{ producto.categoria }}</td>
                         <td class="py-2 px-4 border-b">{{ producto.stock }}</td>
                         <td class="py-2 px-4 border-b">{{ producto.descuento }}%</td>
                         <td class="py-2 px-4 border-b">{{ producto.estado }}</td>
-                        <td class="py-2 px-4 border-b">{% if producto.is_destacado %}Sí{% else %}No{% endif %}</td>
                         <td class="py-2 px-4 border-b">
                             <a href="{% url 'paneladmin' %}?action=edit&producto_id={{ producto.id }}&panel=products" class="text-blue-500 hover:underline">Editar</a>
                             <a href="{% url 'paneladmin' %}?action=delete&producto_id={{ producto.id }}&panel=products" class="text-red-500 hover:underline ml-4">Eliminar</a>
@@ -68,7 +64,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="10" class="py-2 px-4 border-b text-center">No hay productos registrados.</td>
+                        <td colspan="9" class="py-2 px-4 border-b text-center">No hay productos registrados.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -85,4 +81,42 @@
             addProductForm.classList.toggle('hidden');
         });
     }
+    // Validaciones en tiempo real para Productos
+    const productForms = document.querySelectorAll('#addProductForm, #productForm');
+    productForms.forEach(form => {
+        const precioInput = form.querySelector('input[name="precio"]');
+        const stockInput = form.querySelector('input[name="stock"]');
+        const imagenInput = form.querySelector('input[name="imagen"]');
+        if (precioInput) {
+            precioInput.addEventListener('input', () => {
+                if (parseFloat(precioInput.value) < 0 && precioInput.value !== '') {
+                    precioInput.classList.add('border-red-500');
+                    precioInput.classList.remove('border-green-500');
+                } else {
+                    precioInput.classList.add('border-green-500');
+                    precioInput.classList.remove('border-red-500');
+                }
+            });
+        }
+        if (stockInput) {
+            stockInput.addEventListener('input', () => {
+                if (parseInt(stockInput.value) < 0 && stockInput.value !== '') {
+                    stockInput.classList.add('border-red-500');
+                    stockInput.classList.remove('border-green-500');
+                } else {
+                    stockInput.classList.add('border-green-500');
+                    stockInput.classList.remove('border-red-500');
+                }
+            });
+        }
+        if (imagenInput) {
+            imagenInput.addEventListener('change', () => {
+                const file = imagenInput.files[0];
+                if (file && !file.name.toLowerCase().endswith(('.jpg', '.jpeg', '.png', '.gif'))) {
+                    alert('Solo se permiten imágenes (jpg, jpeg, png, gif).');
+                    imagenInput.value = '';
+                }
+            });
+        }
+    });
 </script>
