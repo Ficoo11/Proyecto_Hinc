@@ -376,75 +376,98 @@ def catalogo_view(request):
     categorias = Categoria.objects.all()
     return render(request, 'catalogo.html', {'productos': productos, 'categorias': categorias})
 
-@csrf_exempt
+# Vistas del carrito
+@login_required
 @require_POST
+@csrf_exempt
 def agregar_al_carrito(request):
-    if not request.user.is_authenticated:
-        return JsonResponse({'success': False, 'message': 'Debes iniciar sesión para agregar productos al carrito.'})
-    data = json.loads(request.body)
-    producto_id = data.get('producto_id')
-    cantidad = data.get('cantidad', 1)
     try:
-        producto = Producto.objects.get(id=producto_id, estado='Habilitado', stock__gt=0)
+        data = json.loads(request.body)
+        producto_id = data.get('producto_id')
+        cantidad = data.get('cantidad', 1)
+        
+        producto = get_object_or_404(Producto, id=producto_id)
         carrito, created = Carrito.objects.get_or_create(usuario=request.user)
-        item, item_created = ItemCarrito.objects.get_or_create(carrito=carrito, producto=producto)
-        if not item_created:
-            item.cantidad += int(cantidad)
-        else:
-            item.cantidad = int(cantidad)
-        if item.cantidad > producto.stock:
-            item.cantidad = producto.stock
-        item.save()
-        return JsonResponse({'success': True, 'message': 'Producto agregado al carrito.', 'cantidad': item.cantidad})
-    except Producto.DoesNotExist:
-        return JsonResponse({'success': False, 'message': 'Producto no encontrado o no disponible.'})
+        
+        item, created = ItemCarrito.objects.get_or_create(
+            carrito=carrito,
+            producto=producto,
+            defaults={'cantidad': cantidad}
+        )
+        
+        if not created:
+            item.cantidad += cantidad
+            item.save()
+        
+        return JsonResponse({
+            'success': True,
+            'carrito': obtener_datos_carrito(carrito)
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
 
-@csrf_exempt
+@login_required
 @require_POST
-def quitar_del_carrito(request):
-    if not request.user.is_authenticated:
-        return JsonResponse({'success': False, 'message': 'Debes iniciar sesión para modificar el carrito.'})
-    data = json.loads(request.body)
-    producto_id = data.get('producto_id')
-    try:
-        carrito = Carrito.objects.get(usuario=request.user)
-        item = ItemCarrito.objects.get(carrito=carrito, producto_id=producto_id)
-        item.delete()
-        return JsonResponse({'success': True, 'message': 'Producto eliminado del carrito.'})
-    except (Carrito.DoesNotExist, ItemCarrito.DoesNotExist):
-        return JsonResponse({'success': False, 'message': 'Producto no encontrado en el carrito.'})
-
 @csrf_exempt
-def obtener_carrito(request):
-    if not request.user.is_authenticated:
-        return JsonResponse({'success': False, 'message': 'Debes iniciar sesión para ver el carrito.', 'items': [], 'total': 0, 'cantidad_total': 0})
+def quitar_del_carrito(request):
     try:
-        carrito = Carrito.objects.get(usuario=request.user)
-        items = [
-            {
-                'id': item.producto.id,
-                'nombre': item.producto.nombre,
-                'precio': float(item.producto.precio),
-                'cantidad': item.cantidad,
-                'imagen': item.producto.imagen.url if item.producto.imagen else None,
-                'total': float(item.obtener_total())
-            } for item in carrito.items.all()
-        ]
-        total = float(carrito.obtener_total())
-        cantidad_total = carrito.obtener_cantidad_total()
-        return JsonResponse({'success': True, 'items': items, 'total': total, 'cantidad_total': cantidad_total})
-    except Carrito.DoesNotExist:
-        return JsonResponse({'success': True, 'items': [], 'total': 0, 'cantidad_total': 0})
+        data = json.loads(request.body)
+        producto_id = data.get('producto_id')
+        
+        carrito = get_object_or_404(Carrito, usuario=request.user)
+        item = get_object_or_404(ItemCarrito, carrito=carrito, producto_id=producto_id)
+        item.delete()
+        
+        return JsonResponse({
+            'success': True,
+            'carrito': obtener_datos_carrito(carrito)
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def obtener_carrito(request):
+    try:
+        carrito, created = Carrito.objects.get_or_create(usuario=request.user)
+        return JsonResponse({
+            'success': True,
+            'carrito': obtener_datos_carrito(carrito)
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+def obtener_datos_carrito(carrito):
+    items = []
+    for item in carrito.items.all():
+        items.append({
+            'id_producto': item.producto.id,
+            'nombre': item.producto.nombre,
+            'precio': float(item.producto.precio),
+            'cantidad': item.cantidad,
+            'imagen': item.producto.imagen.url if item.producto.imagen else ''
+        })
+    
+    return {
+        'items': items,
+        'total': float(carrito.obtener_total()),
+        'cantidad_total': carrito.obtener_cantidad_total()
+    }
 
 @login_required
 def ver_carrito(request):
-    if not request.user.is_authenticated:
-        messages.error(request, "Debes iniciar sesión para ver el carrito.")
-        return redirect('login')
-    carrito = Carrito.objects.get_or_create(usuario=request.user)[0]
-    items = carrito.items.all()
-    total = carrito.obtener_total()
-    return render(request, 'carrito.html', {'items': items, 'total': total})
+    carrito, created = Carrito.objects.get_or_create(usuario=request.user)
+    return render(request, 'carrito.html', {'carrito': carrito})
+
+# Modificar la vista index para pasar productos
+def index(request):
+    productos_destacados = Producto.objects.all()[:4]
+    
+    return render(request, 'index.html', {
+        'user': request.user if request.user.is_authenticated else None,
+        'productos_destacados': productos_destacados
+    })
 
 def index2(request):
     productos_destacados = Producto.objects.filter(is_destacado=True, estado='Habilitado', stock__gt=0)[:4]

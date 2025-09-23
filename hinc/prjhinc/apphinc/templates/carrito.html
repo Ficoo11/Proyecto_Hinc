@@ -1,6 +1,4 @@
-<!-- templates/carrito.html (modified) -->
 {% load static %}
-{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -11,7 +9,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="shortcut icon" href="{% static 'Img/Hinc.png' %}" type="image/x-icon">
 </head>
-<body class="bg-black font-sans">
+<body class="bg-gray-900 font-sans text-white">
+    <!-- Header -->
     <header class="relative h-24 overflow-hidden z-10">
         <video class="absolute w-full h-full object-cover z-0" autoplay muted loop>
             <source src="{% static 'Img/Hinc.mp4' %}" type="video/mp4">
@@ -20,72 +19,111 @@
             <a href="{% url 'index' %}">
                 <img src="{% static 'Img/Hinc.png' %}" alt="Hinc Logo" class="w-6 h-10">
             </a>
-            <h1 class="text-2xl text-white font-bold absolute left-1/2 transform -translate-x-1/2">Carrito de Compras</h1>
-            <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300">
+            <h1 class="text-2xl font-bold absolute left-1/2 transform -translate-x-1/2">Carrito de Compras</h1>
+            <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-gray-200 hover:text-black rounded-md transition-all duration-300">
                 <i class="fa-solid fa-user"></i>
             </button>
         </nav>
-        <div id="userMenu" class="hidden fixed right-4 top-20 w-48 bg-white rounded-lg shadow-xl z-[9999] border border-gray-200">
-            <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg transition-colors duration-200">Configuración</a>
-            <a href="{% url 'index' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Volver al Inicio</a>
-            <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
+        <div id="userMenu" class="hidden fixed right-4 top-20 w-48 bg-gray-800 rounded-lg shadow-xl z-[9999] border border-gray-700">
+            <a href="#" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-t-lg transition-colors duration-200">Configuración</a>
+            <a href="{% url 'index' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 transition-colors duration-200">Volver al Inicio</a>
+            <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
         </div>
     </header>
-    <main class="flex-1 p-8 text-white text-center">
-        <h2 class="text-3xl font-bold mb-4">Carrito de Compras</h2>
-        {% if carrito.items.all %}
-            <div class="bg-white shadow-md rounded-lg p-6 text-black">
+
+    <!-- Main Content -->
+    {% block content %}
+    <main class="flex-1 p-8 bg-gray-100 text-black">
+        {% if messages %}
+            <div id="messages-container" class="mb-4">
+                {% for message in messages %}
+                    {% if message.tags == 'success' %}
+                        <div class="p-4 bg-green-100 text-green-800 rounded-md border border-green-300">
+                            {{ message }}
+                        </div>
+                    {% else %}
+                        <div class="p-4 bg-red-100 text-red-800 rounded-md border border-red-300">
+                            {{ message }}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="max-w-6xl mx-auto">
+            <h1 class="text-3xl font-bold mb-8 text-gray-800">Tu Carrito de Compras</h1>
+            
+            {% if carrito.items.all %}
+            <div class="bg-white shadow-md rounded-lg p-6 border border-gray-200">
                 {% for item in carrito.items.all %}
                 <div class="flex justify-between items-center border-b py-4" data-producto-id="{{ item.producto.id }}">
                     <div class="flex items-center">
                         {% if item.producto.imagen %}
                         <img src="{{ item.producto.imagen.url }}" alt="{{ item.producto.nombre }}" 
-                             class="w-20 h-20 object-cover rounded mr-4">
+                             class="w-20 h-20 object-cover rounded mr-4 border border-gray-200">
                         {% endif %}
                         <div>
-                            <h3 class="font-semibold">{{ item.producto.nombre }}</h3>
-                            <p class="text-gray-600">{{ item.producto.precio|currency }}</p>
+                            <h3 class="font-semibold text-lg text-gray-800">{{ item.producto.nombre }}</h3>
+                            <p class="text-gray-600">S/. {{ item.producto.precio }}</p>
                             <p class="text-gray-600">Cantidad: {{ item.cantidad }}</p>
                         </div>
                     </div>
                     
                     <div class="flex items-center">
-                        <span class="font-semibold mr-4">{{ item.obtener_total|currency }}</span>
-                        <button class="btn-quitar-producto bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                        <span class="font-semibold text-lg text-gray-800 mr-4">S/. {{ item.obtener_total }}</span>
+                        <button class="btn-quitar-producto bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition duration-300"
                                 data-producto-id="{{ item.producto.id }}">
-                            Eliminar
+                            <i class="fa-solid fa-trash mr-2"></i>Eliminar
                         </button>
                     </div>
                 </div>
                 {% endfor %}
                 
                 <div class="mt-6 text-right">
-                    <h2 class="text-2xl font-bold">Total: {{ carrito.obtener_total|currency }}</h2>
-                    <button class="bg-orange-500 text-white px-6 py-2 rounded hover:bg-orange-600 mt-4">
+                    <h2 class="text-2xl font-bold text-gray-800">Total: S/. {{ carrito.obtener_total }}</h2>
+                    <button class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 mt-4 transition duration-300">
                         Proceder al Pago
                     </button>
                 </div>
             </div>
-        {% else %}
-            <div class="text-center py-12">
+            {% else %}
+            <div class="text-center py-12 bg-white rounded-lg shadow-md border border-gray-200">
                 <p class="text-gray-500 text-lg">Tu carrito está vacío</p>
-                <a href="{% url 'catalogo' %}" class="text-orange-500 hover:underline mt-4 inline-block">
+                <a href="{% url 'catalogo' %}" class="text-orange-500 hover:underline mt-4 inline-block font-semibold">
                     Continuar comprando
                 </a>
             </div>
-        {% endif %}
+            {% endif %}
+        </div>
     </main>
-    <footer class="bg-black text-center py-4 z-0">
-        <p class="text-sm text-white">&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</p>
+    {% endblock %}
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-center py-4 z-0">
+        <p class="text-sm text-white">&copy; 2025 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</p>
     </footer>
+
     <script>
+        // User Menu Dropdown
         const userMenuBtn = document.getElementById('userMenuBtn');
         const userMenu = document.getElementById('userMenu');
-        if (userMenuBtn && userMenu) {
-            userMenuBtn.addEventListener('click', () => {
-                userMenu.classList.toggle('hidden');
-            });
-        }
+        userMenuBtn.addEventListener('click', () => {
+            userMenu.classList.toggle('hidden');
+        });
+
+        // Ocultar mensajes automáticamente después de 5 segundos
+        setTimeout(() => {
+            const messagesContainer = document.getElementById('messages-container');
+            if (messagesContainer) {
+                messagesContainer.style.display = 'none';
+            }
+        }, 5000);
+
+        // URLs para el carrito
+        const URL_AGREGAR_CARRITO = "{% url 'agregar_al_carrito' %}";
+        const URL_OBTENER_CARRITO = "{% url 'obtener_carrito' %}";
+        const URL_QUITAR_DEL_CARRITO = "{% url 'quitar_del_carrito' %}";
     </script>
+    <script src="{% static 'js/carrito.js' %}"></script>
 </body>
 </html>
