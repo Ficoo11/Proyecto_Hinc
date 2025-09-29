@@ -91,7 +91,7 @@
         <div class="flex justify-center gap-5 flex-wrap">
             {% for producto in productos_destacados %}
             <div class="text-center text-gray-800 flex-1 max-w-xs m-2">
-                <a href="#">
+                <a href="{% url 'catalogo' %}">
                     {% if producto.imagen %}<img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="w-[300px] h-[400px] object-cover transition-all cursor-pointer" />{% else %}<img src="{% static 'img/default.jpg' %}" alt="{{ producto.nombre }}" class="w-[300px] h-[400px] object-cover transition-all cursor-pointer" />{% endif %}
                 </a>
                 <div class="text-xl font-bold mt-2">{{ producto.nombre }}</div>
@@ -114,7 +114,7 @@
         <div class="flex justify-center gap-5 flex-wrap">
             {% for categoria in categorias %}
             <div class="text-center">
-                <a href="#" class="category-card">
+                <a href="{% url 'catalogo' %}" class="category-card">
                     {% if categoria.imagen %}
                         <img src="{{ categoria.imagen.url }}" alt="{{ categoria.nombre }}" class="w-[300px] h-[400px] object-cover rounded-xl" />
                     {% else %}
@@ -134,7 +134,7 @@
         <div class="flex justify-center gap-5 flex-wrap">
             {% for oferta in ofertas %}
             <div class="text-center text-gray-800 flex-1 max-w-xs m-2">
-                <a href="#">
+                <a href="{% url 'catalogo' %}">
                     {% if oferta.imagen %}<img src="{{ oferta.imagen.url }}" alt="{{ oferta.nombre }}" class="w-[300px] h-[400px] object-cover transition-all cursor-pointer" />{% else %}<img src="{% static 'img/default.jpg' %}" alt="{{ oferta.nombre }}" class="w-[300px] h-[400px] object-cover transition-all cursor-pointer" />{% endif %}
                 </a>
                 <div class="text-xl font-bold mt-2">{{ oferta.nombre }}</div>
