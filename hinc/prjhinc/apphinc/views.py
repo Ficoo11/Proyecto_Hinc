@@ -12,10 +12,11 @@ from django.views.decorators.http import require_POST
 import json
 import logging
 
-# Configurar logging para depuración
+# Configura el sistema de logging en nivel DEBUG para capturar mensajes detallados de depuración, útiles para identificar errores en el flujo de la aplicación. Usa un logger específico para este módulo.
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+# Renderiza la página principal (index2.html), mostrando hasta 4 productos destacados y en oferta (estado='Habilitado', stock>0) del modelo Producto, y todas las categorías del modelo Categoria. Pasa el usuario autenticado, productos y categorías al template. Accesible sin autenticación.
 def index(request):
     productos_destacados = Producto.objects.filter(is_destacado=True, estado='Habilitado', stock__gt=0)[:4]
     categorias = Categoria.objects.all()
@@ -27,6 +28,7 @@ def index(request):
         'ofertas': ofertas
     })
 
+# Maneja el registro de usuarios con CustomUserCreationForm. Para POST, asigna rol 'Usuario' y estado 'Habilitado', valida el formulario, guarda el usuario (modelo CustomUser) con contraseña encriptada y redirige a login. Si hay errores, muestra mensajes detallados. Para GET, renderiza register.html con el formulario vacío. Pública.
 def register_view(request):
     if request.method == 'POST':
         post_data = request.POST.copy()
@@ -52,6 +54,7 @@ def register_view(request):
         form = CustomUserCreationForm()
     return render(request, 'register.html', {'form': form})
 
+# Gestiona el inicio de sesión con LoginForm. Para POST, valida correo y contraseña, verifica el usuario (modelo CustomUser) y su estado ('Habilitado'), autentica con ModelBackend, inicia sesión y redirige a index. Si hay errores, muestra mensaje. Para GET, renderiza login.html con formulario vacío. Pública.
 def login_view(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
@@ -70,10 +73,12 @@ def login_view(request):
         form = LoginForm()
     return render(request, 'login.html', {'form': form})
 
+# Cierra la sesión del usuario autenticado con logout() y redirige a index. No requiere validaciones adicionales. Accesible para usuarios autenticados.
 def logout_view(request):
     logout(request)
     return redirect('index')
 
+# Renderiza el panel de administración (paneladmin.html) para usuarios con rol 'Admin', mostrando todos los usuarios (CustomUser), productos (Producto) y categorías (Categoria). Si el usuario no es Admin, muestra error y redirige a index. Requiere autenticación.
 @login_required
 def paneladmin_view(request):
     if request.user.role != 'Admin':
@@ -88,6 +93,7 @@ def paneladmin_view(request):
         'categorias': categorias
     })
 
+# Gestiona la administración de usuarios para Admins, mostrando todos los usuarios (CustomUser) en PAusuarios.html. Soporta acciones (add, edit, delete) según el parámetro 'action'. Para POST, valida CustomUserCreationForm para agregar o editar usuarios, o elimina un usuario por ID. Muestra mensajes de éxito o error y redirige a usuarios. Requiere autenticación y rol Admin.
 @login_required
 def usuarios_view(request):
     if request.user.role != 'Admin':
@@ -125,6 +131,7 @@ def usuarios_view(request):
             return redirect('usuarios')
     return render(request, 'PAusuarios.html', {'users': users, 'action': action, 'user': user, 'user_form': user_form})
 
+# Permite a Admins agregar nuevos usuarios con CustomUserCreationForm. Para POST, valida y guarda el usuario (CustomUser), redirige a usuarios con mensaje de éxito o muestra errores. Para GET, renderiza PAusuarios.html con formulario vacío. Requiere autenticación y rol Admin.
 @login_required
 def add_user(request):
     if request.user.role != 'Admin':
@@ -144,6 +151,7 @@ def add_user(request):
         form = CustomUserCreationForm()
     return render(request, 'PAusuarios.html', {'user_form': form, 'action': 'add'})
 
+# Permite a Admins editar un usuario existente (CustomUser) identificado por user_id. Para POST, valida CustomUserCreationForm, actualiza el usuario y redirige a usuarios. Para GET, renderiza PAusuarios.html con el formulario prellenado. Muestra mensajes de éxito o error. Requiere autenticación y rol Admin.
 @login_required
 def edit_user(request, user_id):
     if request.user.role != 'Admin':
@@ -164,6 +172,7 @@ def edit_user(request, user_id):
         form = CustomUserCreationForm(instance=user)
     return render(request, 'PAusuarios.html', {'user_form': form, 'action': 'edit', 'user': user})
 
+# Permite a Admins eliminar un usuario (CustomUser) por user_id. Para POST, elimina el usuario y redirige a usuarios con mensaje de éxito. Para GET, renderiza PAusuarios.html para confirmar la eliminación. Requiere autenticación y rol Admin.
 @login_required
 def delete_user(request, user_id):
     if request.user.role != 'Admin':
@@ -176,6 +185,7 @@ def delete_user(request, user_id):
         return redirect('usuarios')
     return render(request, 'PAusuarios.html', {'action': 'delete', 'user': user})
 
+# Gestiona la administración de productos para Admins, mostrando todos los productos (Producto) en Pproductos.html. Soporta acciones (create, update, delete) según 'action'. Para POST, valida ProductoForm para crear o actualizar productos (incluye archivos para imágenes), o elimina un producto por ID. Muestra mensajes y redirige a productos. Requiere autenticación y rol Admin.
 @login_required
 def productos_view(request):
     if request.user.role != 'Admin':
@@ -213,6 +223,7 @@ def productos_view(request):
             return redirect('productos')
     return render(request, 'Pproductos.html', {'productos': productos, 'action': action, 'producto': producto, 'form': form})
 
+# Permite a Admins crear productos con ProductoForm. Para POST, valida el formulario (incluye request.FILES para imágenes), guarda el producto (modelo Producto) y redirige a productos. Para GET, renderiza Pproductos.html con formulario vacío. Muestra mensajes de éxito o error. Requiere autenticación y rol Admin.
 @login_required
 def productos_create(request):
     if request.user.role != 'Admin':
@@ -232,6 +243,7 @@ def productos_create(request):
         form = ProductoForm()
     return render(request, 'Pproductos.html', {'form': form, 'action': 'create_productos'})
 
+# Permite a Admins editar un producto (Producto) por producto_id. Para POST, valida ProductoForm (con tallas prellenadas desde el modelo), actualiza el producto y redirige a productos. Para GET, renderiza Pproductos.html con formulario prellenado. Muestra mensajes de éxito o error. Requiere autenticación y rol Admin.
 @login_required
 def productos_update(request, producto_id):
     if request.user.role != 'Admin':
@@ -250,6 +262,7 @@ def productos_update(request, producto_id):
                 messages.error(request, error)
     return render(request, 'Pproductos.html', {'form': form, 'action': 'update_productos', 'producto': producto})
 
+# Permite a Admins eliminar un producto (Producto) por producto_id. Para POST, elimina el producto y redirige a productos con mensaje de éxito. Para GET, renderiza Pproductos.html para confirmar eliminación. Requiere autenticación y rol Admin.
 @login_required
 def productos_delete(request, producto_id):
     if request.user.role != 'Admin':
@@ -262,6 +275,7 @@ def productos_delete(request, producto_id):
         return redirect('productos')
     return render(request, 'Pproductos.html', {'action': 'delete_productos', 'producto': producto})
 
+# Gestiona la administración de categorías para Admins, mostrando todas las categorías (Categoria) en PAcategorias.html. Soporta acciones (create, update, delete) según 'action'. Para POST, valida CategoriaForm para crear o actualizar categorías (con imágenes), o elimina una categoría por ID. Muestra mensajes y redirige a categorias. Requiere autenticación y rol Admin.
 @login_required
 def categorias_view(request):
     if request.user.role != 'Admin':
@@ -299,6 +313,7 @@ def categorias_view(request):
             return redirect('categorias')
     return render(request, 'PAcategorias.html', {'categorias': categorias, 'action': action, 'categoria': categoria, 'form': form})
 
+# Permite a Admins crear categorías con CategoriaForm. Para POST, valida el formulario (incluye request.FILES para imágenes), guarda la categoría (modelo Categoria) y redirige a categorias. Para GET, renderiza PAcategorias.html con formulario vacío. Muestra mensajes de éxito o error. Requiere autenticación y rol Admin.
 @login_required
 def categorias_create(request):
     if request.user.role != 'Admin':
@@ -318,6 +333,7 @@ def categorias_create(request):
         form = CategoriaForm()
     return render(request, 'PAcategorias.html', {'form': form, 'action': 'create_categorias'})
 
+# Permite a Admins editar una categoría (Categoria) por categoria_id. Para POST, valida CategoriaForm, actualiza la categoría y redirige a categorias. Para GET, renderiza PAcategorias.html con formulario prellenado. Muestra mensajes de éxito o error. Requiere autenticación y rol Admin.
 @login_required
 def categorias_update(request, categoria_id):
     if request.user.role != 'Admin':
@@ -336,6 +352,7 @@ def categorias_update(request, categoria_id):
                 messages.error(request, error)
     return render(request, 'PAcategorias.html', {'form': form, 'action': 'update_categorias', 'categoria': categoria})
 
+# Permite a Admins eliminar una categoría (Categoria) por categoria_id. Para POST, elimina la categoría y redirige a categorias con mensaje de éxito. Para GET, renderiza PAcategorias.html para confirmar eliminación. Requiere autenticación y rol Admin.
 @login_required
 def categorias_delete(request, categoria_id):
     if request.user.role != 'Admin':
@@ -348,6 +365,7 @@ def categorias_delete(request, categoria_id):
         return redirect('categorias')
     return render(request, 'PAcategorias.html', {'action': 'delete_categorias', 'categoria': categoria})
 
+# Gestiona el inventario para Admins, mostrando todos los productos (Producto) en Pinventario.html. Soporta acciones (edit, delete) según 'action'. Para POST, valida InventoryForm para actualizar el stock de un producto o lo elimina por ID. Muestra mensajes y redirige a inventario. Requiere autenticación y rol Admin.
 @login_required
 def inventario_view(request):
     if request.user.role != 'Admin':
@@ -375,12 +393,13 @@ def inventario_view(request):
             return redirect('inventario')
     return render(request, 'Pinventario.html', {'productos': productos, 'action': action, 'producto': producto, 'form': form})
 
+# Renderiza el catálogo (catalogo.html), mostrando todos los productos (Producto) y categorías (Categoria). Pasa ambos al contexto del template para su visualización. Accesible sin autenticación, permite a todos los usuarios explorar los productos.
 def catalogo_view(request):
     productos = Producto.objects.all()
     categorias = Categoria.objects.all()
     return render(request, 'catalogo.html', {'productos': productos, 'categorias': categorias})
 
-# Vistas del carrito
+# Agrega un producto al carrito del usuario autenticado (modelos Carrito e ItemCarrito). Recibe producto_id y cantidad en un JSON vía POST, obtiene o crea un carrito, actualiza o crea un ItemCarrito, y devuelve un JSON con los datos del carrito. Usa csrf_exempt y require_POST. Requiere autenticación.
 @login_required
 @require_POST
 @csrf_exempt
@@ -411,6 +430,7 @@ def agregar_al_carrito(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
+# Elimina un producto del carrito del usuario autenticado. Recibe producto_id en un JSON vía POST, elimina el ItemCarrito correspondiente y devuelve un JSON con los datos actualizados del carrito. Usa csrf_exempt y require_POST. Requiere autenticación.
 @login_required
 @require_POST
 @csrf_exempt
@@ -431,6 +451,7 @@ def quitar_del_carrito(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
+# Obtiene los datos del carrito del usuario autenticado (modelo Carrito). Crea o recupera el carrito y devuelve un JSON con sus datos, generados por obtener_datos_carrito. Requiere autenticación.
 @login_required
 def obtener_carrito(request):
     try:
@@ -442,6 +463,7 @@ def obtener_carrito(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
+# Genera un diccionario con los datos del carrito, incluyendo los ítems (ItemCarrito) con id, nombre, precio, cantidad e imagen del producto, además del total y cantidad total del carrito. Usado por las vistas del carrito para devolver datos en formato JSON.
 def obtener_datos_carrito(carrito):
     items = []
     for item in carrito.items.all():
@@ -459,6 +481,7 @@ def obtener_datos_carrito(carrito):
         'cantidad_total': carrito.obtener_cantidad_total()
     }
 
+# Renderiza la página del carrito (carrito.html) para el usuario autenticado, mostrando los ítems del carrito (modelo Carrito). Crea o recupera el carrito y lo pasa al template. Requiere autenticación.
 @login_required
 def ver_carrito(request):
     carrito, created = Carrito.objects.get_or_create(usuario=request.user)

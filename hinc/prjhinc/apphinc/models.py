@@ -3,6 +3,7 @@ from django.db import models
 from django.conf import settings
 from decimal import Decimal
 
+# Define los modelos de la base de datos para la tienda en línea, gestionando usuarios, categorías, productos y carritos de compra. Incluye un modelo personalizado de usuario (CustomUser) con roles y estados, un modelo para categorías (Categoria) con nombre, descripción e imagen, un modelo para productos (Producto) con detalles como precio, tallas y descuentos, y modelos para carritos (Carrito) e ítems de carrito (ItemCarrito) que manejan las compras de los usuarios. Los modelos usan relaciones (ForeignKey, OneToOneField) para conectar datos y métodos personalizados para cálculos como precios con descuento y totales del carrito, soportando la lógica del sistema de comercio electrónico.
 class CustomUser(AbstractUser):
     role = models.CharField(max_length=20, choices=[('Admin', 'Admin'), ('Usuario', 'Usuario')], default='Usuario')
     estado = models.CharField(max_length=20, choices=[('Habilitado', 'Habilitado'), ('Inhabilitado', 'Inhabilitado')], default='Habilitado')

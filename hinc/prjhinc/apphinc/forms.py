@@ -3,8 +3,10 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from .models import Producto, Categoria
 
+# Obtiene el modelo de usuario personalizado (CustomUser) para su uso en formularios.
 CustomUser = get_user_model()
 
+# Formulario para crear y editar usuarios (CustomUser). Incluye campos para nombre de usuario, correo, contraseñas, rol y estado. Valida que el correo y usuario sean únicos, asegura que las contraseñas coincidan y tengan al menos 8 caracteres (en registro o si se modifican en edición). En el guardado, encripta la contraseña solo si se proporciona, integrándose con las vistas de registro y gestión de usuarios en el panel de administración.
 class CustomUserCreationForm(forms.ModelForm):
     password1 = forms.CharField(label="Contraseña", widget=forms.PasswordInput, required=False, help_text="Deje en blanco para no cambiar la contraseña. Debe tener al menos 8 caracteres si se modifica.")
     password2 = forms.CharField(label="Confirmar Contraseña", widget=forms.PasswordInput, required=False, help_text="Confirme la nueva contraseña o déjelo en blanco.")
@@ -55,6 +57,7 @@ class CustomUserCreationForm(forms.ModelForm):
             user.save()
         return user
 
+# Formulario para el inicio de sesión, con campos para correo y contraseña. Aplica estilos CSS personalizados a los campos mediante widgets. Valida que el correo exista, la contraseña sea correcta y el usuario esté habilitado (CustomUser). Usado en la vista login_view para autenticar usuarios.
 class LoginForm(forms.Form):
     email = forms.EmailField(label="Correo", max_length=254)
     password = forms.CharField(label="Contraseña", widget=forms.PasswordInput)
@@ -78,6 +81,7 @@ class LoginForm(forms.Form):
                 raise ValidationError("El usuario está inhabilitado.")
         return cleaned_data
 
+# Formulario para crear y editar productos (Producto). Incluye campos como nombre, precio, tallas (selección múltiple), imagen, descripción, categoría, stock, descuento, estado y destacado. Valida que el precio y stock no sean negativos, y que la imagen sea de tipo válido (jpg, jpeg, png, gif). Convierte las tallas seleccionadas en una cadena separada por comas para el guardado. Usado en vistas de gestión de productos en el panel de administración.
 class ProductoForm(forms.ModelForm):
     TALLAS_CHOICES = [
         ('XS', 'XS'),
@@ -120,6 +124,7 @@ class ProductoForm(forms.ModelForm):
             instance.save()
         return instance
 
+# Formulario para crear y editar categorías (Categoria). Incluye campos para nombre, descripción e imagen. Valida que el nombre no esté vacío y que la imagen sea de tipo válido (jpg, jpeg, png, gif). Usado en vistas de gestión de categorías en el panel de administración.
 class CategoriaForm(forms.ModelForm):
     class Meta:
         model = Categoria
@@ -138,6 +143,7 @@ class CategoriaForm(forms.ModelForm):
                 raise ValidationError("Solo se permiten archivos de imagen (jpg, jpeg, png, gif).")
         return imagen
 
+# Formulario para gestionar el inventario de productos (Producto). Incluye campos para stock, descuento y estado. Valida que el stock no sea negativo. Usado en la vista inventario_view para actualizar el inventario en el panel de administración.
 class InventoryForm(forms.ModelForm):
     class Meta:
         model = Producto

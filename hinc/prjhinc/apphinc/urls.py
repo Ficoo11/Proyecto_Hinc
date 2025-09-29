@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 
+# Define las rutas URL de la aplicación, mapeando URLs a vistas en views.py para gestionar la navegación del sitio web de la tienda en línea. Organiza el acceso a funcionalidades clave: página principal (index), autenticación (registro, inicio y cierre de sesión), gestión administrativa (panel de administración, usuarios, productos, categorías e inventario) y carrito de compras (agregar, quitar, obtener y ver carrito). Cada ruta tiene un nombre único para su uso en templates y redirecciones, soportando tanto acciones públicas (como el catálogo) como protegidas para administradores (requieren autenticación y rol Admin) y usuarios autenticados (carrito).
 urlpatterns = [
     path('', views.index, name='index'),
     path('register/', views.register_view, name='register'),

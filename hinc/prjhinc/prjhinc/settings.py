@@ -13,21 +13,18 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Configuración de rutas base
+# Define el directorio raíz del proyecto (BASE_DIR) usando Path para manejar rutas de forma portátil. Es la base para rutas de archivos estáticos, multimedia y templates, asegurando que el proyecto acceda correctamente a sus recursos.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
+# Configuración de seguridad y modo de desarrollo
+# Establece la clave secreta (SECRET_KEY) para seguridad criptográfica (no segura para producción), activa el modo DEBUG para desarrollo (muestra errores detallados), y define ALLOWED_HOSTS vacío para permitir acceso local. Estas configuraciones son críticas para el entorno de desarrollo, pero deben ajustarse en producción.
 SECRET_KEY = 'django-insecure-3d3mnc_y9!5d@t_l*!@n07-zyt!+j31oqy!ua52ya0a@j&-mq0'
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
 ALLOWED_HOSTS = []
 
-# Application definition
+# Definición de aplicaciones instaladas
+# Lista las aplicaciones activas en el proyecto, incluyendo apps estándar de Django (admin, auth, sessions, etc.), django.contrib.sites para allauth, la aplicación personalizada apphinc (que contiene modelos, vistas, etc.), y django-allauth con soporte para autenticación social (Google). Esto habilita las funcionalidades de administración, autenticación y la lógica de la tienda en línea.
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -43,8 +40,12 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',  # Proveedor de Google
 ]
 
+# Configuración del sitio para django-allauth
+# Define el ID del sitio (SITE_ID=1) requerido por django-allauth para gestionar autenticación social y cuentas de usuario, asociando el proyecto a un sitio específico en la base de datos.
 SITE_ID = 1
 
+# Configuración de middleware
+# Define los middlewares que procesan solicitudes HTTP, incluyendo seguridad, sesiones, CSRF, autenticación, mensajes y soporte para django-allauth. Garantizan que las solicitudes sean seguras, las sesiones funcionen, y los mensajes de error/success se muestren en los templates.
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -56,8 +57,12 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',
 ]
 
+# Configuración de URLs raíz
+# Especifica el módulo de URLs principal (prjhinc.urls) que define las rutas del proyecto, incluyendo el panel de administración, autenticación social y las rutas de la aplicación apphinc.
 ROOT_URLCONF = 'prjhinc.urls'
 
+# Configuración de templates
+# Configura el sistema de templates de Django, especificando el backend DjangoTemplates, el directorio de templates (apphinc/templates), y activa la búsqueda en directorios de aplicaciones. Incluye procesadores de contexto para pasar información de solicitud, autenticación y mensajes a los templates, permitiendo renderizar páginas dinámicas como login.html, register.html y el catálogo.
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -73,9 +78,12 @@ TEMPLATES = [
     },
 ]
 
+# Configuración de la aplicación WSGI
+# Define el punto de entrada WSGI (prjhinc.wsgi.application) para el despliegue del proyecto, usado por servidores como Gunicorn en producción o el servidor de desarrollo de Django.
 WSGI_APPLICATION = 'prjhinc.wsgi.application'
 
-# Database
+# Configuración de la base de datos
+# Configura la conexión a una base de datos MySQL llamada 'Hinc' usando el motor django.db.backends.mysql. Especifica el usuario root sin contraseña (configuración predeterminada de XAMPP), localhost como host, y el puerto 3306. Almacena los modelos de apphinc (CustomUser, Producto, Categoria, etc.) y datos de autenticación.
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -87,7 +95,8 @@ DATABASES = {
     }
 }
 
-# Authentication
+# Configuración de autenticación
+# Define el modelo de usuario personalizado (apphinc.CustomUser) y los backends de autenticación, incluyendo EmailAuthBackend para login por correo, ModelBackend para autenticación estándar, y AuthenticationBackend de allauth para autenticación social. Esto permite autenticar usuarios con correo, nombre de usuario o cuentas sociales (Google).
 AUTH_USER_MODEL = 'apphinc.CustomUser'
 AUTHENTICATION_BACKENDS = [
     'apphinc.backends.EmailAuthBackend',  # Si usas un backend personalizado para login por email
@@ -95,7 +104,8 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-# Configuración específica de Google
+# Configuración de autenticación social con Google
+# Especifica las credenciales de la aplicación de Google para django-allauth, permitiendo inicio de sesión con cuentas de Google. Los valores de client_id y secret deben ser reemplazados por los obtenidos desde la consola de desarrolladores de Google para autenticación social.
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'APP': {
@@ -105,19 +115,22 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-# URLs de login/logout
+# Configuración de URLs de autenticación
+# Define las URLs para login (/accounts/login/), y redirecciones tras login y logout (ambas a la página principal '/'). Estas URLs se integran con django-allauth y las vistas de apphinc para gestionar el flujo de autenticación.
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'  # Redirigir a home después de login
 LOGOUT_REDIRECT_URL = '/'  # Redirigir a home después de logout
 
-# Config Allauth (actualizado)
+# Configuración específica de django-allauth
+# Configura django-allauth para usar solo autenticación por correo, define los campos requeridos en el registro (email, username, contraseñas), exige verificación de correo electrónico, y habilita la consulta y almacenamiento de tokens para cuentas sociales. Esto asegura que los usuarios verifiquen su correo y permite inicios de sesión sociales seguros.
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_STORE_TOKENS = True
 
-# Password validation
+# Validación de contraseñas
+# Aplica validadores de contraseñas para garantizar que las contraseñas no sean similares a los datos del usuario, tengan una longitud mínima, no sean comunes ni completamente numéricas. Se integra con CustomUserCreationForm para reforzar la seguridad de las contraseñas.
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -133,20 +146,25 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
+# Internacionalización
+# Configura el idioma en español (es-es), la zona horaria en America/Bogota, y activa la internacionalización (USE_I18N) y el uso de zonas horarias (USE_TZ). Esto asegura que las fechas, horas y textos se muestren correctamente en español y en la zona horaria local.
 LANGUAGE_CODE = 'es-es'
 TIME_ZONE = 'America/Bogota'
 USE_I18N = True
 USE_TZ = True
 
-# Static files
+# Archivos estáticos
+# Define la URL base para archivos estáticos (/static/) y el directorio donde se encuentran (apphinc/static). Permite servir CSS, JavaScript e imágenes estáticas en modo desarrollo, integrándose con las rutas en prjhinc/urls.py.
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'apphinc' / 'static',
 ]
 
-# Default primary key field type
+# Tipo de clave primaria predeterminada
+# Establece BigAutoField como el tipo de clave primaria automática para los modelos, asegurando compatibilidad con bases de datos modernas. Coincide con la configuración en apphinc/apps.py.
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Archivos multimedia
+# Define la URL base (/media/) y el directorio (BASE_DIR/media) para archivos multimedia, como imágenes de productos y categorías. Permite cargar y servir archivos subidos por usuarios/administradores en modo desarrollo, integrándose con las rutas en prjhinc/urls.py.
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
