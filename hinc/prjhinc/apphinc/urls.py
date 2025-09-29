@@ -25,5 +25,4 @@ urlpatterns = [
     path('carrito/quitar/', views.quitar_del_carrito, name='quitar_del_carrito'),
     path('carrito/obtener/', views.obtener_carrito, name='obtener_carrito'),
     path('carrito/', views.ver_carrito, name='ver_carrito'),
-    path('index2/', views.index2, name='index2'),
 ]

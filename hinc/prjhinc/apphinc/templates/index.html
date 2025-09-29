@@ -44,7 +44,7 @@
                             {% if user.role == 'Admin' %}
                                 <a href="{% url 'paneladmin' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg transition-colors duration-200">Panel Admin</a>
                             {% else %}
-                                <a href="{% url 'user_dashboard' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Mi Cuenta</a>
+                                <a href="{% url 'index' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Mi Cuenta</a>
                             {% endif %}
                             <a href="{% url 'ver_carrito' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Ver Carrito</a>
                             <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Configuración</a>

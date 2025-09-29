@@ -1,91 +1,77 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo - Hinc</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="shortcut icon" href="{% static 'img/Hinc.png' %}" type="image/x-icon" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="shortcut icon" href="{% static 'img/Hinc.png' %}" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <title>Catálogo - Hinc</title>
     <style>
-        body {
-            background-color: #000;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
-        }
-        .fondo-video {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: -1;
-            filter: brightness(0.7);
-        }
-        .card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-        .cart-wrapper { display: inline-block; margin-right: 15px; }
-        .header__button { background: transparent; border: none; color: white; font-size: 1.2rem; cursor: pointer; padding: 8px 12px; border-radius: 5px; transition: all 0.3s ease; display: flex; align-items: center; position: relative; }
-        .header__button:hover { background-color: white; color: black; }
-        #cart-count { position: absolute; top: -5px; right: -5px; background-color: #f97316; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; }
+        body { font-family: 'Montserrat', sans-serif; background-color: #DDDDDD; }
+        .header-video { object-fit: cover; }
+        .nav-navbar a:hover { color: black; background-color: white; border: 2px solid white; border-radius: 5px; text-decoration: underline; }
+        .product img:hover { transform: scale(1.05); opacity: 0.8; }
+        .price-old { text-decoration: line-through; color: red; }
+        .agregar-carrito:hover { background-color: #f97316; }
+        .product-card { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); background-color: white; padding: 1rem; }
+        .category-circle { transition: transform 0.3s ease; }
+        .category-circle:hover { transform: scale(1.1); }
     </style>
 </head>
 <body>
-    <video class="fondo-video" autoplay muted loop>
-        <source src="{% static 'img/Hinc.mp4' %}" type="video/mp4">
-    </video>
-    
-    <!-- Header (mismo que original) -->
-    <header class="relative z-10 p-4 bg-black/60 backdrop-blur-md">
-        <div class="container mx-auto flex justify-between items-center">
-            <a href="{% url 'index' %}">
-                <img src="{% static 'img/Hinc.png' %}" alt="Hinc Logo" class="h-12">
-            </a>
-            <div class="flex items-center space-x-4">
-                <div class="cart-wrapper">
-                    <button onclick="abrirCarrito()" class="header__button">
-                        <i class="fa-solid fa-cart-shopping"></i>
-                        <span id="cart-count" class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
-                    </button>
-                </div>
+    <!-- Header -->
+    <header class="relative h-[350px] overflow-hidden">
+        <video class="absolute w-full h-full object-cover header-video" autoplay muted loop>
+            <source src="{% static 'img/Hinc.mp4' %}" type="video/mp4" />
+        </video>
+        <nav class="absolute w-full h-[100px] flex items-center justify-around z-10 bg-black/60 backdrop-blur-md">
+            <a href="{% url 'index' %}"><img src="{% static 'img/Hinc.png' %}" alt="Hinc Logo" class="h-8" /></a>
+            <div class="nav-navbar flex space-x-4">
+                <a href="#Categorias" class="text-white text-lg font-bold px-4 py-2 transition-all">Categorias</a>
+                <a href="{% url 'catalogo' %}" class="text-white text-lg font-bold px-4 py-2 transition-all">Catalogo</a>
+            </div>
+            <div class="flex items-center space-x-2">
                 {% if user.is_authenticated %}
                     <div class="relative">
-                        <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10">
+                        <button onclick="abrirCarrito()" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all flex items-center justify-center w-10 h-10">
+                            <i class="fa-solid fa-cart-shopping"></i>
+                            <span id="cart-count" class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all flex items-center justify-center w-10 h-10">
                             <i class="fa-solid fa-user"></i>
                         </button>
                         <div id="userMenu" class="hidden absolute right-0 top-12 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-200">
                             {% if user.role == 'Admin' %}
-                                <a href="{% url 'paneladmin' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg transition-colors duration-200">Panel Admin</a>
+                                <a href="{% url 'paneladmin' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg">Panel Admin</a>
                             {% else %}
-                                <a href="{% url 'user_dashboard' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Mi Cuenta</a>
+                                <a href="{% url 'index' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100">Mi Cuenta</a>
                             {% endif %}
-                            <a href="{% url 'ver_carrito' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Ver Carrito</a>
-                            <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 transition-colors duration-200">Configuración</a>
-                            <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
+                            <a href="{% url 'ver_carrito' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100">Ver Carrito</a>
+                            <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100">Configuración</a>
+                            <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg">Cerrar Sesión</a>
                         </div>
                     </div>
                 {% else %}
                     <div class="space-x-4">
-                        <a href="{% url 'login' %}" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10">
+                        <a href="{% url 'login' %}" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all flex items-center justify-center w-10 h-10">
                             <i class="fa-solid fa-sign-in-alt"></i>
                         </a>
-                        <a href="{% url 'register' %}" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all duration-300 flex items-center justify-center w-10 h-10">
+                        <a href="{% url 'register' %}" class="text-white text-base p-2 hover:bg-white hover:text-black rounded-md transition-all flex items-center justify-center w-10 h-10">
                             <i class="fa-solid fa-user-plus"></i>
                         </a>
                     </div>
                 {% endif %}
             </div>
+        </nav>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center z-10">
+            <h1 class="text-5xl text-white font-bold uppercase">Catálogo de Productos</h1>
         </div>
     </header>
-    <!-- Sidebar Carrito (mismo que original) -->
+    <!-- Sidebar Carrito -->
     <div id="carritoSidebar" class="fixed top-0 right-0 h-full w-80 bg-white shadow-lg transform translate-x-full transition-transform duration-300 z-50">
         <div class="flex justify-between items-center p-4 border-b">
             <h2 class="text-lg font-bold">Agregados al carrito</h2>
@@ -105,63 +91,78 @@
             <a href="#" onclick="cerrarCarrito()" class="block text-center text-blue-600 hover:underline">Seguir comprando</a>
         </div>
     </div>
-    <!-- Main Content -->
-    <main class="container mx-auto py-8 flex-1 z-10">
-        <h1 class="text-3xl text-white font-bold mb-8 text-center">Catálogo de Productos</h1>
-        <!-- Sección de Categorías -->
-        <h2 class="text-2xl text-white font-bold mb-4">Categorías</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Sección de Categorías -->
+    <section class="py-10 px-8 bg-gray-100 text-center" id="Categorias">
+        <h2 class="text-4xl text-[#800E0E] mb-8 uppercase font-bold">Categorías</h2>
+        <div class="flex justify-center gap-6 flex-wrap">
             {% for categoria in categorias %}
-                <div class="card bg-white/90 backdrop-blur-md p-4 rounded-lg shadow-lg cursor-pointer">
-                    <h3 class="text-xl font-bold text-black mb-2">{{ categoria.nombre }}</h3>
-                    <p class="text-gray-600">{{ categoria.descripcion|truncatechars:100 }}</p>
-                </div>
+            <div class="text-center">
+                <a href="#{{ categoria.nombre|slugify }}" class="category-circle">
+                    {% if categoria.imagen %}
+                        <img src="{{ categoria.imagen.url }}" alt="{{ categoria.nombre }}" class="w-[150px] h-[150px] object-cover rounded-full shadow-md" />
+                    {% else %}
+                        <img src="{% static 'img/default-categoria.jpg' %}" alt="{{ categoria.nombre }}" class="w-[150px] h-[150px] object-cover rounded-full shadow-md" />
+                    {% endif %}
+                </a>
+                <p class="text-base font-semibold text-gray-800 mt-2">{{ categoria.nombre }}</p>
+            </div>
             {% empty %}
-                <div class="col-span-full text-center text-white text-xl">
-                    No hay categorías disponibles.
-                </div>
+            <p class="text-xl text-gray-600">No hay categorías disponibles.</p>
             {% endfor %}
         </div>
-        <!-- Catálogo de Productos -->
-        <h2 class="text-2xl text-white font-bold mb-4">Productos</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    </section>
+    <!-- Secciones de Productos por Categoría -->
+    {% for categoria in categorias %}
+    <section class="py-20 px-8 bg-white text-center" id="{{ categoria.nombre|slugify }}">
+        <h2 class="text-4xl text-[#800E0E] mb-10 uppercase font-bold tracking-wider">{{ categoria.nombre }}</h2>
+        <div class="flex justify-center gap-5 flex-wrap">
             {% for producto in productos %}
-                <div class="card bg-white/90 backdrop-blur-md p-4 rounded-lg shadow-lg">
-                    <h3 class="text-xl font-bold text-black mb-2">{{ producto.nombre }}</h3>
-                    <p class="text-gray-700 mb-2"><strong>Precio:</strong> ${{ producto.precio|floatformat:0|add:"."|slice:".2:"|join:"" }}</p>
-                    <p class="text-gray-700 mb-2"><strong>Tallas:</strong> {{ producto.tallas }}</p>
-                    {% if producto.imagen %}
-                        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="w-full h-48 object-cover rounded-md mb-2">
-                    {% else %}
-                        <div class="w-full h-48 bg-gray-200 flex items-center justify-center rounded-md mb-2">Sin imagen</div>
-                    {% endif %}
-                    <p class="text-gray-600 mb-2">{{ producto.descripcion|truncatechars:100 }}</p>
-                    <p class="text-gray-700 mb-3"><strong>Categoría:</strong> {{ producto.categoria.nombre|default:"Sin categoría" }}</p>
-                    <!-- Selector de cantidad y botón Agregar al Carrito (mismo que original) -->
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center">
-                            <button class="cantidad-menos bg-gray-200 px-2 py-1 rounded-l">-</button>
-                            <input type="number" value="1" min="1" max="10" class="cantidad-input w-12 text-center border-y">
-                            <button class="cantidad-mas bg-gray-200 px-2 py-1 rounded-r">+</button>
-                        </div>
+                {% if producto.categoria == categoria %}
+                <div class="product-card text-center text-gray-800 max-w-xs">
+                    <a href="#">
+                        {% if producto.imagen %}
+                            <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="w-[300px] h-[400px] object-cover rounded-xl mx-auto" />
+                        {% else %}
+                            <img src="{% static 'img/default.jpg' %}" alt="{{ producto.nombre }}" class="w-[300px] h-[400px] object-cover rounded-xl mx-auto" />
+                        {% endif %}
+                    </a>
+                    <div class="text-xl font-bold mt-4">{{ producto.nombre }}</div>
+                    <p class="text-base text-gray-600 mt-2">{{ producto.descripcion|truncatechars:100 }}</p>
+                    <p class="text-base text-gray-600 mt-2"><strong>Tallas:</strong> {{ producto.tallas }}</p>
+                    <div class="text-lg font-semibold text-gray-800 mt-4">
+                        {% if producto.descuento > 0 %}
+                            <span class="price-old mr-2">{{ producto.precio|floatformat:0|add:"."|slice:".2:"|join:"" }}</span>
+                            {{ producto.precio_con_descuento|floatformat:0|add:"."|slice:".2:"|join:"" }}
+                        {% else %}
+                            {{ producto.precio|floatformat:0|add:"."|slice:".2:"|join:"" }}
+                        {% endif %}
                     </div>
-                    <button class="agregar-carrito bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 w-full"
+                    <div class="flex items-center justify-center mt-4">
+                        <button class="cantidad-menos bg-gray-200 px-3 py-1 rounded-l hover:bg-gray-300">-</button>
+                        <input type="number" value="1" min="1" max="10" class="cantidad-input w-12 text-center border-y border-gray-200">
+                        <button class="cantidad-mas bg-gray-200 px-3 py-1 rounded-r hover:bg-gray-300">+</button>
+                    </div>
+                    <button class="agregar-carrito bg-orange-500 text-white px-4 py-2 rounded w-full mt-3 hover:bg-orange-600 transition-all"
                             data-producto-id="{{ producto.id }}">
                         <i class="fas fa-cart-plus mr-2"></i>Agregar al Carrito
                     </button>
                 </div>
-            {% empty %}
-                <div class="col-span-full text-center text-white text-xl">
-                    No hay productos disponibles en el catálogo.
-                </div>
+                {% endif %}
             {% endfor %}
         </div>
-    </main>
-    <!-- Footer (mismo que original) -->
-    <footer class="bg-black/80 text-center py-4 z-10">
-        <p class="text-sm text-white">&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</p>
+    </section>
+    {% empty %}
+        <section class="py-20 px-8 bg-white text-center">
+            <p class="text-xl text-gray-600">No hay categorías disponibles.</p>
+        </section>
+    {% endfor %}
+    <!-- Footer -->
+    <footer class="bg-black py-4 text-center text-white">
+        <small>&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</small>
     </footer>
-    <!-- Scripts (mismo que original) -->
+    <!-- Botón volver arriba -->
+    <button id="backToTopBtn" class="fixed bottom-5 right-5 bg-[#800E0E] text-white p-4 rounded-full text-2xl cursor-pointer hidden">&#8679;</button>
+    <!-- Scripts -->
     <script>
         const URL_AGREGAR_CARRITO = "{% url 'agregar_al_carrito' %}";
         const URL_OBTENER_CARRITO = "{% url 'obtener_carrito' %}";
@@ -169,36 +170,21 @@
     </script>
     <script src="{% static 'js/carrito.js' %}"></script>
     <script>
-        // Smooth scroll (mismo que original)
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
+        // Back to top
+        const backToTopBtn = document.getElementById('backToTopBtn');
+        window.onscroll = () => {
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                backToTopBtn.classList.remove('hidden');
+            } else {
+                backToTopBtn.classList.add('hidden');
+            }
+        };
+        backToTopBtn.addEventListener('click', () => {
+            document.body.scrollTop = 0;
+            document.documentElement.scrollTop = 0;
         });
-        function abrirCarrito() {
-            const carritoSidebar = document.getElementById("carritoSidebar");
-            if (carritoSidebar) {
-                carritoSidebar.classList.remove("translate-x-full");
-                const overlay = document.createElement('div');
-                overlay.id = 'carrito-overlay';
-                overlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-40';
-                overlay.onclick = cerrarCarrito;
-                document.body.appendChild(overlay);
-            }
-        }
-        function cerrarCarrito() {
-            const carritoSidebar = document.getElementById("carritoSidebar");
-            if (carritoSidebar) {
-                carritoSidebar.classList.add("translate-x-full");
-            }
-            const overlay = document.getElementById('carrito-overlay');
-            if (overlay) {
-                overlay.remove();
-            }
-        }
+
+        // User Menu y carrito
         document.addEventListener('DOMContentLoaded', () => {
             const userMenuBtn = document.getElementById('userMenuBtn');
             const userMenu = document.getElementById('userMenu');
@@ -216,7 +202,46 @@
             if (typeof fetchCarrito === 'function') {
                 fetchCarrito();
             }
+
+            // Manejo de cantidad
+            document.querySelectorAll('.cantidad-menos').forEach(button => {
+                button.addEventListener('click', () => {
+                    const input = button.nextElementSibling;
+                    let value = parseInt(input.value);
+                    if (value > 1) {
+                        input.value = value - 1;
+                    }
+                });
+            });
+
+            document.querySelectorAll('.cantidad-mas').forEach(button => {
+                button.addEventListener('click', () => {
+                    const input = button.previousElementSibling;
+                    let value = parseInt(input.value);
+                    if (value < 10) {
+                        input.value = value + 1;
+                    }
+                });
+            });
+
+            // Smooth scroll para categorías
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
         });
+
+        function abrirCarrito() {
+            document.getElementById("carritoSidebar").classList.remove("translate-x-full");
+        }
+
+        function cerrarCarrito() {
+            document.getElementById("carritoSidebar").classList.add("translate-x-full");
+        }
     </script>
 </body>
 </html>

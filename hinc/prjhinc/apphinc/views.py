@@ -17,10 +17,14 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 def index(request):
-    productos_destacados = Producto.objects.filter(estado='Habilitado', stock__gt=0)[:4]
-    return render(request, 'index.html', {
+    productos_destacados = Producto.objects.filter(is_destacado=True, estado='Habilitado', stock__gt=0)[:4]
+    categorias = Categoria.objects.all()
+    ofertas = Producto.objects.filter(descuento__gt=0, estado='Habilitado', stock__gt=0)[:4]
+    return render(request, 'index2.html', {
         'user': request.user if request.user.is_authenticated else None,
-        'productos_destacados': productos_destacados
+        'productos_destacados': productos_destacados,
+        'categorias': categorias,
+        'ofertas': ofertas
     })
 
 def register_view(request):
@@ -459,23 +463,3 @@ def obtener_datos_carrito(carrito):
 def ver_carrito(request):
     carrito, created = Carrito.objects.get_or_create(usuario=request.user)
     return render(request, 'carrito.html', {'carrito': carrito})
-
-# Modificar la vista index para pasar productos
-def index(request):
-    productos_destacados = Producto.objects.all()[:4]
-    
-    return render(request, 'index.html', {
-        'user': request.user if request.user.is_authenticated else None,
-        'productos_destacados': productos_destacados
-    })
-
-def index2(request):
-    productos_destacados = Producto.objects.filter(is_destacado=True, estado='Habilitado', stock__gt=0)[:4]
-    categorias = Categoria.objects.all()
-    ofertas = Producto.objects.filter(descuento__gt=0, estado='Habilitado', stock__gt=0)[:4]
-    return render(request, 'index2.html', {
-        'user': request.user if request.user.is_authenticated else None,
-        'productos_destacados': productos_destacados,
-        'categorias': categorias,
-        'ofertas': ofertas
-    })
