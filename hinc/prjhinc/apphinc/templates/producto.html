@@ -1,0 +1,455 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ producto.nombre }} - Hinc</title>
+    <link rel="shortcut icon" href="{% static 'img/Hinc.png' %}" type="image/x-icon">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Montserrat', sans-serif; }
+        .nav-navbar a:hover { color: black; background-color: white; border: 2px solid white; border-radius: 5px; text-decoration: underline; }
+        .talla-btn { transition: all 0.3s ease; }
+        .talla-btn:hover { transform: scale(1.05); }
+        .talla-btn.selected { background-color: #000; color: white; border-color: #000; }
+        .talla-btn.disabled { background-color: #f3f4f6; color: #9ca3af; cursor: not-allowed; border-color: #d1d5db; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="relative h-20 bg-white shadow-sm">
+        <nav class="w-full h-full flex items-center justify-between px-6 max-w-7xl mx-auto">
+            <a href="{% url 'index' %}">
+                <img src="{% static 'img/Hinc.png' %}" alt="Hinc Logo" class="h-8">
+            </a>
+            <div class="nav-navbar flex space-x-4">
+                <a href="{% url 'catalogo' %}" class="text-gray-800 text-lg font-medium px-4 py-2 transition-all">Catálogo</a>
+                <a href="#Categorias" class="text-gray-800 text-lg font-medium px-4 py-2 transition-all">Categorías</a>
+            </div>
+            <div class="flex items-center space-x-2">
+                {% if user.is_authenticated %}
+                    <div class="relative">
+                        <button onclick="abrirCarrito()" class="text-gray-800 text-base p-2 hover:bg-gray-100 rounded-md transition-all flex items-center justify-center w-10 h-10">
+                            <i class="fa-solid fa-cart-shopping"></i>
+                            <span id="cart-count" class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <button id="userMenuBtn" class="text-gray-800 text-base p-2 hover:bg-gray-100 rounded-md transition-all flex items-center justify-center w-10 h-10">
+                            <i class="fa-solid fa-user"></i>
+                        </button>
+                        <div id="userMenu" class="hidden absolute right-0 top-12 w-48 bg-white rounded-lg shadow-xl z-50 border border-gray-200">
+                            {% if user.role == 'Admin' %}
+                                <a href="{% url 'paneladmin' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg">Panel Admin</a>
+                            {% else %}
+                                <a href="{% url 'index' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100">Mi Cuenta</a>
+                            {% endif %}
+                            <a href="{% url 'ver_carrito' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100">Ver Carrito</a>
+                            <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100">Configuración</a>
+                            <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg">Cerrar Sesión</a>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="space-x-4">
+                        <a href="{% url 'register' %}" class="text-gray-800 text-base p-2 hover:bg-gray-100 rounded-md transition-all flex items-center justify-center w-10 h-10">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    <!-- Sidebar Carrito -->
+    <div id="carritoSidebar" class="fixed top-0 right-0 h-full w-80 bg-white shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+        <div class="flex justify-between items-center p-4 border-b">
+            <h2 class="text-lg font-bold">Agregados al carrito</h2>
+            <button onclick="cerrarCarrito()" class="text-xl">&times;</button>
+        </div>
+        <div class="p-4">
+            <div class="bg-yellow-200 text-yellow-900 text-sm p-2 rounded mb-4">
+                <i class="fas fa-info-circle mr-2"></i> Los descuentos serán visualizados al seleccionar el método de pago
+            </div>
+            <div id="carritoContenido" class="text-center text-gray-500">
+                No tienes productos en tu carrito
+            </div>
+        </div>
+        <div class="absolute bottom-0 w-full p-4 border-t">
+            <p class="text-right font-semibold mb-2">Subtotal: <span id="subtotalCarrito">$0</span></p>
+            <a href="{% url 'ver_carrito' %}" class="block text-center bg-orange-500 hover:bg-orange-600 text-white py-2 rounded mb-2">Ver carrito / Ir a pagar</a>
+            <a href="#" onclick="cerrarCarrito()" class="block text-center text-blue-600 hover:underline">Seguir comprando</a>
+        </div>
+    </div>
+
+    <!-- Producto Detalle -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <!-- Imágenes del Producto -->
+            <div class="space-y-4">
+                <div class="bg-white rounded-lg shadow-sm p-4">
+                    {% if producto.imagen %}
+                        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="w-full h-auto rounded-lg">
+                    {% else %}
+                        <img src="{% static 'img/default.jpg' %}" alt="{{ producto.nombre }}" class="w-full h-auto rounded-lg">
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Información del Producto -->
+            <div class="space-y-6">
+                <!-- Breadcrumb -->
+                <nav class="text-sm text-gray-500">
+                    <a href="{% url 'index' %}" class="hover:text-gray-700">Inicio</a> / 
+                    <a href="{% url 'catalogo' %}" class="hover:text-gray-700">Catálogo</a> / 
+                    <span class="text-gray-800">{{ producto.nombre }}</span>
+                </nav>
+
+                <!-- Nombre y Precio -->
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ producto.nombre }}</h1>
+                    <div class="flex items-center space-x-4 mt-2">
+                        {% if producto.descuento > 0 %}
+                            <span class="text-2xl font-bold text-gray-900">${{ producto.precio_con_descuento|floatformat:0 }}</span>
+                            <span class="text-xl text-gray-500 line-through">${{ producto.precio|floatformat:0 }}</span>
+                            <span class="bg-red-100 text-red-800 text-sm font-medium px-2 py-1 rounded">-{{ producto.descuento }}%</span>
+                        {% else %}
+                            <span class="text-2xl font-bold text-gray-900">${{ producto.precio|floatformat:0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Descripción -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Descripción</h3>
+                    <p class="text-gray-600 leading-relaxed">{{ producto.descripcion }}</p>
+                </div>
+
+                <!-- Selección de Talla -->
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Selecciona tu talla</h3>
+                        <button type="button" class="text-sm text-gray-500 hover:text-gray-700 flex items-center">
+                            <i class="fas fa-ruler mr-1"></i>
+                            Guía de tallas
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-4 gap-3" id="tallas-container">
+                        {% for stock_talla_obj in producto.stocktalla_set.all %}
+                            <button type="button" 
+                                    class="talla-btn border-2 border-gray-300 rounded-lg py-3 px-4 text-center font-medium transition-all {% if stock_talla_obj.stock <= 0 %}disabled{% endif %}"
+                                    data-talla="{{ stock_talla_obj.talla }}"
+                                    data-stock="{{ stock_talla_obj.stock }}"
+                                    {% if stock_talla_obj.stock <= 0 %}disabled{% endif %}>
+                                {{ stock_talla_obj.talla }}
+                                {% if stock_talla_obj.stock <= 10 and stock_talla_obj.stock > 0 %}
+                                    <div class="text-xs text-red-600 mt-1">¡Quedan pocas!</div>
+                                {% elif stock_talla_obj.stock == 0 %}
+                                    <div class="text-xs text-gray-500 mt-1">Agotado</div>
+                                {% endif %}
+                            </button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Alertas de Stock Bajo -->
+                <div id="stock-alerts" class="space-y-2">
+                    {% for stock_talla_obj in producto.stocktalla_set.all %}
+                        {% if stock_talla_obj.stock <= 10 and stock_talla_obj.stock > 0 %}
+                            <div class="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start">
+                                <i class="fas fa-exclamation-triangle text-red-500 mt-0.5 mr-3"></i>
+                                <div>
+                                    <p class="text-red-800 font-medium text-sm">¡Quedan pocas unidades en talla {{ stock_talla_obj.talla }}!</p>
+                                    <p class="text-red-600 text-xs mt-1">Solo {{ stock_talla_obj.stock }} disponible{{ stock_talla_obj.stock|pluralize }}</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <!-- Cantidad y Agregar al Carrito -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-lg font-semibold text-gray-900 mb-2 block">Cantidad</label>
+                        <div class="flex items-center space-x-3">
+                            <button type="button" id="decrementar-cantidad" class="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50">
+                                <i class="fas fa-minus text-gray-600"></i>
+                            </button>
+                            <input type="number" id="cantidad" value="1" min="1" max="10" class="w-20 text-center border border-gray-300 rounded-lg py-2">
+                            <button type="button" id="incrementar-cantidad" class="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50">
+                                <i class="fas fa-plus text-gray-600"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-4">
+                        <button id="agregar-carrito-btn" 
+                                class="flex-1 bg-orange-500 text-white py-4 px-6 rounded-lg font-semibold hover:bg-orange-600 transition-colors duration-200 flex items-center justify-center disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                disabled>
+                            <i class="fas fa-shopping-cart mr-2"></i>
+                            Agregar al Carrito
+                        </button>
+                        <button class="w-12 h-12 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors duration-200">
+                            <i class="far fa-heart text-gray-600"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Información Adicional -->
+                <div class="border-t border-gray-200 pt-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-gray-600">
+                        <div class="flex items-center">
+                            <i class="fas fa-truck text-gray-400 mr-3"></i>
+                            <span>Envío gratis en compras superiores a $100.000</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-undo text-gray-400 mr-3"></i>
+                            <span>Devoluciones gratis en 30 días</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-shield-alt text-gray-400 mr-3"></i>
+                            <span>Garantía del producto</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Simplificado -->
+    <footer class="bg-black py-4 text-center text-white mt-12">
+        <small>&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</small>
+    </footer>
+
+    <script>
+        const URL_AGREGAR_CARRITO = "{% url 'agregar_al_carrito' %}";
+        const URL_OBTENER_CARRITO = "{% url 'obtener_carrito' %}";
+        const URL_QUITAR_DEL_CARRITO = "{% url 'quitar_del_carrito' %}";
+        const PRODUCTO_ID = {{ producto.id }};
+
+        // Variables globales
+        let tallaSeleccionada = null;
+        let cantidad = 1;
+
+        // Función para obtener y actualizar el carrito - AGREGADA
+        async function fetchCarrito() {
+            try {
+                const response = await fetch(URL_OBTENER_CARRITO);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const cartCount = document.getElementById('cart-count');
+                    if (cartCount) {
+                        cartCount.textContent = data.carrito.cantidad_total;
+                    }
+                    
+                    // Actualizar sidebar del carrito
+                    actualizarSidebarCarrito(data.carrito);
+                }
+            } catch (error) {
+                console.error('Error al obtener carrito:', error);
+            }
+        }
+
+        // Función para actualizar el sidebar del carrito - AGREGADA
+        function actualizarSidebarCarrito(carrito) {
+            const carritoContenido = document.getElementById('carritoContenido');
+            const subtotalCarrito = document.getElementById('subtotalCarrito');
+            
+            if (carrito.items.length === 0) {
+                carritoContenido.innerHTML = '<p class="text-center text-gray-500">No tienes productos en tu carrito</p>';
+                subtotalCarrito.textContent = '$0';
+            } else {
+                let html = '';
+                carrito.items.forEach(item => {
+                    html += `
+                        <div class="flex items-center justify-between mb-3 p-2 bg-gray-50 rounded">
+                            <div class="flex items-center">
+                                ${item.imagen ? `<img src="${item.imagen}" alt="${item.nombre}" class="w-10 h-10 object-cover rounded mr-2">` : ''}
+                                <div>
+                                    <p class="text-sm font-medium">${item.nombre}</p>
+                                    <p class="text-xs text-gray-500">Talla: ${item.talla} | Cantidad: ${item.cantidad}</p>
+                                </div>
+                            </div>
+                            <p class="text-sm font-semibold">$${(item.precio * item.cantidad).toFixed(0)}</p>
+                        </div>
+                    `;
+                });
+                carritoContenido.innerHTML = html;
+                subtotalCarrito.textContent = '$' + carrito.total.toFixed(0);
+            }
+        }
+
+        // Selección de talla - CORREGIDO
+        document.addEventListener('DOMContentLoaded', function() {
+            const tallaBtns = document.querySelectorAll('.talla-btn:not(.disabled)');
+            
+            tallaBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    console.log('Botón de talla clickeado:', this.dataset.talla);
+                    
+                    // Remover selección anterior
+                    document.querySelectorAll('.talla-btn').forEach(b => {
+                        b.classList.remove('selected', 'border-black', 'bg-black', 'text-white');
+                        b.classList.add('border-gray-300', 'bg-white', 'text-gray-900');
+                    });
+                    
+                    // Seleccionar nueva talla
+                    this.classList.remove('border-gray-300', 'bg-white', 'text-gray-900');
+                    this.classList.add('selected', 'border-black', 'bg-black', 'text-white');
+                    tallaSeleccionada = this.dataset.talla;
+                    
+                    console.log('Talla seleccionada:', tallaSeleccionada);
+                    
+                    // Habilitar botón de agregar al carrito
+                    const agregarBtn = document.getElementById('agregar-carrito-btn');
+                    agregarBtn.disabled = false;
+                    agregarBtn.classList.remove('bg-gray-300');
+                    agregarBtn.classList.add('bg-orange-500', 'hover:bg-orange-600');
+                    
+                    // Mostrar información de stock si es bajo
+                    const stock = parseInt(this.dataset.stock);
+                    if (stock <= 10) {
+                        console.log('Stock bajo:', stock);
+                    }
+                });
+            });
+
+            // Manejo de cantidad
+            document.getElementById('incrementar-cantidad').addEventListener('click', function() {
+                const input = document.getElementById('cantidad');
+                if (parseInt(input.value) < 10) {
+                    input.value = parseInt(input.value) + 1;
+                    cantidad = input.value;
+                }
+            });
+
+            document.getElementById('decrementar-cantidad').addEventListener('click', function() {
+                const input = document.getElementById('cantidad');
+                if (parseInt(input.value) > 1) {
+                    input.value = parseInt(input.value) - 1;
+                    cantidad = input.value;
+                }
+            });
+
+            document.getElementById('cantidad').addEventListener('change', function() {
+                let value = parseInt(this.value);
+                if (value < 1) value = 1;
+                if (value > 10) value = 10;
+                this.value = value;
+                cantidad = value;
+            });
+
+            // Agregar al carrito
+            document.getElementById('agregar-carrito-btn').addEventListener('click', async function() {
+                if (!tallaSeleccionada) {
+                    alert('Por favor selecciona una talla');
+                    return;
+                }
+
+                const btn = this;
+                const originalText = btn.innerHTML;
+                
+                // Mostrar loading
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Agregando...';
+                btn.disabled = true;
+
+                try {
+                    const response = await fetch(URL_AGREGAR_CARRITO, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                            producto_id: PRODUCTO_ID,
+                            cantidad: parseInt(cantidad),
+                            talla: tallaSeleccionada
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Mostrar mensaje de éxito
+                        mostrarMensajeExito('Producto agregado al carrito');
+                        
+                        // Actualizar contador del carrito
+                        fetchCarrito();
+                        
+                        // Abrir sidebar del carrito
+                        abrirCarrito();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (error) {
+                    alert('Error al agregar al carrito: ' + error.message);
+                } finally {
+                    // Restaurar botón
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+
+            // User Menu
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const userMenu = document.getElementById('userMenu');
+            if (userMenuBtn && userMenu) {
+                userMenuBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    userMenu.classList.toggle('hidden');
+                });
+                document.addEventListener('click', (event) => {
+                    if (!userMenuBtn.contains(event.target) && !userMenu.contains(event.target)) {
+                        userMenu.classList.add('hidden');
+                    }
+                });
+            }
+            
+            // Cargar carrito al iniciar la página
+            fetchCarrito();
+        });
+
+        // Funciones auxiliares
+        function mostrarMensajeExito(mensaje) {
+            const alerta = document.createElement('div');
+            alerta.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-transform duration-300';
+            alerta.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span>${mensaje}</span>
+                </div>
+            `;
+            document.body.appendChild(alerta);
+
+            setTimeout(() => {
+                alerta.remove();
+            }, 3000);
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function abrirCarrito() {
+            document.getElementById("carritoSidebar").classList.remove("translate-x-full");
+        }
+
+        function cerrarCarrito() {
+            document.getElementById("carritoSidebar").classList.add("translate-x-full");
+        }
+    </script>
+</body>
+</html>

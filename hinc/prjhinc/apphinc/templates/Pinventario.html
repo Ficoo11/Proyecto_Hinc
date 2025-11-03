@@ -71,9 +71,11 @@
                 </div>
             {% endif %}
             {% if action == 'update_productos' and producto %}
-                <form method="post" action="{% url 'productos_update' producto.id %}" class="mb-6 p-6 bg-white rounded-md shadow-md" enctype="multipart/form-data" id="inventoryForm">
+                <form method="post" action="{% url 'inventario' %}?action=update_productos&producto_id={{ producto.id }}" class="mb-6 p-6 bg-white rounded-md shadow-md" id="inventoryForm">
                     {% csrf_token %}
-                    <div class="grid grid-cols-1 gap-4">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Editar Inventario: {{ producto.nombre }}</h3>
+                    
+                    <div class="grid grid-cols-1 gap-4 mb-6">
                         {% for field in form %}
                             <div>
                                 <label class="block text-gray-700 font-semibold">{{ field.label }}</label>
@@ -84,42 +86,50 @@
                             </div>
                         {% endfor %}
                     </div>
+                    
+                    <!-- Sección de Stock por Tallas -->
+                    <div class="mt-6 border-t pt-6">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Stock por Tallas</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {% for stock_form in stock_forms %}
+                            <div class="bg-gray-50 p-4 rounded-md border border-gray-200 {% if stock_form.instance.stock <= 10 %}border-yellow-300 bg-yellow-50{% endif %}">
+                                <label class="block text-gray-700 font-semibold mb-2">Talla {{ stock_form.instance.talla }}</label>
+                                <input type="number" 
+                                       name="stock_{{ stock_form.instance.talla }}" 
+                                       value="{{ stock_form.instance.stock }}" 
+                                       min="0" 
+                                       class="mt-1 p-2 w-full border border-gray-300 rounded-md focus:ring-black focus:border-black {% if stock_form.instance.stock <= 10 %}border-yellow-500{% endif %}"
+                                       placeholder="Stock">
+                                {% if stock_form.instance.stock <= 10 %}
+                                <div class="mt-1 text-xs text-red-600">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>Stock bajo ({{ stock_form.instance.stock }} unidades)
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
                     <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-300">Actualizar Inventario</button>
                     <a href="{% url 'inventario' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
                 </form>
             {% elif action == 'delete_productos' and producto %}
                 <div class="mb-6 p-4 bg-red-100 rounded-md border border-red-300">
                     <p class="text-red-700">¿Estás seguro de eliminar el producto {{ producto.nombre }} del inventario?</p>
-                    <form method="post" action="{% url 'productos_delete' producto.id %}?panel=inventory">
+                    <form method="post" action="{% url 'inventario' %}?action=delete_productos&producto_id={{ producto.id }}">
                         {% csrf_token %}
                         <button type="submit" class="mt-4 bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition duration-300">Eliminar</button>
                         <a href="{% url 'inventario' %}" class="ml-4 text-blue-500 hover:underline">Cancelar</a>
                     </form>
                 </div>
             {% else %}
-                <button id="addProductBtn" class="mb-6 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-300">Agregar Nuevo Producto</button>
-                <form id="addProductForm" method="post" action="{% url 'productos_create' %}" class="mb-6 p-6 bg-white rounded-md shadow-md hidden" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="grid grid-cols-1 gap-4">
-                        {% for field in form %}
-                            <div>
-                                <label class="block text-gray-700 font-semibold">{{ field.label }}</label>
-                                {{ field|add_class:"mt-1 p-2 w-full border border-gray-300 rounded-md focus:ring-black focus:border-black" }}
-                                {% if field.errors %}
-                                    <span class="text-red-500 text-sm">{{ field.errors.0 }}</span>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                    </div>
-                    <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-300">Guardar Producto</button>
-                    <a href="{% url 'inventario' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
-                </form>
                 <div class="overflow-x-auto">
                     <table class="min-w-full bg-white border border-gray-300">
                         <thead>
                             <tr class="bg-gray-200">
                                 <th class="py-2 px-4 border-b text-left text-gray-700">Nombre</th>
-                                <th class="py-2 px-4 border-b text-left text-gray-700">Stock</th>
+                                <th class="py-2 px-4 border-b text-left text-gray-700">Stock General</th>
+                                <th class="py-2 px-4 border-b text-left text-gray-700">Stock por Tallas</th>
                                 <th class="py-2 px-4 border-b text-left text-gray-700">Descuento</th>
                                 <th class="py-2 px-4 border-b text-left text-gray-700">Estado</th>
                                 <th class="py-2 px-4 border-b text-left text-gray-700">Acciones</th>
@@ -127,19 +137,34 @@
                         </thead>
                         <tbody>
                             {% for producto in productos %}
-                            <tr class="{% if producto.stock <= 0 or producto.estado == 'Agotado' %}bg-red-100{% else %}hover:bg-gray-100{% endif %}">
+                            <tr class="{% if producto.stock <= 0 or producto.estado == 'Agotado' %}bg-red-100{% elif producto.tiene_stock_bajo %}bg-yellow-50{% else %}hover:bg-gray-100{% endif %}">
                                 <td class="py-2 px-4 border-b">{{ producto.nombre }}</td>
-                                <td class="py-2 px-4 border-b">{{ producto.stock }}</td>
+                                <td class="py-2 px-4 border-b">
+                                    {{ producto.stock }}
+                                    {% if producto.tiene_stock_bajo %}
+                                    <span class="ml-2 text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">Stock Bajo</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-2 px-4 border-b">
+                                    {% for stock_talla in producto.stocktalla_set.all %}
+                                    <div class="text-sm">
+                                        {{ stock_talla.talla }}: {{ stock_talla.stock }}
+                                        {% if stock_talla.stock <= 10 %}
+                                        <span class="text-xs text-red-600 ml-1">⚠</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </td>
                                 <td class="py-2 px-4 border-b">{{ producto.descuento }}%</td>
                                 <td class="py-2 px-4 border-b">{{ producto.estado }}</td>
                                 <td class="py-2 px-4 border-b">
-                                    <a href="{% url 'productos_update' producto.id %}?panel=inventory" class="text-blue-500 hover:underline">Editar</a>
-                                    <a href="{% url 'productos_delete' producto.id %}?panel=inventory" class="text-red-500 hover:underline ml-4">Eliminar</a>
+                                    <a href="{% url 'inventario' %}?action=update_productos&producto_id={{ producto.id }}" class="text-blue-500 hover:underline">Editar</a>
+                                    <a href="{% url 'inventario' %}?action=delete_productos&producto_id={{ producto.id }}" class="text-red-500 hover:underline ml-4">Eliminar</a>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="py-2 px-4 border-b text-center text-gray-700">No hay productos en inventario.</td>
+                                <td colspan="6" class="py-2 px-4 border-b text-center text-gray-700">No hay productos en inventario.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -159,33 +184,22 @@
         userMenuBtn.addEventListener('click', () => {
             userMenu.classList.toggle('hidden');
         });
-
-        // Toggle Form for Adding Product
-        const addProductBtn = document.getElementById('addProductBtn');
-        const addProductForm = document.getElementById('addProductForm');
-        if (addProductBtn && addProductForm) {
-            addProductBtn.addEventListener('click', () => {
-                addProductForm.classList.toggle('hidden');
-            });
-        }
-
         // Validaciones en tiempo real
         const inventoryForms = document.querySelectorAll('#inventoryForm');
         inventoryForms.forEach(form => {
-            const stockInput = form.querySelector('input[name="stock"]');
-            if (stockInput) {
-                stockInput.addEventListener('input', () => {
-                    if (parseInt(stockInput.value) < 0 && stockInput.value !== '') {
-                        stockInput.classList.add('border-red-500');
-                        stockInput.classList.remove('border-green-500');
+            const stockInputs = form.querySelectorAll('input[name^="stock_"]');
+            stockInputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    if (parseInt(input.value) < 0 && input.value !== '') {
+                        input.classList.add('border-red-500');
+                        input.classList.remove('border-green-500');
                     } else {
-                        stockInput.classList.add('border-green-500');
-                        stockInput.classList.remove('border-red-500');
+                        input.classList.add('border-green-500');
+                        input.classList.remove('border-red-500');
                     }
                 });
-            }
+            });
         });
-
         // Ocultar mensajes automáticamente después de 5 segundos
         setTimeout(() => {
             const messagesContainer = document.getElementById('messages-container');

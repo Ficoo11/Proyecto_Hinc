@@ -30,7 +30,6 @@
             <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
         </div>
     </header>
-
     <!-- Main Content -->
     {% block content %}
     <main class="flex-1 p-8 bg-gray-100 text-black">
@@ -49,38 +48,39 @@
                 {% endfor %}
             </div>
         {% endif %}
-
         <div class="max-w-6xl mx-auto">
             <h1 class="text-3xl font-bold mb-8 text-gray-800">Tu Carrito de Compras</h1>
-            
+           
             {% if carrito.items.all %}
             <div class="bg-white shadow-md rounded-lg p-6 border border-gray-200">
                 {% for item in carrito.items.all %}
-                <div class="flex justify-between items-center border-b py-4" data-producto-id="{{ item.producto.id }}">
+                <div class="flex justify-between items-center border-b py-4" data-item-id="{{ item.id }}" data-producto-id="{{ item.producto.id }}" data-talla="{{ item.talla }}">
                     <div class="flex items-center">
                         {% if item.producto.imagen %}
-                        <img src="{{ item.producto.imagen.url }}" alt="{{ item.producto.nombre }}" 
+                        <img src="{{ item.producto.imagen.url }}" alt="{{ item.producto.nombre }}"
                              class="w-20 h-20 object-cover rounded mr-4 border border-gray-200">
                         {% endif %}
                         <div>
                             <h3 class="font-semibold text-lg text-gray-800">{{ item.producto.nombre }}</h3>
-                            <p class="text-gray-600">S/. {{ item.producto.precio }}</p>
+                            <p class="text-gray-600">$ {{ item.producto.precio }}</p>
                             <p class="text-gray-600">Cantidad: {{ item.cantidad }}</p>
+                            <p class="text-gray-600">Talla: {{ item.talla }}</p>
                         </div>
                     </div>
-                    
+                   
                     <div class="flex items-center">
-                        <span class="font-semibold text-lg text-gray-800 mr-4">S/. {{ item.obtener_total }}</span>
+                        <span class="font-semibold text-lg text-gray-800 mr-4">$ {{ item.obtener_total }}</span>
                         <button class="btn-quitar-producto bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition duration-300"
-                                data-producto-id="{{ item.producto.id }}">
+                                data-producto-id="{{ item.producto.id }}"
+                                data-talla="{{ item.talla }}">
                             <i class="fa-solid fa-trash mr-2"></i>Eliminar
                         </button>
                     </div>
                 </div>
                 {% endfor %}
-                
+               
                 <div class="mt-6 text-right">
-                    <h2 class="text-2xl font-bold text-gray-800">Total: S/. {{ carrito.obtener_total }}</h2>
+                    <h2 class="text-2xl font-bold text-gray-800">Total: $ {{ carrito.obtener_total }}</h2>
                     <button class="bg-orange-500 text-white px-6 py-2 rounded-md hover:bg-orange-600 mt-4 transition duration-300">
                         Proceder al Pago
                     </button>
@@ -97,12 +97,10 @@
         </div>
     </main>
     {% endblock %}
-
     <!-- Footer -->
     <footer class="bg-gray-900 text-center py-4 z-0">
-        <p class="text-sm text-white">&copy; 2025 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</p>
+        <p class="text-sm text-white">&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</p>
     </footer>
-
     <script>
         // User Menu Dropdown
         const userMenuBtn = document.getElementById('userMenuBtn');
@@ -110,7 +108,6 @@
         userMenuBtn.addEventListener('click', () => {
             userMenu.classList.toggle('hidden');
         });
-
         // Ocultar mensajes automáticamente después de 5 segundos
         setTimeout(() => {
             const messagesContainer = document.getElementById('messages-container');
@@ -118,12 +115,60 @@
                 messagesContainer.style.display = 'none';
             }
         }, 5000);
-
         // URLs para el carrito
         const URL_AGREGAR_CARRITO = "{% url 'agregar_al_carrito' %}";
         const URL_OBTENER_CARRITO = "{% url 'obtener_carrito' %}";
         const URL_QUITAR_DEL_CARRITO = "{% url 'quitar_del_carrito' %}";
+
+        // Eliminar productos del carrito - CORREGIDO
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.btn-quitar-producto').forEach(button => {
+                button.addEventListener('click', async function() {
+                    const productoId = this.dataset.productoId;
+                    const talla = this.dataset.talla;
+                    
+                    try {
+                        const response = await fetch(URL_QUITAR_DEL_CARRITO, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken')
+                            },
+                            body: JSON.stringify({
+                                producto_id: productoId,
+                                talla: talla
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            // Recargar la página para actualizar la vista
+                            location.reload();
+                        } else {
+                            alert('Error: ' + data.error);
+                        }
+                    } catch (error) {
+                        alert('Error al eliminar del carrito: ' + error.message);
+                    }
+                });
+            });
+        });
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
     </script>
-    <script src="{% static 'js/carrito.js' %}"></script>
 </body>
 </html>

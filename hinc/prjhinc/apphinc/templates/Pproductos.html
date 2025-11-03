@@ -101,6 +101,30 @@
                             </div>
                         {% endfor %}
                     </div>
+                    
+                    <!-- Sección de Stock por Tallas -->
+                    <div class="mt-6 border-t pt-6">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Stock por Tallas</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {% for stock_form in stock_forms %}
+                            <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
+                                <label class="block text-gray-700 font-semibold mb-2">Talla {{ stock_form.talla }}</label>
+                                <input type="number" 
+                                       name="stock_{{ stock_form.talla }}" 
+                                       value="{{ stock_form.instance.stock }}" 
+                                       min="0" 
+                                       class="mt-1 p-2 w-full border border-gray-300 rounded-md focus:ring-black focus:border-black"
+                                       placeholder="Stock">
+                                {% if stock_form.instance.stock <= 10 %}
+                                <div class="mt-1 text-xs text-red-600">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>Stock bajo
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
                     <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-300">Actualizar Producto</button>
                     <a href="{% url 'productos' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
                 </form>
@@ -138,16 +162,23 @@
                                 <th class="py-2 px-4 border-b text-left text-gray-700">Nombre</th>
                                 <th class="py-2 px-4 border-b text-left text-gray-700">Precio</th>
                                 <th class="py-2 px-4 border-b text-left text-gray-700">Tallas</th>
+                                <th class="py-2 px-4 border-b text-left text-gray-700">Stock General</th>
                                 <th class="py-2 px-4 border-b text-left text-gray-700">Categoría</th>
                                 <th class="py-2 px-4 border-b text-left text-gray-700">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for producto in productos %}
-                            <tr class="hover:bg-gray-100">
+                            <tr class="hover:bg-gray-100 {% if producto.tiene_stock_bajo %}bg-yellow-50{% endif %}">
                                 <td class="py-2 px-4 border-b">{{ producto.nombre }}</td>
                                 <td class="py-2 px-4 border-b">${{ producto.precio }}</td>
                                 <td class="py-2 px-4 border-b">{{ producto.tallas }}</td>
+                                <td class="py-2 px-4 border-b">
+                                    {{ producto.stock }}
+                                    {% if producto.tiene_stock_bajo %}
+                                    <span class="ml-2 text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">Stock Bajo</span>
+                                    {% endif %}
+                                </td>
                                 <td class="py-2 px-4 border-b">{{ producto.categoria }}</td>
                                 <td class="py-2 px-4 border-b">
                                     <a href="{% url 'productos_update' producto.id %}" class="text-blue-500 hover:underline">Editar</a>
@@ -156,7 +187,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="py-2 px-4 border-b text-center text-gray-700">No hay productos registrados.</td>
+                                <td colspan="6" class="py-2 px-4 border-b text-center text-gray-700">No hay productos registrados.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -176,7 +207,6 @@
         userMenuBtn.addEventListener('click', () => {
             userMenu.classList.toggle('hidden');
         });
-
         // Toggle Form for Adding Product
         const addProductBtn = document.getElementById('addProductBtn');
         const addProductForm = document.getElementById('addProductForm');
@@ -185,13 +215,26 @@
                 addProductForm.classList.toggle('hidden');
             });
         }
-
         // Validaciones en tiempo real
         const productForms = document.querySelectorAll('#productForm');
         productForms.forEach(form => {
             const precioInput = form.querySelector('input[name="precio"]');
-            const stockInput = form.querySelector('input[name="stock"]');
             const imagenInput = form.querySelector('input[name="imagen"]');
+            
+            // Validar campos de stock por talla
+            const stockInputs = form.querySelectorAll('input[name^="stock_"]');
+            stockInputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    if (parseInt(input.value) < 0 && input.value !== '') {
+                        input.classList.add('border-red-500');
+                        input.classList.remove('border-green-500');
+                    } else {
+                        input.classList.add('border-green-500');
+                        input.classList.remove('border-red-500');
+                    }
+                });
+            });
+            
             if (precioInput) {
                 precioInput.addEventListener('input', () => {
                     if (parseFloat(precioInput.value) < 0 && precioInput.value !== '') {
@@ -200,17 +243,6 @@
                     } else {
                         precioInput.classList.add('border-green-500');
                         precioInput.classList.remove('border-red-500');
-                    }
-                });
-            }
-            if (stockInput) {
-                stockInput.addEventListener('input', () => {
-                    if (parseInt(stockInput.value) < 0 && stockInput.value !== '') {
-                        stockInput.classList.add('border-red-500');
-                        stockInput.classList.remove('border-green-500');
-                    } else {
-                        stockInput.classList.add('border-green-500');
-                        stockInput.classList.remove('border-red-500');
                     }
                 });
             }
@@ -224,7 +256,6 @@
                 });
             }
         });
-
         // Ocultar mensajes automáticamente después de 5 segundos
         setTimeout(() => {
             const messagesContainer = document.getElementById('messages-container');

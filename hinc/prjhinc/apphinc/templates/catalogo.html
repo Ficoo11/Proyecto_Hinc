@@ -115,8 +115,8 @@
         <div class="flex justify-center gap-5 flex-wrap">
             {% for producto in productos %}
                 {% if producto.categoria == categoria %}
-                <div class="product-card text-center text-gray-800 max-w-xs">
-                    <a href="#">
+                <div class="product-card text-center text-gray-800 max-w-xs cursor-pointer" onclick="window.location.href='{% url 'producto_detalle' producto.id %}'">
+                    <a href="{% url 'producto_detalle' producto.id %}">
                         {% if producto.imagen %}
                             <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="w-[300px] h-[400px] object-cover rounded-xl mx-auto" />
                         {% else %}
@@ -125,23 +125,18 @@
                     </a>
                     <div class="text-xl font-bold mt-4">{{ producto.nombre }}</div>
                     <p class="text-base text-gray-600 mt-2">{{ producto.descripcion|truncatechars:100 }}</p>
-                    <p class="text-base text-gray-600 mt-2"><strong>Tallas:</strong> {{ producto.tallas }}</p>
+                    <p class="text-base text-gray-600 mt-2"><strong>Tallas disponibles:</strong> {{ producto.tallas }}</p>
                     <div class="text-lg font-semibold text-gray-800 mt-4">
                         {% if producto.descuento > 0 %}
-                            <span class="price-old mr-2">{{ producto.precio|floatformat:0|add:"."|slice:".2:"|join:"" }}</span>
-                            {{ producto.precio_con_descuento|floatformat:0|add:"."|slice:".2:"|join:"" }}
+                            <span class="price-old mr-2">${{ producto.precio|floatformat:0 }}</span>
+                            ${{ producto.precio_con_descuento|floatformat:0 }}
                         {% else %}
-                            {{ producto.precio|floatformat:0|add:"."|slice:".2:"|join:"" }}
+                            ${{ producto.precio|floatformat:0 }}
                         {% endif %}
                     </div>
-                    <div class="flex items-center justify-center mt-4">
-                        <button class="cantidad-menos bg-gray-200 px-3 py-1 rounded-l hover:bg-gray-300">-</button>
-                        <input type="number" value="1" min="1" max="10" class="cantidad-input w-12 text-center border-y border-gray-200">
-                        <button class="cantidad-mas bg-gray-200 px-3 py-1 rounded-r hover:bg-gray-300">+</button>
-                    </div>
-                    <button class="agregar-carrito bg-orange-500 text-white px-4 py-2 rounded w-full mt-3 hover:bg-orange-600 transition-all"
-                            data-producto-id="{{ producto.id }}">
-                        <i class="fas fa-cart-plus mr-2"></i>Agregar al Carrito
+                    <button class="bg-orange-500 text-white px-4 py-2 rounded w-full mt-3 hover:bg-orange-600 transition-all"
+                            onclick="window.location.href='{% url 'producto_detalle' producto.id %}'">
+                        <i class="fas fa-eye mr-2"></i>Ver Detalles
                     </button>
                 </div>
                 {% endif %}
@@ -180,7 +175,6 @@
             document.body.scrollTop = 0;
             document.documentElement.scrollTop = 0;
         });
-
         // User Menu y carrito
         document.addEventListener('DOMContentLoaded', () => {
             const userMenuBtn = document.getElementById('userMenuBtn');
@@ -199,28 +193,6 @@
             if (typeof fetchCarrito === 'function') {
                 fetchCarrito();
             }
-
-            // Manejo de cantidad
-            document.querySelectorAll('.cantidad-menos').forEach(button => {
-                button.addEventListener('click', () => {
-                    const input = button.nextElementSibling;
-                    let value = parseInt(input.value);
-                    if (value > 1) {
-                        input.value = value - 1;
-                    }
-                });
-            });
-
-            document.querySelectorAll('.cantidad-mas').forEach(button => {
-                button.addEventListener('click', () => {
-                    const input = button.previousElementSibling;
-                    let value = parseInt(input.value);
-                    if (value < 10) {
-                        input.value = value + 1;
-                    }
-                });
-            });
-
             // Smooth scroll para categorías
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function(e) {
@@ -231,11 +203,9 @@
                 });
             });
         });
-
         function abrirCarrito() {
             document.getElementById("carritoSidebar").classList.remove("translate-x-full");
         }
-
         function cerrarCarrito() {
             document.getElementById("carritoSidebar").classList.add("translate-x-full");
         }

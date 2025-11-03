@@ -1,45 +1,39 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from .models import Producto, Categoria
-
+from .models import Producto, Categoria, StockTalla
 # Obtiene el modelo de usuario personalizado (CustomUser) para su uso en formularios.
 CustomUser = get_user_model()
-
 # Formulario para crear y editar usuarios (CustomUser). Incluye campos para nombre de usuario, correo, contraseñas, rol y estado. Valida que el correo y usuario sean únicos, asegura que las contraseñas coincidan y tengan al menos 8 caracteres (en registro o si se modifican en edición). En el guardado, encripta la contraseña solo si se proporciona, integrándose con las vistas de registro y gestión de usuarios en el panel de administración.
 class CustomUserCreationForm(forms.ModelForm):
     password1 = forms.CharField(label="Contraseña", widget=forms.PasswordInput, required=False, help_text="Deje en blanco para no cambiar la contraseña. Debe tener al menos 8 caracteres si se modifica.")
     password2 = forms.CharField(label="Confirmar Contraseña", widget=forms.PasswordInput, required=False, help_text="Confirme la nueva contraseña o déjelo en blanco.")
     role = forms.ChoiceField(choices=[('Admin', 'Admin'), ('Usuario', 'Usuario')], required=True)
     estado = forms.ChoiceField(choices=[('Habilitado', 'Habilitado'), ('Inhabilitado', 'Inhabilitado')], required=True)
-
     class Meta:
         model = CustomUser
         fields = ('username', 'email', 'password1', 'password2', 'role', 'estado')
-
     def clean_email(self):
         email = self.cleaned_data['email']
         if CustomUser.objects.filter(email=email).exclude(id=self.instance.id if self.instance else None).exists():
             raise ValidationError("Este correo ya está registrado.")
         return email
-
     def clean_username(self):
         username = self.cleaned_data['username']
         if CustomUser.objects.filter(username=username).exclude(id=self.instance.id if self.instance else None).exists():
             raise ValidationError("Este usuario ya está registrado.")
         return username
-
     def clean(self):
         cleaned_data = super().clean()
         password1 = cleaned_data.get("password1")
         password2 = cleaned_data.get("password2")
-        if self.instance.pk:  # Edición
-            if password1 or password2:  # Si se proporciona alguna contraseña
+        if self.instance.pk: # Edición
+            if password1 or password2: # Si se proporciona alguna contraseña
                 if password1 != password2:
                     raise ValidationError("Las contraseñas no coinciden.")
                 if len(password1) < 8:
                     raise ValidationError("La contraseña debe tener al menos 8 caracteres.")
-        else:  # Registro
+        else: # Registro
             if not password1 or not password2:
                 raise ValidationError("Debes proporcionar y confirmar una contraseña.")
             if password1 != password2:
@@ -47,26 +41,22 @@ class CustomUserCreationForm(forms.ModelForm):
             if len(password1) < 8:
                 raise ValidationError("La contraseña debe tener al menos 8 caracteres.")
         return cleaned_data
-
     def save(self, commit=True):
         user = super().save(commit=False)
         password = self.cleaned_data.get("password1")
-        if password:  # Solo actualizar contraseña si se proporciona
+        if password: # Solo actualizar contraseña si se proporciona
             user.set_password(password)
         if commit:
             user.save()
         return user
-
 # Formulario para el inicio de sesión, con campos para correo y contraseña. Aplica estilos CSS personalizados a los campos mediante widgets. Valida que el correo exista, la contraseña sea correcta y el usuario esté habilitado (CustomUser). Usado en la vista login_view para autenticar usuarios.
 class LoginForm(forms.Form):
     email = forms.EmailField(label="Correo", max_length=254)
     password = forms.CharField(label="Contraseña", widget=forms.PasswordInput)
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['email'].widget.attrs.update({'class': 'mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black'})
         self.fields['password'].widget.attrs.update({'class': 'mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black'})
-
     def clean(self):
         cleaned_data = super().clean()
         email = cleaned_data.get('email')
@@ -80,7 +70,6 @@ class LoginForm(forms.Form):
             elif user.estado != 'Habilitado':
                 raise ValidationError("El usuario está inhabilitado.")
         return cleaned_data
-
 # Formulario para crear y editar productos (Producto). Incluye campos como nombre, precio, tallas (selección múltiple), imagen, descripción, categoría, stock, descuento, estado y destacado. Valida que el precio y stock no sean negativos, y que la imagen sea de tipo válido (jpg, jpeg, png, gif). Convierte las tallas seleccionadas en una cadena separada por comas para el guardado. Usado en vistas de gestión de productos en el panel de administración.
 class ProductoForm(forms.ModelForm):
     TALLAS_CHOICES = [
@@ -93,64 +82,79 @@ class ProductoForm(forms.ModelForm):
     ]
     tallas = forms.MultipleChoiceField(choices=TALLAS_CHOICES, widget=forms.CheckboxSelectMultiple, required=False)
     categoria = forms.ModelChoiceField(queryset=Categoria.objects.all(), required=False, empty_label="Seleccionar categoría")
-
+    
     class Meta:
         model = Producto
-        fields = ('nombre', 'precio', 'tallas', 'imagen', 'descripcion', 'categoria', 'stock', 'descuento', 'estado', 'is_destacado')
-
+        fields = ('nombre', 'precio', 'tallas', 'imagen', 'descripcion', 'categoria', 'descuento', 'estado', 'is_destacado')
+    
     def clean_precio(self):
         precio = self.cleaned_data.get('precio')
         if precio < 0:
             raise ValidationError("El precio no puede ser negativo.")
         return precio
-
-    def clean_stock(self):
-        stock = self.cleaned_data.get('stock')
-        if stock < 0:
-            raise ValidationError("El stock no puede ser negativo.")
-        return stock
-
+    
     def clean_imagen(self):
         imagen = self.cleaned_data.get('imagen')
         if imagen:
             if not imagen.name.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
                 raise ValidationError("Solo se permiten archivos de imagen (jpg, jpeg, png, gif).")
         return imagen
-
+    
     def save(self, commit=True):
         instance = super().save(commit=False)
-        instance.tallas = ','.join(self.cleaned_data['tallas'])  # Guardar como comma-separated
+        instance.tallas = ','.join(self.cleaned_data['tallas']) # Guardar como comma-separated
         if commit:
             instance.save()
+            # Crear registros de stock por talla para las tallas seleccionadas
+            for talla in self.cleaned_data['tallas']:
+                StockTalla.objects.get_or_create(
+                    producto=instance,
+                    talla=talla,
+                    defaults={'stock': 0}
+                )
         return instance
+
+class StockTallaForm(forms.ModelForm):
+    class Meta:
+        model = StockTalla
+        fields = ('stock',)
+        widgets = {
+            'stock': forms.NumberInput(attrs={'min': 0, 'class': 'mt-1 p-2 w-full border border-gray-300 rounded-md focus:ring-black focus:border-black'})
+        }
+    
+    def clean_stock(self):
+        stock = self.cleaned_data.get('stock')
+        if stock < 0:
+            raise ValidationError("El stock no puede ser negativo.")
+        return stock
+
+class StockTallaInlineFormSet(forms.BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        for form in self.forms:
+            if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
+                stock = form.cleaned_data.get('stock')
+                if stock is not None and stock < 0:
+                    form.add_error('stock', "El stock no puede ser negativo.")
 
 # Formulario para crear y editar categorías (Categoria). Incluye campos para nombre, descripción e imagen. Valida que el nombre no esté vacío y que la imagen sea de tipo válido (jpg, jpeg, png, gif). Usado en vistas de gestión de categorías en el panel de administración.
 class CategoriaForm(forms.ModelForm):
     class Meta:
         model = Categoria
         fields = ('nombre', 'descripcion', 'imagen')
-
     def clean_nombre(self):
         nombre = self.cleaned_data.get('nombre')
         if not nombre:
             raise ValidationError("El nombre no puede estar vacío.")
         return nombre
-
     def clean_imagen(self):
         imagen = self.cleaned_data.get('imagen')
         if imagen:
             if not imagen.name.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
                 raise ValidationError("Solo se permiten archivos de imagen (jpg, jpeg, png, gif).")
         return imagen
-
 # Formulario para gestionar el inventario de productos (Producto). Incluye campos para stock, descuento y estado. Valida que el stock no sea negativo. Usado en la vista inventario_view para actualizar el inventario en el panel de administración.
 class InventoryForm(forms.ModelForm):
     class Meta:
         model = Producto
-        fields = ('stock', 'descuento', 'estado')
-
-    def clean_stock(self):
-        stock = self.cleaned_data.get('stock')
-        if stock < 0:
-            raise ValidationError("El stock no puede ser negativo.")
-        return stock
+        fields = ('descuento', 'estado')
