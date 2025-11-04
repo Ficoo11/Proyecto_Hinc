@@ -3,8 +3,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.backends import ModelBackend
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .forms import CustomUserCreationForm, LoginForm, ProductoForm, CategoriaForm, InventoryForm, StockTallaForm, StockTallaInlineFormSet, PedidoForm
-from .models import CustomUser, Producto, Categoria, Carrito, ItemCarrito, StockTalla, Pedido, DetallePedido
+from .forms import CustomUserCreationForm, LoginForm, ProductoForm, CategoriaForm, InventoryForm, StockTallaForm, StockTallaInlineFormSet
+from .models import CustomUser, Producto, Categoria, Carrito, ItemCarrito, StockTalla
 from django.urls import reverse
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -219,7 +219,7 @@ def productos_view(request):
                     messages.error(request, error)
         elif action == 'update_productos' and producto_id:
             form = ProductoForm(request.POST, request.FILES, instance=producto)
-            if form.isvalid():
+            if form.is_valid():
                 form.save()
                 messages.success(request, "Producto actualizado exitosamente.")
                 return redirect('productos')
@@ -589,148 +589,3 @@ def obtener_datos_carrito(carrito):
 def ver_carrito(request):
     carrito, created = Carrito.objects.get_or_create(usuario=request.user)
     return render(request, 'carrito.html', {'carrito': carrito})
-# Renderiza la página de checkout para procesar el pago
-@login_required
-def checkout_view(request):
-    carrito, created = Carrito.objects.get_or_create(usuario=request.user)
-    
-    if not carrito.items.exists():
-        messages.error(request, "Tu carrito está vacío.")
-        return redirect('ver_carrito')
-    
-    # Verificar stock antes de proceder al pago
-    for item in carrito.items.all():
-        try:
-            stock_talla = StockTalla.objects.get(producto=item.producto, talla=item.talla)
-            if stock_talla.stock < item.cantidad:
-                messages.error(request, f"No hay suficiente stock para {item.producto.nombre} en talla {item.talla}. Solo quedan {stock_talla.stock} unidades.")
-                return redirect('ver_carrito')
-        except StockTalla.DoesNotExist:
-            messages.error(request, f"El producto {item.producto.nombre} en talla {item.talla} no está disponible.")
-            return redirect('ver_carrito')
-    
-    if request.method == 'POST':
-        form = PedidoForm(request.POST)
-        if form.is_valid():
-            # Crear el pedido
-            pedido = form.save(commit=False)
-            pedido.usuario = request.user
-            pedido.total = carrito.obtener_total()
-            pedido.numero_pedido = pedido.generar_numero_pedido()
-            pedido.save()
-            
-            # Crear detalles del pedido y actualizar stock
-            for item in carrito.items.all():
-                DetallePedido.objects.create(
-                    pedido=pedido,
-                    producto=item.producto,
-                    talla=item.talla,
-                    cantidad=item.cantidad,
-                    precio=item.producto.precio
-                )
-                
-                # Actualizar stock
-                stock_talla = StockTalla.objects.get(producto=item.producto, talla=item.talla)
-                stock_talla.stock -= item.cantidad
-                stock_talla.save()
-                
-                # Actualizar stock general del producto
-                item.producto.actualizar_stock_general()
-            
-            # Vaciar el carrito
-            carrito.items.all().delete()
-            
-            messages.success(request, f"¡Pedido realizado exitosamente! Número de pedido: {pedido.numero_pedido}")
-            return redirect('confirmacion_pedido', pedido_id=pedido.id)
-    else:
-        # Prellenar formulario con datos del usuario si existen
-        initial_data = {}
-        if request.user.first_name and request.user.last_name:
-            initial_data['nombre_completo'] = f"{request.user.first_name} {request.user.last_name}"
-        if request.user.email:
-            initial_data['email'] = request.user.email
-        
-        form = PedidoForm(initial=initial_data)
-    
-    return render(request, 'checkout.html', {
-        'carrito': carrito,
-        'form': form
-    })
-# Renderiza la página de confirmación de pedido
-@login_required
-def confirmacion_pedido_view(request, pedido_id):
-    pedido = get_object_or_404(Pedido, id=pedido_id, usuario=request.user)
-    return render(request, 'confirmacion_pedido.html', {'pedido': pedido})
-# Simula el procesamiento de pago
-@login_required
-@require_POST
-@csrf_exempt
-def procesar_pago(request):
-    try:
-        data = json.loads(request.body)
-        carrito, created = Carrito.objects.get_or_create(usuario=request.user)
-        
-        if not carrito.items.exists():
-            return JsonResponse({'success': False, 'error': 'El carrito está vacío'})
-        
-        # Verificar stock nuevamente antes del pago
-        for item in carrito.items.all():
-            try:
-                stock_talla = StockTalla.objects.get(producto=item.producto, talla=item.talla)
-                if stock_talla.stock < item.cantidad:
-                    return JsonResponse({
-                        'success': False, 
-                        'error': f"No hay suficiente stock para {item.producto.nombre} en talla {item.talla}"
-                    })
-            except StockTalla.DoesNotExist:
-                return JsonResponse({
-                    'success': False, 
-                    'error': f"El producto {item.producto.nombre} en talla {item.talla} no está disponible"
-                })
-        
-        # Simular procesamiento de pago (en una aplicación real, aquí se conectaría con la pasarela de pago)
-        import time
-        time.sleep(2)  # Simular delay de procesamiento
-        
-        # Crear pedido
-        pedido = Pedido.objects.create(
-            usuario=request.user,
-            total=carrito.obtener_total(),
-            numero_pedido=Pedido().generar_numero_pedido(),
-            direccion_envio=data.get('direccion'),
-            ciudad=data.get('ciudad'),
-            telefono=data.get('telefono'),
-            estado='completado'
-        )
-        
-        # Crear detalles del pedido y actualizar stock
-        for item in carrito.items.all():
-            DetallePedido.objects.create(
-                pedido=pedido,
-                producto=item.producto,
-                talla=item.talla,
-                cantidad=item.cantidad,
-                precio=item.producto.precio
-            )
-            
-            # Actualizar stock
-            stock_talla = StockTalla.objects.get(producto=item.producto, talla=item.talla)
-            stock_talla.stock -= item.cantidad
-            stock_talla.save()
-            
-            # Actualizar stock general del producto
-            item.producto.actualizar_stock_general()
-        
-        # Vaciar el carrito
-        carrito.items.all().delete()
-        
-        return JsonResponse({
-            'success': True,
-            'pedido_id': pedido.id,
-            'numero_pedido': pedido.numero_pedido,
-            'mensaje': '¡Pago procesado exitosamente!'
-        })
-        
-    except Exception as e:
-        logger.error(f"Error al procesar pago: {str(e)}")
-        return JsonResponse({'success': False, 'error': str(e)})

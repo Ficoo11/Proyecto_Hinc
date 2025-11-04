@@ -101,7 +101,7 @@ class Carrito(models.Model):
     def obtener_total(self):
         total = sum(float(item.obtener_total()) for item in self.items.all())
         return total
-    
+
     def obtener_cantidad_total(self):
         return sum(int(item.cantidad) for item in self.items.all())
 
@@ -120,42 +120,3 @@ class ItemCarrito(models.Model):
     
     class Meta:
         unique_together = ('carrito', 'producto', 'talla')
-
-class Pedido(models.Model):
-    ESTADOS_PEDIDO = [
-        ('pendiente', 'Pendiente'),
-        ('procesando', 'Procesando'),
-        ('completado', 'Completado'),
-        ('cancelado', 'Cancelado'),
-    ]
-    
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='pedidos')
-    numero_pedido = models.CharField(max_length=20, unique=True)
-    total = models.DecimalField(max_digits=10, decimal_places=2)
-    estado = models.CharField(max_length=20, choices=ESTADOS_PEDIDO, default='pendiente')
-    creado_en = models.DateTimeField(auto_now_add=True)
-    actualizado_en = models.DateTimeField(auto_now=True)
-    direccion_envio = models.TextField()
-    ciudad = models.CharField(max_length=100)
-    telefono = models.CharField(max_length=20)
-    
-    def __str__(self):
-        return f"Pedido {self.numero_pedido} - {self.usuario.username}"
-    
-    def generar_numero_pedido(self):
-        import random
-        import string
-        return 'PED' + ''.join(random.choices(string.digits, k=7))
-
-class DetallePedido(models.Model):
-    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='detalles')
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
-    talla = models.CharField(max_length=10)
-    cantidad = models.PositiveIntegerField()
-    precio = models.DecimalField(max_digits=10, decimal_places=2)
-    
-    def __str__(self):
-        return f"{self.cantidad} x {self.producto.nombre} ({self.talla}) - Pedido {self.pedido.numero_pedido}"
-    
-    def obtener_total(self):
-        return self.precio * self.cantidad

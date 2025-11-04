@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+
 # Define las rutas URL de la aplicación, mapeando URLs a vistas en views.py para gestionar la navegación del sitio web de la tienda en línea. Organiza el acceso a funcionalidades clave: página principal (index), autenticación (registro, inicio y cierre de sesión), gestión administrativa (panel de administración, usuarios, productos, categorías e inventario) y carrito de compras (agregar, quitar, obtener y ver carrito). Cada ruta tiene un nombre único para su uso en templates y redirecciones, soportando tanto acciones públicas (como el catálogo) como protegidas para administradores (requieren autenticación y rol Admin) y usuarios autenticados (carrito).
 urlpatterns = [
     path('', views.index, name='index'),
@@ -21,13 +22,9 @@ urlpatterns = [
     path('paneladmin/categorias/delete/<int:categoria_id>/', views.categorias_delete, name='categorias_delete'),
     path('paneladmin/inventario/', views.inventario_view, name='inventario'),
     path('catalogo/', views.catalogo_view, name='catalogo'),
-    path('producto/<int:producto_id>/', views.producto_detalle_view, name='producto_detalle'),
     path('carrito/agregar/', views.agregar_al_carrito, name='agregar_al_carrito'),
     path('carrito/quitar/', views.quitar_del_carrito, name='quitar_del_carrito'),
     path('carrito/obtener/', views.obtener_carrito, name='obtener_carrito'),
     path('carrito/', views.ver_carrito, name='ver_carrito'),
-    # Nuevas URLs para el sistema de pagos
-    path('checkout/', views.checkout_view, name='checkout'),
-    path('procesar-pago/', views.procesar_pago, name='procesar_pago'),
-    path('confirmacion-pedido/<int:pedido_id>/', views.confirmacion_pedido_view, name='confirmacion_pedido'),
+    path('producto/<int:producto_id>/', views.producto_detalle_view, name='producto_detalle'),
 ]
