@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from .models import Producto, Categoria, StockTalla
+from .models import Producto, Categoria, StockTalla, Pedido
 # Obtiene el modelo de usuario personalizado (CustomUser) para su uso en formularios.
 CustomUser = get_user_model()
 # Formulario para crear y editar usuarios (CustomUser). Incluye campos para nombre de usuario, correo, contraseñas, rol y estado. Valida que el correo y usuario sean únicos, asegura que las contraseñas coincidan y tengan al menos 8 caracteres (en registro o si se modifican en edición). En el guardado, encripta la contraseña solo si se proporciona, integrándose con las vistas de registro y gestión de usuarios en el panel de administración.
@@ -158,3 +158,43 @@ class InventoryForm(forms.ModelForm):
     class Meta:
         model = Producto
         fields = ('descuento', 'estado')
+# Formulario para procesar pedidos
+class PedidoForm(forms.ModelForm):
+    nombre_completo = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black',
+            'placeholder': 'Nombre completo'
+        })
+    )
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={
+            'class': 'mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black',
+            'placeholder': 'correo@ejemplo.com'
+        })
+    )
+    telefono = forms.CharField(
+        max_length=20,
+        widget=forms.TextInput(attrs={
+            'class': 'mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black',
+            'placeholder': '+57 300 123 4567'
+        })
+    )
+    direccion = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black',
+            'placeholder': 'Dirección completa de envío',
+            'rows': 3
+        })
+    )
+    ciudad = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black',
+            'placeholder': 'Ciudad'
+        })
+    )
+    
+    class Meta:
+        model = Pedido
+        fields = ['nombre_completo', 'email', 'telefono', 'direccion', 'ciudad']
