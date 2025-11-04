@@ -1,0 +1,327 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Hinc</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="shortcut icon" href="{% static 'Img/Hinc.png' %}" type="image/x-icon">
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <header class="relative h-20 bg-white shadow-sm">
+        <nav class="w-full h-full flex items-center justify-between px-6 max-w-7xl mx-auto">
+            <a href="{% url 'index' %}">
+                <img src="{% static 'img/Hinc.png' %}" alt="Hinc Logo" class="h-8">
+            </a>
+            <h1 class="text-xl font-bold text-gray-800">Finalizar Compra</h1>
+            <div class="flex items-center space-x-2">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'ver_carrito' %}" class="text-gray-800 text-base p-2 hover:bg-gray-100 rounded-md transition-all flex items-center justify-center">
+                        <i class="fa-solid fa-arrow-left mr-2"></i>Volver al Carrito
+                    </a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Información de Envío y Pago -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Información de Envío y Pago</h2>
+                
+                <form id="checkout-form" method="POST">
+                    {% csrf_token %}
+                    
+                    <!-- Información Personal -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Información Personal</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
+                                {{ form.nombre_completo }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                {{ form.email }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información de Envío -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Información de Envío</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
+                                {{ form.direccion }}
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Ciudad</label>
+                                    {{ form.ciudad }}
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                                    {{ form.telefono }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información de Pago -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Información de Pago</h3>
+                        
+                        <!-- Métodos de Pago -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-3">Método de Pago</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                                    <input type="radio" name="metodo_pago" value="tarjeta" checked class="mr-3">
+                                    <div>
+                                        <span class="font-medium">Tarjeta de Crédito/Débito</span>
+                                        <p class="text-sm text-gray-500">Paga con tu tarjeta Visa, Mastercard o American Express</p>
+                                    </div>
+                                </label>
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                                    <input type="radio" name="metodo_pago" value="paypal" class="mr-3">
+                                    <div>
+                                        <span class="font-medium">PayPal</span>
+                                        <p class="text-sm text-gray-500">Paga de forma segura con tu cuenta PayPal</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Información de Tarjeta (se muestra solo si se selecciona tarjeta) -->
+                        <div id="tarjeta-info" class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Número de Tarjeta</label>
+                                    <input type="text" placeholder="1234 5678 9012 3456" 
+                                           class="mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black"
+                                           maxlength="19">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">CVV</label>
+                                    <input type="text" placeholder="123" 
+                                           class="mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black"
+                                           maxlength="3">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Expiración</label>
+                                    <input type="text" placeholder="MM/AA" 
+                                           class="mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black"
+                                           maxlength="5">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre en la Tarjeta</label>
+                                    <input type="text" placeholder="JUAN PEREZ" 
+                                           class="mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Términos y Condiciones -->
+                    <div class="mb-6">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="terminos" class="mr-2">
+                            <span class="text-sm text-gray-600">
+                                Acepto los <a href="#" class="text-orange-500 hover:underline">términos y condiciones</a> 
+                                y la <a href="#" class="text-orange-500 hover:underline">política de privacidad</a>
+                            </span>
+                        </label>
+                    </div>
+
+                    <button type="button" id="procesar-pago-btn" 
+                            class="w-full bg-orange-500 text-white py-4 px-6 rounded-lg font-semibold hover:bg-orange-600 transition-colors duration-200 flex items-center justify-center disabled:bg-gray-300 disabled:cursor-not-allowed">
+                        <i class="fas fa-lock mr-2"></i>
+                        Procesar Pago - ${{ carrito.obtener_total|floatformat:0 }}
+                    </button>
+                </form>
+            </div>
+
+            <!-- Resumen del Pedido -->
+            <div class="bg-white rounded-lg shadow-sm p-6 h-fit">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Resumen del Pedido</h2>
+                
+                <!-- Productos -->
+                <div class="mb-6">
+                    {% for item in carrito.items.all %}
+                    <div class="flex items-center justify-between py-4 border-b">
+                        <div class="flex items-center">
+                            {% if item.producto.imagen %}
+                            <img src="{{ item.producto.imagen.url }}" alt="{{ item.producto.nombre }}" 
+                                 class="w-16 h-16 object-cover rounded mr-4">
+                            {% endif %}
+                            <div>
+                                <h4 class="font-medium text-gray-800">{{ item.producto.nombre }}</h4>
+                                <p class="text-sm text-gray-500">Talla: {{ item.talla }} | Cantidad: {{ item.cantidad }}</p>
+                                <p class="text-sm text-gray-500">${{ item.producto.precio|floatformat:0 }} c/u</p>
+                            </div>
+                        </div>
+                        <span class="font-semibold">${{ item.obtener_total|floatformat:0 }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Resumen de Costos -->
+                <div class="space-y-3 mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Subtotal</span>
+                        <span>${{ carrito.obtener_total|floatformat:0 }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Envío</span>
+                        <span class="text-green-600">Gratis</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold border-t pt-3">
+                        <span>Total</span>
+                        <span>${{ carrito.obtener_total|floatformat:0 }}</span>
+                    </div>
+                </div>
+
+                <!-- Información de Seguridad -->
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-shield-alt text-green-500 mr-3"></i>
+                        <div>
+                            <p class="font-medium text-green-800">Pago Seguro</p>
+                            <p class="text-sm text-green-600">Tu información está protegida con encriptación SSL</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-black py-4 text-center text-white mt-12">
+        <small>&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</small>
+    </footer>
+
+    <script>
+        const URL_PROCESAR_PAGO = "{% url 'procesar_pago' %}";
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const procesarPagoBtn = document.getElementById('procesar-pago-btn');
+            const terminosCheckbox = document.getElementById('terminos');
+            const form = document.getElementById('checkout-form');
+
+            // Mostrar/ocultar información de tarjeta según método de pago
+            const metodosPago = document.querySelectorAll('input[name="metodo_pago"]');
+            const tarjetaInfo = document.getElementById('tarjeta-info');
+
+            metodosPago.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'tarjeta') {
+                        tarjetaInfo.style.display = 'block';
+                    } else {
+                        tarjetaInfo.style.display = 'none';
+                    }
+                });
+            });
+
+            // Validar términos y condiciones
+            terminosCheckbox.addEventListener('change', function() {
+                procesarPagoBtn.disabled = !this.checked;
+            });
+
+            // Procesar pago
+            procesarPagoBtn.addEventListener('click', async function() {
+                if (!terminosCheckbox.checked) {
+                    alert('Debes aceptar los términos y condiciones para continuar.');
+                    return;
+                }
+
+                const btn = this;
+                const originalText = btn.innerHTML;
+                
+                // Mostrar loading
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Procesando Pago...';
+                btn.disabled = true;
+
+                try {
+                    // Obtener datos del formulario
+                    const formData = new FormData(form);
+                    const data = {
+                        nombre_completo: formData.get('nombre_completo'),
+                        email: formData.get('email'),
+                        telefono: formData.get('telefono'),
+                        direccion: formData.get('direccion'),
+                        ciudad: formData.get('ciudad'),
+                        metodo_pago: document.querySelector('input[name="metodo_pago"]:checked').value
+                    };
+
+                    const response = await fetch(URL_PROCESAR_PAGO, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Redirigir a página de confirmación
+                        window.location.href = "{% url 'confirmacion_pedido' 0 %}".replace('0', result.pedido_id);
+                    } else {
+                        alert('Error: ' + result.error);
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }
+                } catch (error) {
+                    alert('Error al procesar el pago: ' + error.message);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+
+            // Formatear número de tarjeta
+            const numeroTarjetaInput = document.querySelector('input[placeholder="1234 5678 9012 3456"]');
+            if (numeroTarjetaInput) {
+                numeroTarjetaInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+                    let matches = value.match(/\d{4,16}/g);
+                    let match = matches && matches[0] || '';
+                    let parts = [];
+                    
+                    for (let i = 0; i < match.length; i += 4) {
+                        parts.push(match.substring(i, i + 4));
+                    }
+                    
+                    if (parts.length) {
+                        e.target.value = parts.join(' ');
+                    } else {
+                        e.target.value = value;
+                    }
+                });
+            }
+        });
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>
