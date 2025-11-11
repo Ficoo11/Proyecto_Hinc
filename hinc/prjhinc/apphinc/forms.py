@@ -115,11 +115,23 @@ class ProductoForm(forms.ModelForm):
         return instance
 
 class StockTallaForm(forms.ModelForm):
+    stock_inicial = forms.IntegerField(
+        min_value=0,
+        required=False,
+        widget=forms.NumberInput(attrs={
+            'class': 'mt-1 p-2 w-full border border-gray-300 rounded-md focus:ring-black focus:border-black',
+            'placeholder': 'Stock inicial'
+        })
+    )
+    
     class Meta:
         model = StockTalla
-        fields = ('stock',)
+        fields = ('stock', 'stock_inicial')
         widgets = {
-            'stock': forms.NumberInput(attrs={'min': 0, 'class': 'mt-1 p-2 w-full border border-gray-300 rounded-md focus:ring-black focus:border-black'})
+            'stock': forms.NumberInput(attrs={
+                'min': 0, 
+                'class': 'mt-1 p-2 w-full border border-gray-300 rounded-md focus:ring-black focus:border-black'
+            })
         }
     
     def clean_stock(self):
@@ -127,6 +139,12 @@ class StockTallaForm(forms.ModelForm):
         if stock < 0:
             raise ValidationError("El stock no puede ser negativo.")
         return stock
+    
+    def clean_stock_inicial(self):
+        stock_inicial = self.cleaned_data.get('stock_inicial')
+        if stock_inicial is not None and stock_inicial < 0:
+            raise ValidationError("El stock inicial no puede ser negativo.")
+        return stock_inicial
 
 class StockTallaInlineFormSet(forms.BaseInlineFormSet):
     def clean(self):

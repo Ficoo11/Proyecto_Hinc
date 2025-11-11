@@ -136,32 +136,39 @@
                         </button>
                     </div>
                     <div class="grid grid-cols-4 gap-3" id="tallas-container">
-                        {% for stock_talla_obj in producto.stocktalla_set.all %}
+                        {% for stock_info_item in stock_info %}
                             <button type="button" 
-                                    class="talla-btn border-2 border-gray-300 rounded-lg py-3 px-4 text-center font-medium transition-all {% if stock_talla_obj.stock <= 0 %}disabled{% endif %}"
-                                    data-talla="{{ stock_talla_obj.talla }}"
-                                    data-stock="{{ stock_talla_obj.stock }}"
-                                    {% if stock_talla_obj.stock <= 0 %}disabled{% endif %}>
-                                {{ stock_talla_obj.talla }}
-                                {% if stock_talla_obj.stock <= 10 and stock_talla_obj.stock > 0 %}
-                                    <div class="text-xs text-red-600 mt-1">¡Quedan pocas!</div>
-                                {% elif stock_talla_obj.stock == 0 %}
-                                    <div class="text-xs text-gray-500 mt-1">Agotado</div>
+                                    class="talla-btn border-2 border-gray-300 rounded-lg py-3 px-4 text-center font-medium transition-all flex flex-col items-center justify-center {% if stock_info_item.stock_actual <= 0 %}disabled{% endif %}"
+                                    data-talla="{{ stock_info_item.talla }}"
+                                    data-stock="{{ stock_info_item.stock_actual }}"
+                                    {% if stock_info_item.stock_actual <= 0 %}disabled{% endif %}>
+                                <span class="text-base font-semibold">{{ stock_info_item.talla }}</span>
+                                <span class="text-xs mt-1 
+                                    {% if stock_info_item.estado == 'critico' %}text-red-600 font-bold
+                                    {% elif stock_info_item.estado == 'bajo' %}text-orange-600
+                                    {% elif stock_info_item.estado == 'medio' %}text-yellow-600
+                                    {% else %}text-green-600{% endif %}">
+                                    {{ stock_info_item.stock_actual }} unid.
+                                </span>
+                                {% if stock_info_item.estado == 'critico' and stock_info_item.stock_actual > 0 %}
+                                    <span class="text-xs text-red-600 font-semibold mt-1">¡CRÍTICO!</span>
+                                {% elif stock_info_item.stock_actual == 0 %}
+                                    <span class="text-xs text-gray-500 mt-1">Agotado</span>
                                 {% endif %}
                             </button>
                         {% endfor %}
                     </div>
                 </div>
 
-                <!-- Alertas de Stock Bajo -->
+                <!-- Alertas de Stock Crítico -->
                 <div id="stock-alerts" class="space-y-2">
-                    {% for stock_talla_obj in producto.stocktalla_set.all %}
-                        {% if stock_talla_obj.stock <= 10 and stock_talla_obj.stock > 0 %}
+                    {% for stock_info_item in stock_info %}
+                        {% if stock_info_item.estado == 'critico' and stock_info_item.stock_actual > 0 %}
                             <div class="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start">
                                 <i class="fas fa-exclamation-triangle text-red-500 mt-0.5 mr-3"></i>
                                 <div>
-                                    <p class="text-red-800 font-medium text-sm">¡Quedan pocas unidades en talla {{ stock_talla_obj.talla }}!</p>
-                                    <p class="text-red-600 text-xs mt-1">Solo {{ stock_talla_obj.stock }} disponible{{ stock_talla_obj.stock|pluralize }}</p>
+                                    <p class="text-red-800 font-medium text-sm">¡STOCK CRÍTICO en talla {{ stock_info_item.talla }}!</p>
+                                    <p class="text-red-600 text-xs mt-1">Solo {{ stock_info_item.stock_actual }} disponible{{ stock_info_item.stock_actual|pluralize }} ({{ stock_info_item.porcentaje|floatformat:1 }}% del stock inicial)</p>
                                 </div>
                             </div>
                         {% endif %}

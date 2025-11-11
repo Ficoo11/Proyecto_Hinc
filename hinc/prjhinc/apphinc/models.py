@@ -83,12 +83,42 @@ class StockTalla(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
     talla = models.CharField(max_length=10, choices=TALLAS_CHOICES)
     stock = models.IntegerField(default=0)
+    stock_inicial = models.IntegerField(default=0)  # Stock inicial para calcular porcentajes
     
     class Meta:
         unique_together = ('producto', 'talla')
     
     def __str__(self):
         return f"{self.producto.nombre} - {self.talla}: {self.stock}"
+    
+    def save(self, *args, **kwargs):
+        # Si es un nuevo registro y stock_inicial es 0, establecerlo igual al stock
+        if self.pk is None and self.stock_inicial == 0 and self.stock > 0:
+            self.stock_inicial = self.stock
+        # Si se actualiza el stock y stock_inicial es 0, establecer stock_inicial
+        elif self.stock_inicial == 0 and self.stock > 0:
+            self.stock_inicial = self.stock
+        super().save(*args, **kwargs)
+    
+    def obtener_porcentaje_stock(self):
+        """Calcula el porcentaje de stock disponible"""
+        if self.stock_inicial == 0:
+            return 0
+        return (self.stock / self.stock_inicial) * 100
+    
+    def obtener_estado_stock(self):
+        """Determina el estado del stock basado en porcentaje"""
+        porcentaje = self.obtener_porcentaje_stock()
+        if porcentaje == 0:
+            return 'agotado', 'Agotado', 'red'
+        elif porcentaje <= 10:
+            return 'critico', 'Crítico (≤10%)', 'red'
+        elif porcentaje <= 25:
+            return 'bajo', 'Bajo (≤25%)', 'orange'
+        elif porcentaje <= 50:
+            return 'medio', 'Medio (≤50%)', 'yellow'
+        else:
+            return 'normal', 'Normal (>50%)', 'green'
 
 class Carrito(models.Model):
     usuario = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='carrito')

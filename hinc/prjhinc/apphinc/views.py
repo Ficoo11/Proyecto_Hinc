@@ -82,21 +82,55 @@ def paneladmin_view(request):
     productos = Producto.objects.all()
     categorias = Categoria.objects.all()
     
-    # Obtener productos con stock bajo
+    # Obtener productos con stock bajo por porcentaje
     productos_stock_bajo = []
     for producto in productos:
-        if producto.tiene_stock_bajo():
-            tallas_bajas = producto.get_tallas_con_stock_bajo()
+        alertas_tallas = []
+        for stock_talla in producto.stocktalla_set.all():
+            estado, estado_texto, color = stock_talla.obtener_estado_stock()
+            if estado in ['critico', 'bajo', 'medio']:
+                alertas_tallas.append({
+                    'talla': stock_talla.talla,
+                    'stock_actual': stock_talla.stock,
+                    'stock_inicial': stock_talla.stock_inicial,
+                    'porcentaje': stock_talla.obtener_porcentaje_stock(),
+                    'estado': estado,
+                    'estado_texto': estado_texto,
+                    'color': color
+                })
+        
+        if alertas_tallas:
             productos_stock_bajo.append({
                 'producto': producto,
-                'tallas_bajas': tallas_bajas
+                'alertas_tallas': alertas_tallas
             })
+    
+    # Calcular contadores para el resumen de estados de stock - CORREGIDO
+    contadores_estados = {
+        'normal': 0,
+        'medio': 0,
+        'bajo': 0,
+        'critico': 0
+    }
+    
+    for producto in productos:
+        for stock_talla in producto.stocktalla_set.all():
+            porcentaje = stock_talla.obtener_porcentaje_stock()
+            if porcentaje > 50:
+                contadores_estados['normal'] += 1
+            elif porcentaje <= 50 and porcentaje > 25:
+                contadores_estados['medio'] += 1
+            elif porcentaje <= 25 and porcentaje > 10:
+                contadores_estados['bajo'] += 1
+            elif porcentaje <= 10 and porcentaje > 0:
+                contadores_estados['critico'] += 1
     
     return render(request, 'paneladmin.html', {
         'users': users,
         'productos': productos,
         'categorias': categorias,
-        'productos_stock_bajo': productos_stock_bajo
+        'productos_stock_bajo': productos_stock_bajo,
+        'contadores_estados': contadores_estados
     })
 # Gestiona la administración de usuarios para Admins, mostrando todos los usuarios (CustomUser) en PAusuarios.html. Soporta acciones (add, edit, delete) según el parámetro 'action'. Para POST, valida CustomUserCreationForm para agregar o editar usuarios, o elimina un usuario por ID. Muestra mensajes de éxito o error y redirige a usuarios. Requiere autenticación y rol Admin.
 @login_required
@@ -276,11 +310,18 @@ def productos_update(request, producto_id):
             # Actualizar stock por tallas
             for stock_talla in stock_tallas:
                 stock_field = f'stock_{stock_talla.talla}'
+                stock_inicial_field = f'stock_inicial_{stock_talla.talla}'
+                
                 if stock_field in request.POST:
                     try:
                         nuevo_stock = int(request.POST[stock_field])
                         if nuevo_stock >= 0:
                             stock_talla.stock = nuevo_stock
+                            # Actualizar stock_inicial si se proporciona
+                            if stock_inicial_field in request.POST:
+                                nuevo_stock_inicial = int(request.POST[stock_inicial_field])
+                                if nuevo_stock_inicial >= 0:
+                                    stock_talla.stock_inicial = nuevo_stock_inicial
                             stock_talla.save()
                     except ValueError:
                         pass
@@ -301,7 +342,9 @@ def productos_update(request, producto_id):
         stock_forms.append({
             'talla': stock_talla.talla,
             'form': StockTallaForm(instance=stock_talla),
-            'instance': stock_talla
+            'instance': stock_talla,
+            'porcentaje': stock_talla.obtener_porcentaje_stock(),
+            'estado': stock_talla.obtener_estado_stock()
         })
     
     return render(request, 'Pproductos.html', {
@@ -438,11 +481,18 @@ def inventario_view(request):
                 stock_tallas = StockTalla.objects.filter(producto=producto)
                 for stock_talla in stock_tallas:
                     stock_field = f'stock_{stock_talla.talla}'
+                    stock_inicial_field = f'stock_inicial_{stock_talla.talla}'
+                    
                     if stock_field in request.POST:
                         try:
                             nuevo_stock = int(request.POST[stock_field])
                             if nuevo_stock >= 0:
                                 stock_talla.stock = nuevo_stock
+                                # Actualizar stock_inicial si se proporciona
+                                if stock_inicial_field in request.POST:
+                                    nuevo_stock_inicial = int(request.POST[stock_inicial_field])
+                                    if nuevo_stock_inicial >= 0:
+                                        stock_talla.stock_inicial = nuevo_stock_inicial
                                 stock_talla.save()
                         except ValueError:
                             pass
@@ -477,9 +527,24 @@ def catalogo_view(request):
 def producto_detalle_view(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
     
+    # Obtener información de stock por porcentaje para cada talla
+    stock_info = []
+    for stock_talla in producto.stocktalla_set.all():
+        estado, estado_texto, color = stock_talla.obtener_estado_stock()
+        stock_info.append({
+            'talla': stock_talla.talla,
+            'stock_actual': stock_talla.stock,
+            'stock_inicial': stock_talla.stock_inicial,
+            'porcentaje': stock_talla.obtener_porcentaje_stock(),
+            'estado': estado,
+            'estado_texto': estado_texto,
+            'color': color
+        })
+    
     return render(request, 'producto.html', {
         'producto': producto,
-        'user': request.user if request.user.is_authenticated else None
+        'user': request.user if request.user.is_authenticated else None,
+        'stock_info': stock_info
     })
 # Agrega un producto al carrito del usuario autenticado (modelos Carrito e ItemCarrito). Recibe producto_id y cantidad en un JSON vía POST, obtiene o crea un carrito, actualiza o crea un ItemCarrito, y devuelve un JSON con los datos del carrito. Usa csrf_exempt y require_POST. Requiere autenticación.
 @login_required
