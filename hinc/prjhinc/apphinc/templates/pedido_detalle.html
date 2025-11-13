@@ -1,0 +1,124 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle Pedido - Hinc</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="shortcut icon" href="{% static 'Img/Hinc.png' %}" type="image/x-icon">
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <header class="relative h-20 bg-white shadow-sm">
+        <nav class="w-full h-full flex items-center justify-between px-6 max-w-7xl mx-auto">
+            <a href="{% url 'index' %}">
+                <img src="{% static 'img/Hinc.png' %}" alt="Hinc Logo" class="h-8">
+            </a>
+            <h1 class="text-xl font-bold text-gray-800">Detalle del Pedido</h1>
+            <a href="{% url 'pedidos' %}" class="text-gray-800 hover:text-gray-600 flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i> Volver a Pedidos
+            </a>
+        </nav>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <!-- Información del Pedido -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Pedido {{ pedido.numero_pedido }}</h2>
+                    <div class="space-y-2">
+                        <p><strong>Estado:</strong> 
+                            <span class="px-2 py-1 rounded-full text-sm font-semibold 
+                                {% if pedido.estado == 'pendiente' %}bg-yellow-100 text-yellow-800
+                                {% elif pedido.estado == 'confirmado' %}bg-blue-100 text-blue-800
+                                {% elif pedido.estado == 'procesando' %}bg-orange-100 text-orange-800
+                                {% elif pedido.estado == 'enviado' %}bg-purple-100 text-purple-800
+                                {% elif pedido.estado == 'entregado' %}bg-green-100 text-green-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ pedido.get_estado_display }}
+                            </span>
+                        </p>
+                        <p><strong>Fecha:</strong> {{ pedido.creado_en|date:"d/m/Y H:i" }}</p>
+                        <p><strong>Total:</strong> ${{ pedido.total|floatformat:0 }}</p>
+                        <p><strong>Método de Pago:</strong> {{ pedido.get_metodo_pago_display }}</p>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Información de Envío</h3>
+                    <div class="space-y-2">
+                        <p><strong>Cliente:</strong> {{ pedido.nombre_completo }}</p>
+                        <p><strong>Email:</strong> {{ pedido.email }}</p>
+                        <p><strong>Teléfono:</strong> {{ pedido.telefono }}</p>
+                        <p><strong>Dirección:</strong> {{ pedido.direccion_envio }}</p>
+                        <p><strong>Ciudad:</strong> {{ pedido.ciudad }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalles del Pedido -->
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Productos</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white border border-gray-200">
+                        <thead class="bg-gray-800 text-white">
+                            <tr>
+                                <th class="py-3 px-4 text-left">Producto</th>
+                                <th class="py-3 px-4 text-left">Talla</th>
+                                <th class="py-3 px-4 text-left">Cantidad</th>
+                                <th class="py-3 px-4 text-left">Precio Unitario</th>
+                                <th class="py-3 px-4 text-left">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for detalle in pedido.detalles.all %}
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center">
+                                        {% if detalle.producto.imagen %}
+                                        <img src="{{ detalle.producto.imagen.url }}" alt="{{ detalle.producto.nombre }}" 
+                                             class="w-12 h-12 object-cover rounded mr-3">
+                                        {% endif %}
+                                        <span class="font-medium">{{ detalle.producto.nombre }}</span>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">{{ detalle.talla }}</td>
+                                <td class="py-3 px-4">{{ detalle.cantidad }}</td>
+                                <td class="py-3 px-4">${{ detalle.precio|floatformat:0 }}</td>
+                                <td class="py-3 px-4 font-semibold">${{ detalle.obtener_total|floatformat:0 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="bg-gray-100">
+                            <tr>
+                                <td colspan="4" class="py-3 px-4 text-right font-semibold">Total del Pedido:</td>
+                                <td class="py-3 px-4 font-bold text-lg">${{ pedido.total|floatformat:0 }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="flex justify-between items-center pt-6 border-t">
+                <a href="{% url 'pedidos' %}" class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>Volver a Pedidos
+                </a>
+                <div class="flex space-x-3">
+                    <a href="{% url 'actualizar_estado_pedido' pedido.id %}" 
+                       class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition-colors">
+                        <i class="fas fa-edit mr-2"></i>Cambiar Estado
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-black py-4 text-center text-white mt-12">
+        <small>&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</small>
+    </footer>
+</body>
+</html>

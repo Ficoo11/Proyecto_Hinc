@@ -7,6 +7,8 @@ from .forms import CustomUserCreationForm, LoginForm, ProductoForm, CategoriaFor
 from .models import CustomUser, Producto, Categoria, Carrito, ItemCarrito, StockTalla, Pedido, DetallePedido
 from django.urls import reverse
 from django.http import JsonResponse
+from django.utils import timezone
+from datetime import timedelta
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import json
@@ -78,9 +80,17 @@ def paneladmin_view(request):
     if request.user.role != 'Admin':
         messages.error(request, "No tienes permiso para acceder al panel de administración.")
         return redirect('index')
+    
     users = CustomUser.objects.all()
     productos = Producto.objects.all()
     categorias = Categoria.objects.all()
+    pedidos = Pedido.objects.all()
+    
+    # Estadísticas de pedidos
+    pedidos_pendientes = pedidos.filter(estado='pendiente').count()
+    pedidos_procesando = pedidos.filter(estado='procesando').count()
+    pedidos_enviados = pedidos.filter(estado='enviado').count()
+    pedidos_recientes = pedidos.filter(creado_en__date=timezone.now().date()).count()
     
     # Obtener productos con stock bajo por porcentaje
     productos_stock_bajo = []
@@ -105,7 +115,7 @@ def paneladmin_view(request):
                 'alertas_tallas': alertas_tallas
             })
     
-    # Calcular contadores para el resumen de estados de stock - CORREGIDO
+    # Calcular contadores para el resumen de estados de stock
     contadores_estados = {
         'normal': 0,
         'medio': 0,
@@ -125,12 +135,23 @@ def paneladmin_view(request):
             elif porcentaje <= 10 and porcentaje > 0:
                 contadores_estados['critico'] += 1
     
+    # Pedidos recientes para notificaciones
+    pedidos_recientes_lista = Pedido.objects.filter(
+        creado_en__gte=timezone.now() - timezone.timedelta(days=7)
+    ).order_by('-creado_en')[:5]
+    
     return render(request, 'paneladmin.html', {
         'users': users,
         'productos': productos,
         'categorias': categorias,
+        'pedidos': pedidos,
+        'pedidos_pendientes': pedidos_pendientes,
+        'pedidos_procesando': pedidos_procesando,
+        'pedidos_enviados': pedidos_enviados,
+        'pedidos_recientes': pedidos_recientes,
         'productos_stock_bajo': productos_stock_bajo,
-        'contadores_estados': contadores_estados
+        'contadores_estados': contadores_estados,
+        'pedidos_recientes_lista': pedidos_recientes_lista
     })
 # Gestiona la administración de usuarios para Admins, mostrando todos los usuarios (CustomUser) en PAusuarios.html. Soporta acciones (add, edit, delete) según el parámetro 'action'. Para POST, valida CustomUserCreationForm para agregar o editar usuarios, o elimina un usuario por ID. Muestra mensajes de éxito o error y redirige a usuarios. Requiere autenticación y rol Admin.
 @login_required
@@ -753,19 +774,21 @@ def procesar_pago(request):
                     'error': f"El producto {item.producto.nombre} en talla {item.talla} no está disponible"
                 })
         
-        # Simular procesamiento de pago (en una aplicación real, aquí se conectaría con la pasarela de pago)
+        # Simular procesamiento de pago
         import time
-        time.sleep(2)  # Simular delay de procesamiento
+        time.sleep(2)
         
         # Crear pedido
         pedido = Pedido.objects.create(
             usuario=request.user,
             total=carrito.obtener_total(),
-            numero_pedido=Pedido().generar_numero_pedido(),
+            nombre_completo=data.get('nombre_completo'),
+            email=data.get('email'),
             direccion_envio=data.get('direccion'),
             ciudad=data.get('ciudad'),
             telefono=data.get('telefono'),
-            estado='completado'
+            metodo_pago=data.get('metodo_pago'),
+            estado='pendiente'
         )
         
         # Crear detalles del pedido y actualizar stock
@@ -799,3 +822,57 @@ def procesar_pago(request):
     except Exception as e:
         logger.error(f"Error al procesar pago: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)})
+    
+    # Vistas para gestión de pedidos
+@login_required
+def pedidos_view(request):
+    if request.user.role != 'Admin':
+        messages.error(request, "No tienes permiso para acceder a esta sección.")
+        return redirect('paneladmin')
+    
+    pedidos = Pedido.objects.all().order_by('-creado_en')
+    estados = Pedido.ESTADOS_PEDIDO
+    
+    # Filtros
+    estado_filtro = request.GET.get('estado')
+    if estado_filtro:
+        pedidos = pedidos.filter(estado=estado_filtro)
+    
+    return render(request, 'pedidos.html', {
+        'pedidos': pedidos,
+        'estados': estados,
+        'estado_filtro': estado_filtro
+    })
+
+@login_required
+def pedido_detalle_view(request, pedido_id):
+    if request.user.role != 'Admin':
+        messages.error(request, "No tienes permiso para acceder a esta sección.")
+        return redirect('paneladmin')
+    
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+    return render(request, 'pedido_detalle.html', {'pedido': pedido})
+
+@login_required
+@require_POST
+def actualizar_estado_pedido(request, pedido_id):
+    if request.user.role != 'Admin':
+        return JsonResponse({'success': False, 'error': 'No tienes permiso para realizar esta acción.'})
+    
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+    nuevo_estado = request.POST.get('estado')
+    
+    if nuevo_estado in dict(Pedido.ESTADOS_PEDIDO):
+        estado_anterior = pedido.estado
+        pedido.estado = nuevo_estado
+        pedido.save()
+        
+        messages.success(request, f"Estado del pedido {pedido.numero_pedido} actualizado a {pedido.get_estado_display()}.")
+        return JsonResponse({'success': True, 'nuevo_estado': nuevo_estado, 'estado_display': pedido.get_estado_display()})
+    
+    return JsonResponse({'success': False, 'error': 'Estado inválido.'})
+
+@login_required
+def mis_pedidos_view(request):
+    pedidos = Pedido.objects.filter(usuario=request.user).order_by('-creado_en')
+    return render(request, 'mis_pedidos.html', {'pedidos': pedidos})

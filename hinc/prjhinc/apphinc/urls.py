@@ -30,4 +30,8 @@ urlpatterns = [
     path('checkout/', views.checkout_view, name='checkout'),
     path('procesar-pago/', views.procesar_pago, name='procesar_pago'),
     path('confirmacion-pedido/<int:pedido_id>/', views.confirmacion_pedido_view, name='confirmacion_pedido'),
+    path('paneladmin/pedidos/', views.pedidos_view, name='pedidos'),
+    path('paneladmin/pedidos/detalle/<int:pedido_id>/', views.pedido_detalle_view, name='pedido_detalle'),
+    path('paneladmin/pedidos/actualizar_estado/<int:pedido_id>/', views.actualizar_estado_pedido, name='actualizar_estado_pedido'),
+    path('mis-pedidos/', views.mis_pedidos_view, name='mis_pedidos'),
 ]

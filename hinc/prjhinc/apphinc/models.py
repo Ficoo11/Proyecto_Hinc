@@ -3,6 +3,7 @@ from django.db import models
 from django.conf import settings
 from decimal import Decimal
 # Define los modelos de la base de datos para la tienda en línea, gestionando usuarios, categorías, productos y carritos de compra. Incluye un modelo personalizado de usuario (CustomUser) con roles y estados, un modelo para categorías (Categoria) con nombre, descripción e imagen, un modelo para productos (Producto) con detalles como precio, tallas y descuentos, y modelos para carritos (Carrito) e ítems de carrito (ItemCarrito) que manejan las compras de los usuarios. Los modelos usan relaciones (ForeignKey, OneToOneField) para conectar datos y métodos personalizados para cálculos como precios con descuento y totales del carrito, soportando la lógica del sistema de comercio electrónico.
+
 class CustomUser(AbstractUser):
     role = models.CharField(max_length=20, choices=[('Admin', 'Admin'), ('Usuario', 'Usuario')], default='Usuario')
     estado = models.CharField(max_length=20, choices=[('Habilitado', 'Habilitado'), ('Inhabilitado', 'Inhabilitado')], default='Habilitado')
@@ -11,12 +12,14 @@ class CustomUser(AbstractUser):
         return self.username
     class Meta:
         db_table = 'usuario'
+
 class Categoria(models.Model):
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField()
     imagen = models.ImageField(upload_to='categorias/', blank=True, null=True)
     def __str__(self):
         return self.nombre
+
 class Producto(models.Model):
     nombre = models.CharField(max_length=100)
     precio = models.DecimalField(max_digits=10, decimal_places=2)
@@ -151,23 +154,41 @@ class ItemCarrito(models.Model):
     class Meta:
         unique_together = ('carrito', 'producto', 'talla')
 
+# SOLO UNA VEZ EL MODELO Pedido - VERSIÓN ACTUALIZADA
 class Pedido(models.Model):
     ESTADOS_PEDIDO = [
         ('pendiente', 'Pendiente'),
+        ('confirmado', 'Confirmado'),
         ('procesando', 'Procesando'),
-        ('completado', 'Completado'),
+        ('enviado', 'Enviado'),
+        ('entregado', 'Entregado'),
         ('cancelado', 'Cancelado'),
+    ]
+    
+    METODOS_PAGO = [
+        ('tarjeta', 'Tarjeta de Crédito/Débito'),
+        ('paypal', 'PayPal'),
+        ('transferencia', 'Transferencia Bancaria'),
     ]
     
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='pedidos')
     numero_pedido = models.CharField(max_length=20, unique=True)
     total = models.DecimalField(max_digits=10, decimal_places=2)
     estado = models.CharField(max_length=20, choices=ESTADOS_PEDIDO, default='pendiente')
+    metodo_pago = models.CharField(max_length=20, choices=METODOS_PAGO, default='tarjeta')
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
-    direccion_envio = models.TextField()
-    ciudad = models.CharField(max_length=100)
-    telefono = models.CharField(max_length=20)
+    
+    # Información de envío - CON VALORES POR DEFECTO
+    nombre_completo = models.CharField(max_length=200, default="Admin")
+    email = models.EmailField(default="Admin@gmail.com")
+    direccion_envio = models.TextField(default="Dirección no especificada")
+    ciudad = models.CharField(max_length=100, default="Ciudad no especificada")
+    telefono = models.CharField(max_length=20, default="0000000000")
+    
+    # Información de pago (simulada) - opcionales
+    numero_tarjeta = models.CharField(max_length=20, blank=True, null=True)
+    fecha_expiracion = models.CharField(max_length=10, blank=True, null=True)
     
     def __str__(self):
         return f"Pedido {self.numero_pedido} - {self.usuario.username}"
@@ -176,7 +197,29 @@ class Pedido(models.Model):
         import random
         import string
         return 'PED' + ''.join(random.choices(string.digits, k=7))
+    
+    def save(self, *args, **kwargs):
+        if not self.numero_pedido:
+            self.numero_pedido = self.generar_numero_pedido()
+        super().save(*args, **kwargs)
+    
+    def obtener_estado_color(self):
+        colores = {
+            'pendiente': 'yellow',
+            'confirmado': 'blue',
+            'procesando': 'orange',
+            'enviado': 'purple',
+            'entregado': 'green',
+            'cancelado': 'red',
+        }
+        return colores.get(self.estado, 'gray')
+    
+    def es_reciente(self):
+        from django.utils import timezone
+        from datetime import timedelta
+        return self.creado_en >= timezone.now() - timedelta(days=1)
 
+# SOLO UNA VEZ EL MODELO DetallePedido
 class DetallePedido(models.Model):
     pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='detalles')
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)

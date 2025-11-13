@@ -50,6 +50,9 @@
                 <li>
                     <a href="{% url 'inventario' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/inventario/' %}bg-gray-700{% endif %}">Inventario</a>
                 </li>
+                <li>
+                    <a href="{% url 'pedidos' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/pedidos/' %}bg-gray-700{% endif %}">Pedidos</a>
+                </li>
             </ul>
         </aside>
         <!-- Main Panel -->
@@ -137,9 +140,112 @@
                 {% endfor %}
             </div>
             {% endif %}
+
+            <!-- Alertas de Pedidos Pendientes -->
+            {% if pedidos_pendientes > 0 %}
+            <div class="mb-6 border-l-4 border-yellow-500 bg-yellow-50 rounded-md shadow-sm overflow-hidden">
+                <div class="p-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-circle mr-3 text-yellow-500 text-xl"></i>
+                        <div>
+                            <strong class="text-lg text-yellow-800">Tienes {{ pedidos_pendientes }} pedido{{ pedidos_pendientes|pluralize }} pendiente{{ pedidos_pendientes|pluralize }}</strong>
+                            <p class="text-sm text-yellow-700">Revisa y actualiza el estado de los pedidos pendientes.</p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'pedidos' %}?estado=pendiente" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition-colors text-sm font-semibold">
+                            <i class="fas fa-clipboard-list mr-2"></i>Ver Pedidos Pendientes
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Pedidos Recientes -->
+            {% if pedidos_recientes_lista %}
+            <div class="mb-6 bg-white rounded-md shadow-md p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-clock mr-2 text-orange-500"></i>Pedidos Recientes (Últimos 7 días)
+                </h3>
+                <div class="space-y-3">
+                    {% for pedido in pedidos_recientes_lista %}
+                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                        <div>
+                            <p class="font-semibold text-gray-800">{{ pedido.numero_pedido }}</p>
+                            <p class="text-sm text-gray-600">{{ pedido.nombre_completo }} - ${{ pedido.total|floatformat:0 }}</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="px-2 py-1 rounded-full text-xs font-semibold 
+                                {% if pedido.estado == 'pendiente' %}bg-yellow-100 text-yellow-800
+                                {% elif pedido.estado == 'confirmado' %}bg-blue-100 text-blue-800
+                                {% elif pedido.estado == 'procesando' %}bg-orange-100 text-orange-800
+                                {% elif pedido.estado == 'enviado' %}bg-purple-100 text-purple-800
+                                {% elif pedido.estado == 'entregado' %}bg-green-100 text-green-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ pedido.get_estado_display }}
+                            </span>
+                            <a href="{% url 'pedido_detalle' pedido.id %}" class="text-blue-500 hover:text-blue-700 text-sm">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
             
             <!-- Dashboard Content -->
             <h2 class="text-2xl font-bold mb-6">Dashboard</h2>
+            
+            <!-- Estadísticas de Pedidos -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+                <div class="p-6 bg-white rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-yellow-100 rounded-lg mr-4">
+                            <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800">Pendientes</h4>
+                            <p class="text-3xl font-bold text-yellow-600 mt-1">{{ pedidos_pendientes }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6 bg-white rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-orange-100 rounded-lg mr-4">
+                            <i class="fas fa-cog text-orange-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800">Procesando</h4>
+                            <p class="text-3xl font-bold text-orange-600 mt-1">{{ pedidos_procesando }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6 bg-white rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-purple-100 rounded-lg mr-4">
+                            <i class="fas fa-shipping-fast text-purple-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800">Enviados</h4>
+                            <p class="text-3xl font-bold text-purple-600 mt-1">{{ pedidos_enviados }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6 bg-white rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-green-100 rounded-lg mr-4">
+                            <i class="fas fa-calendar-day text-green-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800">Hoy</h4>
+                            <p class="text-3xl font-bold text-green-600 mt-1">{{ pedidos_recientes }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estadísticas Generales -->
             <div class="grid grid-cols-2 gap-6 mb-6">
                 <div class="p-6 bg-white rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
                     <h4 class="font-semibold text-gray-800 text-lg">Usuarios Activos</h4>
@@ -159,7 +265,7 @@
                 </div>
             </div>
 
-            <!-- Resumen de Estados de Stock CORREGIDO -->
+            <!-- Resumen de Estados de Stock -->
             <div class="mt-8 bg-white rounded-md shadow-md p-6">
                 <h3 class="text-xl font-bold text-gray-800 mb-4">Resumen de Estados de Stock</h3>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
