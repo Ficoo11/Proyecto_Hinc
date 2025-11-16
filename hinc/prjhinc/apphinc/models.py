@@ -2,14 +2,26 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
 from decimal import Decimal
-# Define los modelos de la base de datos para la tienda en línea, gestionando usuarios, categorías, productos y carritos de compra. Incluye un modelo personalizado de usuario (CustomUser) con roles y estados, un modelo para categorías (Categoria) con nombre, descripción e imagen, un modelo para productos (Producto) con detalles como precio, tallas y descuentos, y modelos para carritos (Carrito) e ítems de carrito (ItemCarrito) que manejan las compras de los usuarios. Los modelos usan relaciones (ForeignKey, OneToOneField) para conectar datos y métodos personalizados para cálculos como precios con descuento y totales del carrito, soportando la lógica del sistema de comercio electrónico.
 
 class CustomUser(AbstractUser):
     role = models.CharField(max_length=20, choices=[('Admin', 'Admin'), ('Usuario', 'Usuario')], default='Usuario')
     estado = models.CharField(max_length=20, choices=[('Habilitado', 'Habilitado'), ('Inhabilitado', 'Inhabilitado')], default='Habilitado')
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # NUEVOS CAMPOS PARA EL PERFIL
+    foto_perfil = models.ImageField(upload_to='perfiles/', blank=True, null=True)
+    documento = models.CharField(max_length=20, blank=True, null=True)
+    genero = models.CharField(max_length=10, choices=[
+        ('M', 'Masculino'), 
+        ('F', 'Femenino'), 
+        ('O', 'Otro')
+    ], blank=True, null=True)
+    fecha_nacimiento = models.DateField(blank=True, null=True)
+    telefono_personal = models.CharField(max_length=15, blank=True, null=True)
+    
     def __str__(self):
         return self.username
+    
     class Meta:
         db_table = 'usuario'
 
@@ -17,6 +29,7 @@ class Categoria(models.Model):
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField()
     imagen = models.ImageField(upload_to='categorias/', blank=True, null=True)
+    
     def __str__(self):
         return self.nombre
 
@@ -28,7 +41,7 @@ class Producto(models.Model):
     descripcion = models.TextField()
     categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    stock = models.IntegerField(default=0)  # Stock general (calculado)
+    stock = models.IntegerField(default=0)
     descuento = models.IntegerField(
         choices=[(i, f"{i}%") for i in range(0, 101, 5)],
         default=0
@@ -47,10 +60,8 @@ class Producto(models.Model):
         return self.precio * Decimal(1 - self.descuento / 100)
     
     def actualizar_stock_general(self):
-        """Actualiza el stock general basado en el stock por tallas"""
         total_stock = sum(stock.stock for stock in self.stocktalla_set.all())
         self.stock = total_stock
-        # Actualizar estado basado en stock
         if total_stock == 0:
             self.estado = 'Agotado'
         elif self.estado == 'Agotado' and total_stock > 0:
@@ -58,7 +69,6 @@ class Producto(models.Model):
         self.save()
     
     def obtener_stock_por_talla(self, talla):
-        """Obtiene el stock para una talla específica"""
         try:
             stock_talla = self.stocktalla_set.get(talla=talla)
             return stock_talla.stock
@@ -66,11 +76,9 @@ class Producto(models.Model):
             return 0
     
     def tiene_stock_bajo(self):
-        """Verifica si alguna talla tiene stock bajo (<= 10)"""
         return self.stocktalla_set.filter(stock__lte=10).exists()
     
     def get_tallas_con_stock_bajo(self):
-        """Obtiene las tallas con stock bajo"""
         return self.stocktalla_set.filter(stock__lte=10)
 
 class StockTalla(models.Model):
@@ -86,7 +94,7 @@ class StockTalla(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
     talla = models.CharField(max_length=10, choices=TALLAS_CHOICES)
     stock = models.IntegerField(default=0)
-    stock_inicial = models.IntegerField(default=0)  # Stock inicial para calcular porcentajes
+    stock_inicial = models.IntegerField(default=0)
     
     class Meta:
         unique_together = ('producto', 'talla')
@@ -95,22 +103,18 @@ class StockTalla(models.Model):
         return f"{self.producto.nombre} - {self.talla}: {self.stock}"
     
     def save(self, *args, **kwargs):
-        # Si es un nuevo registro y stock_inicial es 0, establecerlo igual al stock
         if self.pk is None and self.stock_inicial == 0 and self.stock > 0:
             self.stock_inicial = self.stock
-        # Si se actualiza el stock y stock_inicial es 0, establecer stock_inicial
         elif self.stock_inicial == 0 and self.stock > 0:
             self.stock_inicial = self.stock
         super().save(*args, **kwargs)
     
     def obtener_porcentaje_stock(self):
-        """Calcula el porcentaje de stock disponible"""
         if self.stock_inicial == 0:
             return 0
         return (self.stock / self.stock_inicial) * 100
     
     def obtener_estado_stock(self):
-        """Determina el estado del stock basado en porcentaje"""
         porcentaje = self.obtener_porcentaje_stock()
         if porcentaje == 0:
             return 'agotado', 'Agotado', 'red'
@@ -154,7 +158,6 @@ class ItemCarrito(models.Model):
     class Meta:
         unique_together = ('carrito', 'producto', 'talla')
 
-# SOLO UNA VEZ EL MODELO Pedido - VERSIÓN ACTUALIZADA
 class Pedido(models.Model):
     ESTADOS_PEDIDO = [
         ('pendiente', 'Pendiente'),
@@ -179,14 +182,12 @@ class Pedido(models.Model):
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
     
-    # Información de envío - CON VALORES POR DEFECTO
     nombre_completo = models.CharField(max_length=200, default="Admin")
     email = models.EmailField(default="Admin@gmail.com")
     direccion_envio = models.TextField(default="Dirección no especificada")
     ciudad = models.CharField(max_length=100, default="Ciudad no especificada")
     telefono = models.CharField(max_length=20, default="0000000000")
     
-    # Información de pago (simulada) - opcionales
     numero_tarjeta = models.CharField(max_length=20, blank=True, null=True)
     fecha_expiracion = models.CharField(max_length=10, blank=True, null=True)
     
@@ -219,7 +220,6 @@ class Pedido(models.Model):
         from datetime import timedelta
         return self.creado_en >= timezone.now() - timedelta(days=1)
 
-# SOLO UNA VEZ EL MODELO DetallePedido
 class DetallePedido(models.Model):
     pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='detalles')
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)

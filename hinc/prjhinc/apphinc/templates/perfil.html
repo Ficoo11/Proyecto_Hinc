@@ -1,0 +1,232 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hinc - Mi Perfil</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="shortcut icon" href="{% static 'Img/Hinc.png' %}" type="image/x-icon">
+</head>
+<body class="bg-gray-900 font-sans text-white">
+    <!-- Header -->
+    <header class="relative h-24 overflow-hidden z-10">
+        <video class="absolute w-full h-full object-cover z-0" autoplay muted loop>
+            <source src="{% static 'Img/Hinc.mp4' %}" type="video/mp4">
+        </video>
+        <nav class="absolute w-full h-full flex items-center justify-between px-6 z-20 bg-black/60 backdrop-blur-sm">
+            <a href="{% url 'index' %}">
+                <img src="{% static 'Img/Hinc.png' %}" alt="Hinc Logo" class="w-6 h-10">
+            </a>
+            <h1 class="text-2xl font-bold absolute left-1/2 transform -translate-x-1/2">Mi Perfil</h1>
+            <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-gray-200 hover:text-black rounded-md transition-all duration-300">
+                <i class="fa-solid fa-user"></i>
+            </button>
+        </nav>
+        <div id="userMenu" class="hidden fixed right-4 top-20 w-48 bg-gray-800 rounded-lg shadow-xl z-[9999] border border-gray-700">
+            <a href="{% url 'perfil' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-t-lg transition-colors duration-200">
+                <i class="fas fa-user mr-2"></i>Mi Perfil
+            </a>
+            <a href="{% url 'ver_carrito' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 transition-colors duration-200">
+                <i class="fas fa-shopping-cart mr-2"></i>Carrito
+            </a>
+            <a href="{% url 'mis_pedidos' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 transition-colors duration-200">
+                <i class="fas fa-shopping-bag mr-2"></i>Mis Pedidos
+            </a>
+            <a href="{% url 'index' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 transition-colors duration-200">Volver al Inicio</a>
+            <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
+        </div>
+    </header>
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar de Perfil -->
+        <aside class="w-64 bg-gray-800 p-6 z-0">
+            <div class="text-center mb-6">
+                {% if user.foto_perfil %}
+                    <img src="{{ user.foto_perfil.url }}" alt="Foto de perfil" class="w-24 h-24 rounded-full mx-auto mb-3 object-cover border-2 border-gray-600">
+                {% else %}
+                    <div class="w-24 h-24 rounded-full mx-auto mb-3 bg-gray-600 flex items-center justify-center">
+                        <i class="fas fa-user text-3xl text-gray-400"></i>
+                    </div>
+                {% endif %}
+                <h2 class="text-lg font-semibold">{{ user.first_name }} {{ user.last_name }}</h2>
+                <p class="text-sm text-gray-400">@{{ user.username }}</p>
+            </div>
+            <ul>
+                <li>
+                    <a href="{% url 'perfil' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/perfil/' %}bg-gray-700{% endif %}">
+                        <i class="fas fa-user mr-2"></i>Información Personal
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'mis_pedidos' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300">
+                        <i class="fas fa-shopping-bag mr-2"></i>Mis Pedidos
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'ver_carrito' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300">
+                        <i class="fas fa-shopping-cart mr-2"></i>Mi Carrito
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <main class="flex-1 p-8 bg-gray-100 text-black">
+            {% if messages %}
+                <div id="messages-container" class="mb-4">
+                    {% for message in messages %}
+                        {% if message.tags == 'success' %}
+                            <div class="p-4 bg-green-100 text-green-800 rounded-md border border-green-300">
+                                {{ message }}
+                            </div>
+                        {% else %}
+                            <div class="p-4 bg-red-100 text-red-800 rounded-md border border-red-300">
+                                {{ message }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-6">Información Personal</h2>
+                
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <!-- Foto de Perfil -->
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 font-semibold mb-2">Foto de Perfil</label>
+                            <div class="flex items-center space-x-6">
+                                {% if user.foto_perfil %}
+                                    <img src="{{ user.foto_perfil.url }}" alt="Foto actual" class="w-20 h-20 rounded-full object-cover border-2 border-gray-300">
+                                {% else %}
+                                    <div class="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-300">
+                                        <i class="fas fa-user text-2xl text-gray-400"></i>
+                                    </div>
+                                {% endif %}
+                                <div class="flex-1">
+                                    {{ form.foto_perfil }}
+                                    <p class="text-sm text-gray-500 mt-1">Formatos permitidos: JPG, JPEG, PNG</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nombre -->
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Nombre</label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                                <span class="text-red-500 text-sm">{{ form.first_name.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Apellidos -->
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Apellidos</label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                                <span class="text-red-500 text-sm">{{ form.last_name.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Email -->
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Email</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <span class="text-red-500 text-sm">{{ form.email.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Documento -->
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Documento</label>
+                            {{ form.documento }}
+                            {% if form.documento.errors %}
+                                <span class="text-red-500 text-sm">{{ form.documento.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Género -->
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Género</label>
+                            {{ form.genero }}
+                            {% if form.genero.errors %}
+                                <span class="text-red-500 text-sm">{{ form.genero.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Fecha de Nacimiento -->
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Fecha de Nacimiento</label>
+                            {{ form.fecha_nacimiento }}
+                            {% if form.fecha_nacimiento.errors %}
+                                <span class="text-red-500 text-sm">{{ form.fecha_nacimiento.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Teléfono Personal -->
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 font-semibold mb-2">Teléfono Personal</label>
+                            {{ form.telefono_personal }}
+                            {% if form.telefono_personal.errors %}
+                                <span class="text-red-500 text-sm">{{ form.telefono_personal.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-4">
+                        <a href="{% url 'index' %}" class="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition duration-300">
+                            Cancelar
+                        </a>
+                        <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition duration-300">
+                            <i class="fas fa-save mr-2"></i>Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-center py-4 z-0">
+        <p class="text-sm text-white">&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</p>
+    </footer>
+
+    <script>
+        // User Menu Dropdown
+        const userMenuBtn = document.getElementById('userMenuBtn');
+        const userMenu = document.getElementById('userMenu');
+        userMenuBtn.addEventListener('click', () => {
+            userMenu.classList.toggle('hidden');
+        });
+
+        // Ocultar mensajes automáticamente después de 5 segundos
+        setTimeout(() => {
+            const messagesContainer = document.getElementById('messages-container');
+            if (messagesContainer) {
+                messagesContainer.style.display = 'none';
+            }
+        }, 5000);
+
+        // Validación de imagen
+        const fotoInput = document.querySelector('input[name="foto_perfil"]');
+        if (fotoInput) {
+            fotoInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                    if (!validTypes.includes(file.type)) {
+                        alert('Solo se permiten imágenes JPG, JPEG o PNG.');
+                        this.value = '';
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -14,7 +14,6 @@
         .nav-navbar a:hover { color: black; background-color: white; border: 2px solid white; border-radius: 5px; text-decoration: underline; }
         .product img:hover { transform: scale(1.05); opacity: 0.8; }
         .price-old { text-decoration: line-through; color: red; }
-        .agregar-carrito:hover { background-color: #f97316; }
         .product-card { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); background-color: white; padding: 1rem; }
         .category-circle { transition: transform 0.3s ease; }
         .category-circle:hover { transform: scale(1.1); }
@@ -48,10 +47,9 @@
                             {% if user.role == 'Admin' %}
                                 <a href="{% url 'paneladmin' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg">Panel Admin</a>
                             {% else %}
-                                <a href="{% url 'index' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100">Mi Cuenta</a>
+                                <a href="{% url 'perfil' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100">Mi Perfil</a>
                             {% endif %}
                             <a href="{% url 'ver_carrito' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100">Ver Carrito</a>
-                            <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100">Configuración</a>
                             <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg">Cerrar Sesión</a>
                         </div>
                     </div>
@@ -192,6 +190,7 @@
             document.body.scrollTop = 0;
             document.documentElement.scrollTop = 0;
         });
+
         // User Menu y carrito
         document.addEventListener('DOMContentLoaded', () => {
             const userMenuBtn = document.getElementById('userMenuBtn');

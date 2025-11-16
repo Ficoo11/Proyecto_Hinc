@@ -1,11 +1,15 @@
 from django.urls import path
 from . import views
-# Define las rutas URL de la aplicación, mapeando URLs a vistas en views.py para gestionar la navegación del sitio web de la tienda en línea. Organiza el acceso a funcionalidades clave: página principal (index), autenticación (registro, inicio y cierre de sesión), gestión administrativa (panel de administración, usuarios, productos, categorías e inventario) y carrito de compras (agregar, quitar, obtener y ver carrito). Cada ruta tiene un nombre único para su uso en templates y redirecciones, soportando tanto acciones públicas (como el catálogo) como protegidas para administradores (requieren autenticación y rol Admin) y usuarios autenticados (carrito).
+
 urlpatterns = [
     path('', views.index, name='index'),
     path('register/', views.register_view, name='register'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
+    
+    # NUEVA URL PARA PERFIL
+    path('perfil/', views.perfil_view, name='perfil'),
+    
     path('paneladmin/', views.paneladmin_view, name='paneladmin'),
     path('paneladmin/usuarios/', views.usuarios_view, name='usuarios'),
     path('paneladmin/usuarios/add/', views.add_user, name='add_user'),
@@ -26,7 +30,6 @@ urlpatterns = [
     path('carrito/quitar/', views.quitar_del_carrito, name='quitar_del_carrito'),
     path('carrito/obtener/', views.obtener_carrito, name='obtener_carrito'),
     path('carrito/', views.ver_carrito, name='ver_carrito'),
-    # Nuevas URLs para el sistema de pagos
     path('checkout/', views.checkout_view, name='checkout'),
     path('procesar-pago/', views.procesar_pago, name='procesar_pago'),
     path('confirmacion-pedido/<int:pedido_id>/', views.confirmacion_pedido_view, name='confirmacion_pedido'),
@@ -34,4 +37,5 @@ urlpatterns = [
     path('paneladmin/pedidos/detalle/<int:pedido_id>/', views.pedido_detalle_view, name='pedido_detalle'),
     path('paneladmin/pedidos/actualizar_estado/<int:pedido_id>/', views.actualizar_estado_pedido, name='actualizar_estado_pedido'),
     path('mis-pedidos/', views.mis_pedidos_view, name='mis_pedidos'),
+    
 ]

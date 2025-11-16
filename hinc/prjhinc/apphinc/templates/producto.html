@@ -44,10 +44,9 @@
                             {% if user.role == 'Admin' %}
                                 <a href="{% url 'paneladmin' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-t-lg">Panel Admin</a>
                             {% else %}
-                                <a href="{% url 'index' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100">Mi Cuenta</a>
+                                <a href="{% url 'perfil' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100">Mi Perfil</a>
                             {% endif %}
                             <a href="{% url 'ver_carrito' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100">Ver Carrito</a>
-                            <a href="#" class="block px-4 py-3 text-gray-800 hover:bg-gray-100">Configuración</a>
                             <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-800 hover:bg-gray-100 rounded-b-lg">Cerrar Sesión</a>
                         </div>
                     </div>
@@ -239,7 +238,7 @@
         let tallaSeleccionada = null;
         let cantidad = 1;
 
-        // Función para obtener y actualizar el carrito - AGREGADA
+        // Función para obtener y actualizar el carrito
         async function fetchCarrito() {
             try {
                 const response = await fetch(URL_OBTENER_CARRITO);
@@ -259,7 +258,7 @@
             }
         }
 
-        // Función para actualizar el sidebar del carrito - AGREGADA
+        // Función para actualizar el sidebar del carrito
         function actualizarSidebarCarrito(carrito) {
             const carritoContenido = document.getElementById('carritoContenido');
             const subtotalCarrito = document.getElementById('subtotalCarrito');
@@ -288,7 +287,7 @@
             }
         }
 
-        // Selección de talla - CORREGIDO
+        // Selección de talla
         document.addEventListener('DOMContentLoaded', function() {
             const tallaBtns = document.querySelectorAll('.talla-btn:not(.disabled)');
             

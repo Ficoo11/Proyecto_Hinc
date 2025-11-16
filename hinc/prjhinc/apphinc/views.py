@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.backends import ModelBackend
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .forms import CustomUserCreationForm, LoginForm, ProductoForm, CategoriaForm, InventoryForm, StockTallaForm, StockTallaInlineFormSet, PedidoForm
+from .forms import CustomUserCreationForm, LoginForm, ProductoForm, CategoriaForm, InventoryForm, StockTallaForm, StockTallaInlineFormSet, PedidoForm, PerfilForm
 from .models import CustomUser, Producto, Categoria, Carrito, ItemCarrito, StockTalla, Pedido, DetallePedido
 from django.urls import reverse
 from django.http import JsonResponse
@@ -13,10 +13,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import json
 import logging
-# Configura el sistema de logging en nivel DEBUG para capturar mensajes detallados de depuración, útiles para identificar errores en el flujo de la aplicación. Usa un logger específico para este módulo.
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-# Renderiza la página principal (index2.html), mostrando hasta 4 productos destacados y en oferta (estado='Habilitado', stock>0) del modelo Producto, y todas las categorías del modelo Categoria. Pasa el usuario autenticado, productos y categorías al template. Accesible sin autenticación.
+
 def index(request):
     productos_destacados = Producto.objects.filter(is_destacado=True, estado='Habilitado', stock__gt=0)[:4]
     categorias = Categoria.objects.all()
@@ -27,7 +27,7 @@ def index(request):
         'categorias': categorias,
         'ofertas': ofertas
     })
-# Maneja el registro de usuarios con CustomUserCreationForm. Para POST, asigna rol 'Usuario' y estado 'Habilitado', valida el formulario, guarda el usuario (modelo CustomUser) con contraseña encriptada y redirige a login. Si hay errores, muestra mensajes detallados. Para GET, renderiza register.html con el formulario vacío. Pública.
+
 def register_view(request):
     if request.method == 'POST':
         post_data = request.POST.copy()
@@ -52,7 +52,7 @@ def register_view(request):
     else:
         form = CustomUserCreationForm()
     return render(request, 'register.html', {'form': form})
-# Gestiona el inicio de sesión con LoginForm. Para POST, valida correo y contraseña, verifica el usuario (modelo CustomUser) y su estado ('Habilitado'), autentica con ModelBackend, inicia sesión y redirige a index. Si hay errores, muestra mensaje. Para GET, renderiza login.html con formulario vacío. Pública.
+
 def login_view(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
@@ -70,11 +70,27 @@ def login_view(request):
     else:
         form = LoginForm()
     return render(request, 'login.html', {'form': form})
-# Cierra la sesión del usuario autenticado con logout() y redirige a index. No requiere validaciones adicionales. Accesible para usuarios autenticados.
+
 def logout_view(request):
     logout(request)
     return redirect('index')
-# Renderiza el panel de administración (paneladmin.html) para usuarios con rol 'Admin', mostrando todos los usuarios (CustomUser), productos (Producto) y categorías (Categoria). Si el usuario no es Admin, muestra error y redirige a index. Requiere autenticación.
+
+# NUEVA VISTA PARA PERFIL
+@login_required
+def perfil_view(request):
+    if request.method == 'POST':
+        form = PerfilForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Perfil actualizado exitosamente.")
+            return redirect('perfil')
+        else:
+            messages.error(request, "Error al actualizar el perfil. Verifica los datos.")
+    else:
+        form = PerfilForm(instance=request.user)
+    
+    return render(request, 'perfil.html', {'form': form})
+
 @login_required
 def paneladmin_view(request):
     if request.user.role != 'Admin':
@@ -86,13 +102,11 @@ def paneladmin_view(request):
     categorias = Categoria.objects.all()
     pedidos = Pedido.objects.all()
     
-    # Estadísticas de pedidos
     pedidos_pendientes = pedidos.filter(estado='pendiente').count()
     pedidos_procesando = pedidos.filter(estado='procesando').count()
     pedidos_enviados = pedidos.filter(estado='enviado').count()
     pedidos_recientes = pedidos.filter(creado_en__date=timezone.now().date()).count()
     
-    # Obtener productos con stock bajo por porcentaje
     productos_stock_bajo = []
     for producto in productos:
         alertas_tallas = []
@@ -115,7 +129,6 @@ def paneladmin_view(request):
                 'alertas_tallas': alertas_tallas
             })
     
-    # Calcular contadores para el resumen de estados de stock
     contadores_estados = {
         'normal': 0,
         'medio': 0,
@@ -135,7 +148,6 @@ def paneladmin_view(request):
             elif porcentaje <= 10 and porcentaje > 0:
                 contadores_estados['critico'] += 1
     
-    # Pedidos recientes para notificaciones
     pedidos_recientes_lista = Pedido.objects.filter(
         creado_en__gte=timezone.now() - timezone.timedelta(days=7)
     ).order_by('-creado_en')[:5]
@@ -153,7 +165,7 @@ def paneladmin_view(request):
         'contadores_estados': contadores_estados,
         'pedidos_recientes_lista': pedidos_recientes_lista
     })
-# Gestiona la administración de usuarios para Admins, mostrando todos los usuarios (CustomUser) en PAusuarios.html. Soporta acciones (add, edit, delete) según el parámetro 'action'. Para POST, valida CustomUserCreationForm para agregar o editar usuarios, o elimina un usuario por ID. Muestra mensajes de éxito o error y redirige a usuarios. Requiere autenticación y rol Admin.
+
 @login_required
 def usuarios_view(request):
     if request.user.role != 'Admin':
@@ -190,7 +202,7 @@ def usuarios_view(request):
             messages.success(request, "Usuario eliminado exitosamente.")
             return redirect('usuarios')
     return render(request, 'PAusuarios.html', {'users': users, 'action': action, 'user': user, 'user_form': user_form})
-# Permite a Admins agregar nuevos usuarios con CustomUserCreationForm. Para POST, valida y guarda el usuario (CustomUser), redirige a usuarios con mensaje de éxito o muestra errores. Para GET, renderiza PAusuarios.html con formulario vacío. Requiere autenticación y rol Admin.
+
 @login_required
 def add_user(request):
     if request.user.role != 'Admin':
@@ -209,7 +221,7 @@ def add_user(request):
     else:
         form = CustomUserCreationForm()
     return render(request, 'PAusuarios.html', {'user_form': form, 'action': 'add'})
-# Permite a Admins editar un usuario existente (CustomUser) identificado por user_id. Para POST, valida CustomUserCreationForm, actualiza el usuario y redirige a usuarios. Para GET, renderiza PAusuarios.html con el formulario prellenado. Muestra mensajes de éxito o error. Requiere autenticación y rol Admin.
+
 @login_required
 def edit_user(request, user_id):
     if request.user.role != 'Admin':
@@ -229,7 +241,7 @@ def edit_user(request, user_id):
     else:
         form = CustomUserCreationForm(instance=user)
     return render(request, 'PAusuarios.html', {'user_form': form, 'action': 'edit', 'user': user})
-# Permite a Admins eliminar un usuario (CustomUser) por user_id. Para POST, elimina el usuario y redirige a usuarios con mensaje de éxito. Para GET, renderiza PAusuarios.html para confirmar la eliminación. Requiere autenticación y rol Admin.
+
 @login_required
 def delete_user(request, user_id):
     if request.user.role != 'Admin':
@@ -241,7 +253,7 @@ def delete_user(request, user_id):
         messages.success(request, "Usuario eliminado exitosamente.")
         return redirect('usuarios')
     return render(request, 'PAusuarios.html', {'action': 'delete', 'user': user})
-# Gestiona la administración de productos para Admins, mostrando todos los productos (Producto) en Pproductos.html. Soporta acciones (create, update, delete) según 'action'. Para POST, valida ProductoForm para crear o actualizar productos (incluye archivos para imágenes), o elimina un producto por ID. Muestra mensajes y redirige a productos. Requiere autenticación y rol Admin.
+
 @login_required
 def productos_view(request):
     if request.user.role != 'Admin':
@@ -253,7 +265,6 @@ def productos_view(request):
     producto = get_object_or_404(Producto, id=producto_id) if action in ['edit', 'delete'] and producto_id else None
     
     if producto and action == 'edit':
-        # Obtener stock por tallas para el producto
         stock_tallas = StockTalla.objects.filter(producto=producto)
         stock_forms = [StockTallaForm(instance=stock) for stock in stock_tallas]
     else:
@@ -293,7 +304,7 @@ def productos_view(request):
         'form': form,
         'stock_forms': stock_forms
     })
-# Permite a Admins crear productos con ProductoForm. Para POST, valida el formulario (incluye request.FILES para imágenes), guarda el producto (modelo Producto) y redirige a productos. Para GET, renderiza Pproductos.html con formulario vacío. Muestra mensajes de éxito o error. Requiere autenticación y rol Admin.
+
 @login_required
 def productos_create(request):
     if request.user.role != 'Admin':
@@ -312,7 +323,7 @@ def productos_create(request):
     else:
         form = ProductoForm()
     return render(request, 'Pproductos.html', {'form': form, 'action': 'create_productos'})
-# Permite a Admins editar un producto (Producto) por producto_id. Para POST, valida ProductoForm (con tallas prellenadas desde el modelo), actualiza el producto y redirige a productos. Para GET, renderiza Pproductos.html con formulario prellenado. Muestra mensajes de éxito o error. Requiere autenticación y rol Admin.
+
 @login_required
 def productos_update(request, producto_id):
     if request.user.role != 'Admin':
@@ -321,14 +332,12 @@ def productos_update(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
     form = ProductoForm(request.POST or None, request.FILES or None, instance=producto, initial={'tallas': producto.tallas.split(',') if producto.tallas else []})
     
-    # Obtener stock por tallas para el producto
     stock_tallas = StockTalla.objects.filter(producto=producto)
     
     if request.method == 'POST':
         if form.is_valid():
             producto_actualizado = form.save()
             
-            # Actualizar stock por tallas
             for stock_talla in stock_tallas:
                 stock_field = f'stock_{stock_talla.talla}'
                 stock_inicial_field = f'stock_inicial_{stock_talla.talla}'
@@ -338,7 +347,6 @@ def productos_update(request, producto_id):
                         nuevo_stock = int(request.POST[stock_field])
                         if nuevo_stock >= 0:
                             stock_talla.stock = nuevo_stock
-                            # Actualizar stock_inicial si se proporciona
                             if stock_inicial_field in request.POST:
                                 nuevo_stock_inicial = int(request.POST[stock_inicial_field])
                                 if nuevo_stock_inicial >= 0:
@@ -347,7 +355,6 @@ def productos_update(request, producto_id):
                     except ValueError:
                         pass
             
-            # Actualizar stock general
             producto_actualizado.actualizar_stock_general()
             
             messages.success(request, "Producto actualizado exitosamente.")
@@ -357,7 +364,6 @@ def productos_update(request, producto_id):
             for error in form.errors.values():
                 messages.error(request, error)
     
-    # Crear forms para stock por talla
     stock_forms = []
     for stock_talla in stock_tallas:
         stock_forms.append({
@@ -374,7 +380,7 @@ def productos_update(request, producto_id):
         'producto': producto,
         'stock_forms': stock_forms
     })
-# Permite a Admins eliminar un producto (Producto) por producto_id. Para POST, elimina el producto y redirige a productos con mensaje de éxito. Para GET, renderiza Pproductos.html para confirmar eliminación. Requiere autenticación y rol Admin.
+
 @login_required
 def productos_delete(request, producto_id):
     if request.user.role != 'Admin':
@@ -386,7 +392,7 @@ def productos_delete(request, producto_id):
         messages.success(request, "Producto eliminado exitosamente.")
         return redirect('productos')
     return render(request, 'Pproductos.html', {'action': 'delete_productos', 'producto': producto})
-# Gestiona la administración de categorías para Admins, mostrando todas las categorías (Categoria) en PAcategorias.html. Soporta acciones (create, update, delete) según 'action'. Para POST, valida CategoriaForm para crear o actualizar categorías (con imágenes), o elimina una categoría por ID. Muestra mensajes y redirige a categorias. Requiere autenticación y rol Admin.
+
 @login_required
 def categorias_view(request):
     if request.user.role != 'Admin':
@@ -423,7 +429,7 @@ def categorias_view(request):
             messages.success(request, "Categoría eliminada exitosamente.")
             return redirect('categorias')
     return render(request, 'PAcategorias.html', {'categorias': categorias, 'action': action, 'categoria': categoria, 'form': form})
-# Permite a Admins crear categorías con CategoriaForm. Para POST, valida el formulario (incluye request.FILES para imágenes), guarda la categoría (modelo Categoria) y redirige a categorias. Para GET, renderiza PAcategorias.html con formulario vacío. Muestra mensajes de éxito o error. Requiere autenticación y rol Admin.
+
 @login_required
 def categorias_create(request):
     if request.user.role != 'Admin':
@@ -442,7 +448,7 @@ def categorias_create(request):
     else:
         form = CategoriaForm()
     return render(request, 'PAcategorias.html', {'form': form, 'action': 'create_categorias'})
-# Permite a Admins editar una categoría (Categoria) por categoria_id. Para POST, valida CategoriaForm, actualiza la categoría y redirige a categorias. Para GET, renderiza PAcategorias.html con formulario prellenado. Muestra mensajes de éxito o error. Requiere autenticación y rol Admin.
+
 @login_required
 def categorias_update(request, categoria_id):
     if request.user.role != 'Admin':
@@ -460,7 +466,7 @@ def categorias_update(request, categoria_id):
             for error in form.errors.values():
                 messages.error(request, error)
     return render(request, 'PAcategorias.html', {'form': form, 'action': 'update_categorias', 'categoria': categoria})
-# Permite a Admins eliminar una categoría (Categoria) por categoria_id. Para POST, elimina la categoría y redirige a categorias con mensaje de éxito. Para GET, renderiza PAcategorias.html para confirmar eliminación. Requiere autenticación y rol Admin.
+
 @login_required
 def categorias_delete(request, categoria_id):
     if request.user.role != 'Admin':
@@ -472,7 +478,7 @@ def categorias_delete(request, categoria_id):
         messages.success(request, "Categoría eliminada exitosamente.")
         return redirect('categorias')
     return render(request, 'PAcategorias.html', {'action': 'delete_categorias', 'categoria': categoria})
-# Gestiona el inventario para Admins, mostrando todos los productos (Producto) en Pinventario.html. Soporta acciones (edit, delete) según 'action'. Para POST, valida InventoryForm para actualizar el stock de un producto o lo elimina por ID. Muestra mensajes y redirige a inventario. Requiere autenticación y rol Admin.
+
 @login_required
 def inventario_view(request):
     if request.user.role != 'Admin':
@@ -484,7 +490,6 @@ def inventario_view(request):
     producto = get_object_or_404(Producto, id=producto_id) if action in ['edit', 'delete'] and producto_id else None
     
     if producto and action == 'edit':
-        # Obtener stock por tallas para el producto
         stock_tallas = StockTalla.objects.filter(producto=producto)
         stock_forms = [StockTallaForm(instance=stock) for stock in stock_tallas]
     else:
@@ -498,7 +503,6 @@ def inventario_view(request):
             if form.is_valid():
                 form.save()
                 
-                # Actualizar stock por tallas
                 stock_tallas = StockTalla.objects.filter(producto=producto)
                 for stock_talla in stock_tallas:
                     stock_field = f'stock_{stock_talla.talla}'
@@ -509,7 +513,6 @@ def inventario_view(request):
                             nuevo_stock = int(request.POST[stock_field])
                             if nuevo_stock >= 0:
                                 stock_talla.stock = nuevo_stock
-                                # Actualizar stock_inicial si se proporciona
                                 if stock_inicial_field in request.POST:
                                     nuevo_stock_inicial = int(request.POST[stock_inicial_field])
                                     if nuevo_stock_inicial >= 0:
@@ -518,7 +521,6 @@ def inventario_view(request):
                         except ValueError:
                             pass
                 
-                # Actualizar stock general
                 producto.actualizar_stock_general()
                 
                 messages.success(request, "Inventario actualizado exitosamente.")
@@ -539,16 +541,15 @@ def inventario_view(request):
         'form': form,
         'stock_forms': stock_forms
     })
-# Renderiza el catálogo (catalogo.html), mostrando todos los productos (Producto) y categorías (Categoria). Pasa ambos al contexto del template para su visualización. Accesible sin autenticación, permite a todos los usuarios explorar los productos.
+
 def catalogo_view(request):
     productos = Producto.objects.all()
     categorias = Categoria.objects.all()
     return render(request, 'catalogo.html', {'productos': productos, 'categorias': categorias})
-# Renderiza la página de detalle de producto (producto.html), mostrando toda la información del producto, tallas disponibles, stock y permitiendo agregar al carrito. Accesible sin autenticación.
+
 def producto_detalle_view(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
     
-    # Obtener información de stock por porcentaje para cada talla
     stock_info = []
     for stock_talla in producto.stocktalla_set.all():
         estado, estado_texto, color = stock_talla.obtener_estado_stock()
@@ -567,7 +568,7 @@ def producto_detalle_view(request, producto_id):
         'user': request.user if request.user.is_authenticated else None,
         'stock_info': stock_info
     })
-# Agrega un producto al carrito del usuario autenticado (modelos Carrito e ItemCarrito). Recibe producto_id y cantidad en un JSON vía POST, obtiene o crea un carrito, actualiza o crea un ItemCarrito, y devuelve un JSON con los datos del carrito. Usa csrf_exempt y require_POST. Requiere autenticación.
+
 @login_required
 @require_POST
 @csrf_exempt
@@ -580,7 +581,6 @@ def agregar_al_carrito(request):
        
         producto = get_object_or_404(Producto, id=producto_id)
         
-        # Verificar stock disponible para la talla
         stock_talla = get_object_or_404(StockTalla, producto=producto, talla=talla)
         stock_disponible = stock_talla.stock
         
@@ -600,7 +600,6 @@ def agregar_al_carrito(request):
         )
        
         if not created:
-            # Verificar que no exceda el stock al actualizar
             nueva_cantidad = item.cantidad + cantidad
             if nueva_cantidad > stock_disponible:
                 return JsonResponse({
@@ -618,7 +617,7 @@ def agregar_al_carrito(request):
     except Exception as e:
         logger.error(f"Error al agregar al carrito: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)})
-# Elimina un producto del carrito del usuario autenticado. Recibe producto_id en un JSON vía POST, elimina el ItemCarrito correspondiente y devuelve un JSON con los datos actualizados del carrito. Usa csrf_exempt y require_POST. Requiere autenticación.
+
 @login_required
 @require_POST
 @csrf_exempt
@@ -640,7 +639,7 @@ def quitar_del_carrito(request):
     except Exception as e:
         logger.error(f"Error al quitar del carrito: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)})
-# Obtiene los datos del carrito del usuario autenticado (modelo Carrito). Crea o recupera el carrito y devuelve un JSON con sus datos, generados por obtener_datos_carrito. Requiere autenticación.
+
 @login_required
 def obtener_carrito(request):
     try:
@@ -651,17 +650,17 @@ def obtener_carrito(request):
         })
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
-# Genera un diccionario con los datos del carrito, incluyendo los ítems (ItemCarrito) con id, nombre, precio, cantidad e imagen del producto, además del total y cantidad total del carrito. Usado por las vistas del carrito para devolver datos en formato JSON.
+
 def obtener_datos_carrito(carrito):
     items = []
     for item in carrito.items.all():
         items.append({
-            'id': item.id,  # Agregar ID del item
+            'id': item.id,
             'id_producto': item.producto.id,
             'nombre': item.producto.nombre,
             'precio': float(item.producto.precio),
             'cantidad': item.cantidad,
-            'talla': item.talla,  # Incluir la talla
+            'talla': item.talla,
             'imagen': item.producto.imagen.url if item.producto.imagen else ''
         })
    
@@ -670,12 +669,12 @@ def obtener_datos_carrito(carrito):
         'total': float(carrito.obtener_total()),
         'cantidad_total': carrito.obtener_cantidad_total()
     }
-# Renderiza la página del carrito (carrito.html) para el usuario autenticado, mostrando los ítems del carrito (modelo Carrito). Crea o recupera el carrito y lo pasa al template. Requiere autenticación.
+
 @login_required
 def ver_carrito(request):
     carrito, created = Carrito.objects.get_or_create(usuario=request.user)
     return render(request, 'carrito.html', {'carrito': carrito})
-# Renderiza la página de checkout para procesar el pago
+
 @login_required
 def checkout_view(request):
     carrito, created = Carrito.objects.get_or_create(usuario=request.user)
@@ -684,7 +683,6 @@ def checkout_view(request):
         messages.error(request, "Tu carrito está vacío.")
         return redirect('ver_carrito')
     
-    # Verificar stock antes de proceder al pago
     for item in carrito.items.all():
         try:
             stock_talla = StockTalla.objects.get(producto=item.producto, talla=item.talla)
@@ -698,14 +696,12 @@ def checkout_view(request):
     if request.method == 'POST':
         form = PedidoForm(request.POST)
         if form.is_valid():
-            # Crear el pedido
             pedido = form.save(commit=False)
             pedido.usuario = request.user
             pedido.total = carrito.obtener_total()
             pedido.numero_pedido = pedido.generar_numero_pedido()
             pedido.save()
             
-            # Crear detalles del pedido y actualizar stock
             for item in carrito.items.all():
                 DetallePedido.objects.create(
                     pedido=pedido,
@@ -715,21 +711,17 @@ def checkout_view(request):
                     precio=item.producto.precio
                 )
                 
-                # Actualizar stock
                 stock_talla = StockTalla.objects.get(producto=item.producto, talla=item.talla)
                 stock_talla.stock -= item.cantidad
                 stock_talla.save()
                 
-                # Actualizar stock general del producto
                 item.producto.actualizar_stock_general()
             
-            # Vaciar el carrito
             carrito.items.all().delete()
             
             messages.success(request, f"¡Pedido realizado exitosamente! Número de pedido: {pedido.numero_pedido}")
             return redirect('confirmacion_pedido', pedido_id=pedido.id)
     else:
-        # Prellenar formulario con datos del usuario si existen
         initial_data = {}
         if request.user.first_name and request.user.last_name:
             initial_data['nombre_completo'] = f"{request.user.first_name} {request.user.last_name}"
@@ -742,12 +734,12 @@ def checkout_view(request):
         'carrito': carrito,
         'form': form
     })
-# Renderiza la página de confirmación de pedido
+
 @login_required
 def confirmacion_pedido_view(request, pedido_id):
     pedido = get_object_or_404(Pedido, id=pedido_id, usuario=request.user)
     return render(request, 'confirmacion_pedido.html', {'pedido': pedido})
-# Simula el procesamiento de pago
+
 @login_required
 @require_POST
 @csrf_exempt
@@ -759,7 +751,6 @@ def procesar_pago(request):
         if not carrito.items.exists():
             return JsonResponse({'success': False, 'error': 'El carrito está vacío'})
         
-        # Verificar stock nuevamente antes del pago
         for item in carrito.items.all():
             try:
                 stock_talla = StockTalla.objects.get(producto=item.producto, talla=item.talla)
@@ -774,11 +765,9 @@ def procesar_pago(request):
                     'error': f"El producto {item.producto.nombre} en talla {item.talla} no está disponible"
                 })
         
-        # Simular procesamiento de pago
         import time
         time.sleep(2)
         
-        # Crear pedido
         pedido = Pedido.objects.create(
             usuario=request.user,
             total=carrito.obtener_total(),
@@ -791,7 +780,6 @@ def procesar_pago(request):
             estado='pendiente'
         )
         
-        # Crear detalles del pedido y actualizar stock
         for item in carrito.items.all():
             DetallePedido.objects.create(
                 pedido=pedido,
@@ -801,15 +789,12 @@ def procesar_pago(request):
                 precio=item.producto.precio
             )
             
-            # Actualizar stock
             stock_talla = StockTalla.objects.get(producto=item.producto, talla=item.talla)
             stock_talla.stock -= item.cantidad
             stock_talla.save()
             
-            # Actualizar stock general del producto
             item.producto.actualizar_stock_general()
         
-        # Vaciar el carrito
         carrito.items.all().delete()
         
         return JsonResponse({
@@ -823,7 +808,6 @@ def procesar_pago(request):
         logger.error(f"Error al procesar pago: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)})
     
-    # Vistas para gestión de pedidos
 @login_required
 def pedidos_view(request):
     if request.user.role != 'Admin':
@@ -833,7 +817,6 @@ def pedidos_view(request):
     pedidos = Pedido.objects.all().order_by('-creado_en')
     estados = Pedido.ESTADOS_PEDIDO
     
-    # Filtros
     estado_filtro = request.GET.get('estado')
     if estado_filtro:
         pedidos = pedidos.filter(estado=estado_filtro)
@@ -876,3 +859,4 @@ def actualizar_estado_pedido(request, pedido_id):
 def mis_pedidos_view(request):
     pedidos = Pedido.objects.filter(usuario=request.user).order_by('-creado_en')
     return render(request, 'mis_pedidos.html', {'pedidos': pedidos})
+

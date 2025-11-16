@@ -25,7 +25,15 @@
             </button>
         </nav>
         <div id="userMenu" class="hidden fixed right-4 top-20 w-48 bg-gray-800 rounded-lg shadow-xl z-[9999] border border-gray-700">
-            <a href="#" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-t-lg transition-colors duration-200">Configuración</a>
+            <a href="{% url 'perfil' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-t-lg transition-colors duration-200">
+                <i class="fas fa-user mr-2"></i>Mi Perfil
+            </a>
+            <a href="{% url 'mis_pedidos' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 transition-colors duration-200">
+                <i class="fas fa-shopping-bag mr-2"></i>Mis Pedidos
+            </a>
+            <a href="{% url 'ver_carrito' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 transition-colors duration-200">
+                <i class="fas fa-shopping-cart mr-2"></i>Mi Carrito
+            </a>
             <a href="{% url 'index' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 transition-colors duration-200">Volver al Inicio</a>
             <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
         </div>
