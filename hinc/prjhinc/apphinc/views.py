@@ -860,3 +860,67 @@ def mis_pedidos_view(request):
     pedidos = Pedido.objects.filter(usuario=request.user).order_by('-creado_en')
     return render(request, 'mis_pedidos.html', {'pedidos': pedidos})
 
+@login_required
+def pedido_detalle_view(request, pedido_id):
+    """Vista para ver el detalle de un pedido específico"""
+    if request.user.role != 'Admin':
+        messages.error(request, "No tienes permiso para acceder a esta sección.")
+        return redirect('paneladmin')
+    
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+    return render(request, 'pedido_detalle.html', {'pedido': pedido})
+
+@login_required
+def mis_pedidos_detalle_view(request, pedido_id):
+    """Vista para que los usuarios vean el detalle de sus propios pedidos"""
+    pedido = get_object_or_404(Pedido, id=pedido_id, usuario=request.user)
+    return render(request, 'pedido_detalle.html', {'pedido': pedido})
+
+def producto_detalle(request, producto_id):
+    """
+    Vista para mostrar los detalles de un producto específico
+    """
+    producto = get_object_or_404(Producto, id=producto_id, disponible=True)
+    
+    # Productos relacionados (misma categoría)
+    productos_relacionados = Producto.objects.filter(
+        categoria=producto.categoria, 
+        disponible=True
+    ).exclude(id=producto.id)[:4]  # Limita a 4 productos
+    
+    context = {
+        'producto': producto,
+        'productos_relacionados': productos_relacionados,
+    }
+    
+    return render(request, 'producto_detalle.html', context)
+
+def cambiar_estado_pedido(request, pedido_id):
+    """
+    Vista para cambiar el estado de un pedido
+    """
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+    
+    if request.method == 'POST':
+        nuevo_estado = request.POST.get('nuevo_estado')
+        if nuevo_estado:
+            pedido.estado = nuevo_estado
+            pedido.save()
+            messages.success(request, f'Estado del pedido #{pedido.id} actualizado a: {nuevo_estado}')
+        return redirect('detalle_pedido', pedido_id=pedido.id)
+    
+    # Si es GET, mostrar formulario de cambio de estado
+    return render(request, 'cambiar_estado_pedido.html', {'pedido': pedido})
+
+def detalle_pedido(request, pedido_id):
+    """
+    Vista para mostrar los detalles de un pedido específico
+    """
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+    
+    context = {
+        'pedido': pedido,
+    }
+    
+    return render(request, 'pedidos/detalle_pedido.html', context)
+

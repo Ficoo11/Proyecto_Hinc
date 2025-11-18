@@ -2,6 +2,8 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
 from decimal import Decimal
+from django.utils import timezone
+from datetime import timedelta
 
 class CustomUser(AbstractUser):
     role = models.CharField(max_length=20, choices=[('Admin', 'Admin'), ('Usuario', 'Usuario')], default='Usuario')
@@ -60,6 +62,7 @@ class Producto(models.Model):
         return self.precio * Decimal(1 - self.descuento / 100)
     
     def actualizar_stock_general(self):
+        """Actualiza el stock general basado en el stock por tallas"""
         total_stock = sum(stock.stock for stock in self.stocktalla_set.all())
         self.stock = total_stock
         if total_stock == 0:
@@ -69,6 +72,7 @@ class Producto(models.Model):
         self.save()
     
     def obtener_stock_por_talla(self, talla):
+        """Obtiene el stock para una talla específica"""
         try:
             stock_talla = self.stocktalla_set.get(talla=talla)
             return stock_talla.stock
@@ -76,9 +80,11 @@ class Producto(models.Model):
             return 0
     
     def tiene_stock_bajo(self):
+        """Verifica si alguna talla tiene stock bajo (<= 10)"""
         return self.stocktalla_set.filter(stock__lte=10).exists()
     
     def get_tallas_con_stock_bajo(self):
+        """Obtiene las tallas con stock bajo"""
         return self.stocktalla_set.filter(stock__lte=10)
 
 class StockTalla(models.Model):
@@ -110,11 +116,13 @@ class StockTalla(models.Model):
         super().save(*args, **kwargs)
     
     def obtener_porcentaje_stock(self):
+        """Calcula el porcentaje de stock disponible"""
         if self.stock_inicial == 0:
             return 0
         return (self.stock / self.stock_inicial) * 100
     
     def obtener_estado_stock(self):
+        """Determina el estado del stock basado en porcentaje"""
         porcentaje = self.obtener_porcentaje_stock()
         if porcentaje == 0:
             return 'agotado', 'Agotado', 'red'
@@ -158,6 +166,7 @@ class ItemCarrito(models.Model):
     class Meta:
         unique_together = ('carrito', 'producto', 'talla')
 
+# MODELO PEDIDO COMPLETO Y FUNCIONAL
 class Pedido(models.Model):
     ESTADOS_PEDIDO = [
         ('pendiente', 'Pendiente'),
@@ -182,12 +191,14 @@ class Pedido(models.Model):
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
     
-    nombre_completo = models.CharField(max_length=200, default="Admin")
-    email = models.EmailField(default="Admin@gmail.com")
+    # Información del cliente
+    nombre_completo = models.CharField(max_length=200, default="Cliente")
+    email = models.EmailField(default="cliente@ejemplo.com")
     direccion_envio = models.TextField(default="Dirección no especificada")
     ciudad = models.CharField(max_length=100, default="Ciudad no especificada")
     telefono = models.CharField(max_length=20, default="0000000000")
     
+    # Información de pago (opcional)
     numero_tarjeta = models.CharField(max_length=20, blank=True, null=True)
     fecha_expiracion = models.CharField(max_length=10, blank=True, null=True)
     
@@ -205,9 +216,10 @@ class Pedido(models.Model):
         super().save(*args, **kwargs)
     
     def obtener_estado_color(self):
+        """Devuelve el color correspondiente al estado del pedido"""
         colores = {
             'pendiente': 'yellow',
-            'confirmado': 'blue',
+            'confirmado': 'blue', 
             'procesando': 'orange',
             'enviado': 'purple',
             'entregado': 'green',
@@ -216,10 +228,10 @@ class Pedido(models.Model):
         return colores.get(self.estado, 'gray')
     
     def es_reciente(self):
-        from django.utils import timezone
-        from datetime import timedelta
-        return self.creado_en >= timezone.now() - timedelta(days=1)
+        """Verifica si el pedido fue creado en los últimos 7 días"""
+        return self.creado_en >= timezone.now() - timedelta(days=7)
 
+# MODELO DETALLE PEDIDO COMPLETO Y FUNCIONAL
 class DetallePedido(models.Model):
     pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='detalles')
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
@@ -231,4 +243,9 @@ class DetallePedido(models.Model):
         return f"{self.cantidad} x {self.producto.nombre} ({self.talla}) - Pedido {self.pedido.numero_pedido}"
     
     def obtener_total(self):
+        """Calcula el total para este detalle de pedido"""
         return self.precio * self.cantidad
+    
+    class Meta:
+        verbose_name = "Detalle de Pedido"
+        verbose_name_plural = "Detalles de Pedidos"

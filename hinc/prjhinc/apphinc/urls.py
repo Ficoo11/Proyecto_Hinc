@@ -37,5 +37,17 @@ urlpatterns = [
     path('paneladmin/pedidos/detalle/<int:pedido_id>/', views.pedido_detalle_view, name='pedido_detalle'),
     path('paneladmin/pedidos/actualizar_estado/<int:pedido_id>/', views.actualizar_estado_pedido, name='actualizar_estado_pedido'),
     path('mis-pedidos/', views.mis_pedidos_view, name='mis_pedidos'),
-    
+    path('paneladmin/pedidos/', views.pedidos_view, name='pedidos'),
+    path('paneladmin/pedidos/detalle/<int:pedido_id>/', views.pedido_detalle_view, name='pedido_detalle'),
+    path('paneladmin/pedidos/actualizar_estado/<int:pedido_id>/', views.actualizar_estado_pedido, name='actualizar_estado_pedido'),
+    path('mis-pedidos/', views.mis_pedidos_view, name='mis_pedidos'),
+    path('mis-pedidos/detalle/<int:pedido_id>/', views.mis_pedidos_detalle_view, name='mis_pedidos_detalle'),
+    path('catalogo/', views.catalogo_view, name='catalogo'),
+    path('producto/<int:producto_id>/', views.producto_detalle, name='producto_detalle'),
+    path('pedidos/<int:pedido_id>/', views.detalle_pedido, name='detalle_pedido'),
+    path('pedidos/<int:pedido_id>/cambiar-estado/', views.cambiar_estado_pedido, name='cambiar_estado_pedido'),
+    path('paneladmin/pedidos/', views.pedidos_view, name='pedidos'),
+    path('paneladmin/pedidos/detalle/<int:pedido_id>/', views.pedido_detalle_view, name='pedido_detalle'),
+    path('paneladmin/pedidos/actualizar_estado/<int:pedido_id>/', views.actualizar_estado_pedido, name='actualizar_estado_pedido'),
 ]
+    

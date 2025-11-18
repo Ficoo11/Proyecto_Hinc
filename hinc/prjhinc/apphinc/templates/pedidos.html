@@ -130,12 +130,12 @@
                                     <a href="{% url 'pedido_detalle' pedido.id %}" class="text-blue-500 hover:text-blue-700">
                                         <i class="fas fa-eye"></i> Ver
                                     </a>
-                                    <div class="relative">
-                                        <button class="text-green-500 hover:text-green-700 cambiar-estado-btn" 
-                                                data-pedido-id="{{ pedido.id }}">
-                                            <i class="fas fa-edit"></i> Estado
-                                        </button>
-                                    </div>
+                                    <button class="text-green-500 hover:text-green-700 cambiar-estado-btn" 
+                                            data-pedido-id="{{ pedido.id }}"
+                                            data-pedido-numero="{{ pedido.numero_pedido }}"
+                                            data-estado-actual="{{ pedido.estado }}">
+                                        <i class="fas fa-edit"></i> Estado
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -161,6 +161,7 @@
     <div id="estadoModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
         <div class="bg-white rounded-lg p-6 w-96">
             <h3 class="text-lg font-semibold mb-4">Cambiar Estado del Pedido</h3>
+            <p class="text-sm text-gray-600 mb-4">Pedido: <span id="pedidoNumero"></span></p>
             <form id="estadoForm">
                 {% csrf_token %}
                 <input type="hidden" id="pedidoId" name="pedido_id">
@@ -188,12 +189,19 @@
         // Manejo del modal de estado
         const estadoModal = document.getElementById('estadoModal');
         const estadoForm = document.getElementById('estadoForm');
+        const pedidoNumeroSpan = document.getElementById('pedidoNumero');
         let pedidoActualId = null;
 
         document.querySelectorAll('.cambiar-estado-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 pedidoActualId = this.dataset.pedidoId;
+                const pedidoNumero = this.dataset.pedidoNumero;
+                const estadoActual = this.dataset.estadoActual;
+                
                 document.getElementById('pedidoId').value = pedidoActualId;
+                pedidoNumeroSpan.textContent = pedidoNumero;
+                document.getElementById('nuevoEstado').value = estadoActual;
+                
                 estadoModal.classList.remove('hidden');
             });
         });
@@ -213,7 +221,8 @@
                 const response = await fetch(`/paneladmin/pedidos/actualizar_estado/${pedidoId}/`, {
                     method: 'POST',
                     headers: {
-                        'X-CSRFToken': getCookie('csrftoken')
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
                     body: formData
                 });
@@ -221,6 +230,13 @@
                 const data = await response.json();
 
                 if (data.success) {
+                    // Cerrar modal
+                    cerrarModal();
+                    
+                    // Mostrar mensaje de éxito
+                    alert('Estado actualizado correctamente');
+                    
+                    // Recargar la página para ver los cambios
                     location.reload();
                 } else {
                     alert('Error: ' + data.error);
@@ -252,6 +268,20 @@
                 messagesContainer.style.display = 'none';
             }
         }, 5000);
+
+        // Cerrar modal al hacer clic fuera
+        estadoModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                cerrarModal();
+            }
+        });
+
+        // Cerrar modal con ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                cerrarModal();
+            }
+        });
     </script>
 </body>
 </html>

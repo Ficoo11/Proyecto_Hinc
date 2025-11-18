@@ -8,6 +8,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="shortcut icon" href="{% static 'Img/Hinc.png' %}" type="image/x-icon">
+    <style>
+        .error-message {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        .valid-field {
+            border-color: #10b981 !important;
+        }
+        .invalid-field {
+            border-color: #dc2626 !important;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 font-sans">
     <!-- Header -->
@@ -41,12 +55,14 @@
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">Información Personal</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Completo *</label>
                                 {{ form.nombre_completo }}
+                                <div id="nombre_completo_error" class="error-message">El nombre completo es requerido</div>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
                                 {{ form.email }}
+                                <div id="email_error" class="error-message">Ingresa un email válido</div>
                             </div>
                         </div>
                     </div>
@@ -56,17 +72,20 @@
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">Información de Envío</h3>
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Dirección *</label>
                                 {{ form.direccion }}
+                                <div id="direccion_error" class="error-message">La dirección es requerida</div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Ciudad</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Ciudad *</label>
                                     {{ form.ciudad }}
+                                    <div id="ciudad_error" class="error-message">La ciudad es requerida</div>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono *</label>
                                     {{ form.telefono }}
+                                    <div id="telefono_error" class="error-message">Ingresa un teléfono válido</div>
                                 </div>
                             </div>
                         </div>
@@ -78,7 +97,7 @@
                         
                         <!-- Métodos de Pago -->
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-3">Método de Pago</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">Método de Pago *</label>
                             <div class="space-y-2">
                                 <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
                                     <input type="radio" name="metodo_pago" value="tarjeta" checked class="mr-3">
@@ -95,35 +114,40 @@
                                     </div>
                                 </label>
                             </div>
+                            <div id="metodo_pago_error" class="error-message mt-2">Selecciona un método de pago</div>
                         </div>
 
                         <!-- Información de Tarjeta (se muestra solo si se selecciona tarjeta) -->
                         <div id="tarjeta-info" class="space-y-4">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Número de Tarjeta</label>
-                                    <input type="text" placeholder="1234 5678 9012 3456" 
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Número de Tarjeta *</label>
+                                    <input type="text" id="numero_tarjeta" placeholder="1234 5678 9012 3456" 
                                            class="mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black"
                                            maxlength="19">
+                                    <div id="numero_tarjeta_error" class="error-message">Número de tarjeta inválido</div>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">CVV</label>
-                                    <input type="text" placeholder="123" 
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">CVV *</label>
+                                    <input type="text" id="cvv" placeholder="123" 
                                            class="mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black"
                                            maxlength="3">
+                                    <div id="cvv_error" class="error-message">CVV inválido</div>
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Expiración</label>
-                                    <input type="text" placeholder="MM/AA" 
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Expiración *</label>
+                                    <input type="text" id="fecha_expiracion" placeholder="MM/AA" 
                                            class="mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black"
                                            maxlength="5">
+                                    <div id="fecha_expiracion_error" class="error-message">Fecha inválida (MM/AA)</div>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre en la Tarjeta</label>
-                                    <input type="text" placeholder="JUAN PEREZ" 
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre en la Tarjeta *</label>
+                                    <input type="text" id="nombre_tarjeta" placeholder="JUAN PEREZ" 
                                            class="mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black">
+                                    <div id="nombre_tarjeta_error" class="error-message">Nombre en tarjeta requerido</div>
                                 </div>
                             </div>
                         </div>
@@ -138,6 +162,7 @@
                                 y la <a href="#" class="text-orange-500 hover:underline">política de privacidad</a>
                             </span>
                         </label>
+                        <div id="terminos_error" class="error-message mt-1">Debes aceptar los términos y condiciones</div>
                     </div>
 
                     <button type="button" id="procesar-pago-btn" 
@@ -210,10 +235,76 @@
     <script>
         const URL_PROCESAR_PAGO = "{% url 'procesar_pago' %}";
 
+        // Estado de validación del formulario
+        let formIsValid = false;
+
+        // Validadores
+        const validadores = {
+            nombre_completo: {
+                test: (valor) => valor.trim().length >= 3,
+                mensaje: 'El nombre completo debe tener al menos 3 caracteres'
+            },
+            email: {
+                test: (valor) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor),
+                mensaje: 'Ingresa un email válido'
+            },
+            telefono: {
+                test: (valor) => /^[\d\s\-\+\(\)]{7,15}$/.test(valor),
+                mensaje: 'Ingresa un teléfono válido'
+            },
+            direccion: {
+                test: (valor) => valor.trim().length >= 10,
+                mensaje: 'La dirección debe tener al menos 10 caracteres'
+            },
+            ciudad: {
+                test: (valor) => valor.trim().length >= 2,
+                mensaje: 'La ciudad es requerida'
+            },
+            numero_tarjeta: {
+                test: (valor) => /^\d{4}\s\d{4}\s\d{4}\s\d{4}$/.test(valor),
+                mensaje: 'Número de tarjeta inválido (formato: 1234 5678 9012 3456)'
+            },
+            cvv: {
+                test: (valor) => /^\d{3,4}$/.test(valor),
+                mensaje: 'CVV inválido (3-4 dígitos)'
+            },
+            fecha_expiracion: {
+                test: (valor) => /^(0[1-9]|1[0-2])\/([0-9]{2})$/.test(valor),
+                mensaje: 'Fecha inválida (formato: MM/AA)'
+            },
+            nombre_tarjeta: {
+                test: (valor) => valor.trim().length >= 3,
+                mensaje: 'Nombre en tarjeta requerido'
+            },
+            metodo_pago: {
+                test: (valor) => ['tarjeta', 'paypal'].includes(valor),
+                mensaje: 'Selecciona un método de pago'
+            },
+            terminos: {
+                test: (valor) => valor === true,
+                mensaje: 'Debes aceptar los términos y condiciones'
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
             const procesarPagoBtn = document.getElementById('procesar-pago-btn');
             const terminosCheckbox = document.getElementById('terminos');
             const form = document.getElementById('checkout-form');
+
+            // Elementos del formulario
+            const elementos = {
+                nombre_completo: document.getElementById('id_nombre_completo'),
+                email: document.getElementById('id_email'),
+                telefono: document.getElementById('id_telefono'),
+                direccion: document.getElementById('id_direccion'),
+                ciudad: document.getElementById('id_ciudad'),
+                numero_tarjeta: document.getElementById('numero_tarjeta'),
+                cvv: document.getElementById('cvv'),
+                fecha_expiracion: document.getElementById('fecha_expiracion'),
+                nombre_tarjeta: document.getElementById('nombre_tarjeta'),
+                metodo_pago: document.querySelector('input[name="metodo_pago"]:checked'),
+                terminos: terminosCheckbox
+            };
 
             // Mostrar/ocultar información de tarjeta según método de pago
             const metodosPago = document.querySelectorAll('input[name="metodo_pago"]');
@@ -221,23 +312,82 @@
 
             metodosPago.forEach(radio => {
                 radio.addEventListener('change', function() {
+                    elementos.metodo_pago = this;
                     if (this.value === 'tarjeta') {
                         tarjetaInfo.style.display = 'block';
+                        // Agregar validación para campos de tarjeta
+                        agregarValidacion('numero_tarjeta');
+                        agregarValidacion('cvv');
+                        agregarValidacion('fecha_expiracion');
+                        agregarValidacion('nombre_tarjeta');
                     } else {
                         tarjetaInfo.style.display = 'none';
+                        // Remover validación para campos de tarjeta
+                        removerValidacion('numero_tarjeta');
+                        removerValidacion('cvv');
+                        removerValidacion('fecha_expiracion');
+                        removerValidacion('nombre_tarjeta');
                     }
+                    validarFormulario();
                 });
             });
 
+            // Agregar validación a campos básicos
+            agregarValidacion('nombre_completo');
+            agregarValidacion('email');
+            agregarValidacion('telefono');
+            agregarValidacion('direccion');
+            agregarValidacion('ciudad');
+            agregarValidacion('metodo_pago');
+            agregarValidacion('terminos');
+
             // Validar términos y condiciones
             terminosCheckbox.addEventListener('change', function() {
-                procesarPagoBtn.disabled = !this.checked;
+                validarCampo('terminos', this.checked);
+                validarFormulario();
             });
+
+            // Formatear número de tarjeta
+            const numeroTarjetaInput = document.getElementById('numero_tarjeta');
+            if (numeroTarjetaInput) {
+                numeroTarjetaInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+                    let matches = value.match(/\d{4,16}/g);
+                    let match = matches && matches[0] || '';
+                    let parts = [];
+                    
+                    for (let i = 0; i < match.length; i += 4) {
+                        parts.push(match.substring(i, i + 4));
+                    }
+                    
+                    if (parts.length) {
+                        e.target.value = parts.join(' ');
+                    } else {
+                        e.target.value = value;
+                    }
+                    
+                    validarCampo('numero_tarjeta', e.target.value);
+                    validarFormulario();
+                });
+            }
+
+            // Formatear fecha de expiración
+            const fechaExpiracionInput = document.getElementById('fecha_expiracion');
+            if (fechaExpiracionInput) {
+                fechaExpiracionInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/[^0-9]/g, '');
+                    if (value.length >= 2) {
+                        e.target.value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                    }
+                    validarCampo('fecha_expiracion', e.target.value);
+                    validarFormulario();
+                });
+            }
 
             // Procesar pago
             procesarPagoBtn.addEventListener('click', async function() {
-                if (!terminosCheckbox.checked) {
-                    alert('Debes aceptar los términos y condiciones para continuar.');
+                if (!formIsValid) {
+                    mostrarMensajeError('Por favor, completa todos los campos requeridos correctamente.');
                     return;
                 }
 
@@ -252,12 +402,12 @@
                     // Obtener datos del formulario
                     const formData = new FormData(form);
                     const data = {
-                        nombre_completo: formData.get('nombre_completo'),
-                        email: formData.get('email'),
-                        telefono: formData.get('telefono'),
-                        direccion: formData.get('direccion'),
-                        ciudad: formData.get('ciudad'),
-                        metodo_pago: document.querySelector('input[name="metodo_pago"]:checked').value
+                        nombre_completo: elementos.nombre_completo.value,
+                        email: elementos.email.value,
+                        telefono: elementos.telefono.value,
+                        direccion: elementos.direccion.value,
+                        ciudad: elementos.ciudad.value,
+                        metodo_pago: elementos.metodo_pago.value
                     };
 
                     const response = await fetch(URL_PROCESAR_PAGO, {
@@ -286,27 +436,119 @@
                 }
             });
 
-            // Formatear número de tarjeta
-            const numeroTarjetaInput = document.querySelector('input[placeholder="1234 5678 9012 3456"]');
-            if (numeroTarjetaInput) {
-                numeroTarjetaInput.addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-                    let matches = value.match(/\d{4,16}/g);
-                    let match = matches && matches[0] || '';
-                    let parts = [];
-                    
-                    for (let i = 0; i < match.length; i += 4) {
-                        parts.push(match.substring(i, i + 4));
-                    }
-                    
-                    if (parts.length) {
-                        e.target.value = parts.join(' ');
-                    } else {
-                        e.target.value = value;
-                    }
+            // Funciones de validación
+            function agregarValidacion(campo) {
+                const elemento = elementos[campo];
+                if (!elemento) return;
+
+                if (campo === 'terminos' || campo === 'metodo_pago') return;
+
+                elemento.addEventListener('input', function() {
+                    validarCampo(campo, this.value);
+                    validarFormulario();
+                });
+
+                elemento.addEventListener('blur', function() {
+                    validarCampo(campo, this.value);
+                    validarFormulario();
                 });
             }
+
+            function removerValidacion(campo) {
+                const elemento = elementos[campo];
+                if (!elemento) return;
+
+                elemento.classList.remove('valid-field', 'invalid-field');
+                const errorElement = document.getElementById(`${campo}_error`);
+                if (errorElement) {
+                    errorElement.style.display = 'none';
+                }
+            }
+
+            function validarCampo(campo, valor) {
+                const validador = validadores[campo];
+                const elemento = elementos[campo];
+                const errorElement = document.getElementById(`${campo}_error`);
+
+                if (!validador || !elemento) return;
+
+                const esValido = validador.test(valor);
+
+                if (esValido) {
+                    elemento.classList.add('valid-field');
+                    elemento.classList.remove('invalid-field');
+                    if (errorElement) {
+                        errorElement.style.display = 'none';
+                    }
+                } else {
+                    elemento.classList.add('invalid-field');
+                    elemento.classList.remove('valid-field');
+                    if (errorElement) {
+                        errorElement.textContent = validador.mensaje;
+                        errorElement.style.display = 'block';
+                    }
+                }
+
+                return esValido;
+            }
+
+            function validarFormulario() {
+                let esValido = true;
+
+                // Validar campos básicos
+                esValido = validarCampo('nombre_completo', elementos.nombre_completo.value) && esValido;
+                esValido = validarCampo('email', elementos.email.value) && esValido;
+                esValido = validarCampo('telefono', elementos.telefono.value) && esValido;
+                esValido = validarCampo('direccion', elementos.direccion.value) && esValido;
+                esValido = validarCampo('ciudad', elementos.ciudad.value) && esValido;
+                esValido = validarCampo('metodo_pago', elementos.metodo_pago?.value) && esValido;
+                esValido = validarCampo('terminos', elementos.terminos.checked) && esValido;
+
+                // Validar campos de tarjeta si el método es tarjeta
+                if (elementos.metodo_pago?.value === 'tarjeta') {
+                    esValido = validarCampo('numero_tarjeta', elementos.numero_tarjeta.value) && esValido;
+                    esValido = validarCampo('cvv', elementos.cvv.value) && esValido;
+                    esValido = validarCampo('fecha_expiracion', elementos.fecha_expiracion.value) && esValido;
+                    esValido = validarCampo('nombre_tarjeta', elementos.nombre_tarjeta.value) && esValido;
+                }
+
+                formIsValid = esValido;
+                procesarPagoBtn.disabled = !esValido;
+
+                return esValido;
+            }
+
+            // Validación inicial
+            validarFormulario();
         });
+
+        function mostrarMensajeError(mensaje) {
+            // Crear o mostrar mensaje de error general
+            let errorGeneral = document.getElementById('error-general');
+            if (!errorGeneral) {
+                errorGeneral = document.createElement('div');
+                errorGeneral.id = 'error-general';
+                errorGeneral.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4';
+                const form = document.getElementById('checkout-form');
+                form.parentNode.insertBefore(errorGeneral, form);
+            }
+            
+            errorGeneral.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <span>${mensaje}</span>
+                </div>
+            `;
+            errorGeneral.style.display = 'block';
+
+            // Hacer scroll al mensaje de error
+            errorGeneral.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Ocultar mensaje después de 5 segundos
+            setTimeout(() => {
+                errorGeneral.style.display = 'none';
+            }, 5000);
+        }
 
         function getCookie(name) {
             let cookieValue = null;

@@ -17,9 +17,15 @@
                 <img src="{% static 'img/Hinc.png' %}" alt="Hinc Logo" class="h-8">
             </a>
             <h1 class="text-xl font-bold text-gray-800">Detalle del Pedido</h1>
-            <a href="{% url 'pedidos' %}" class="text-gray-800 hover:text-gray-600 flex items-center">
-                <i class="fas fa-arrow-left mr-2"></i> Volver a Pedidos
-            </a>
+            {% if user.role == 'Admin' %}
+                <a href="{% url 'pedidos' %}" class="text-gray-800 hover:text-gray-600 flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i> Volver a Pedidos
+                </a>
+            {% else %}
+                <a href="{% url 'mis_pedidos' %}" class="text-gray-800 hover:text-gray-600 flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i> Volver a Mis Pedidos
+                </a>
+            {% endif %}
         </nav>
     </header>
 
@@ -103,15 +109,21 @@
 
             <!-- Acciones -->
             <div class="flex justify-between items-center pt-6 border-t">
-                <a href="{% url 'pedidos' %}" class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 transition-colors">
-                    <i class="fas fa-arrow-left mr-2"></i>Volver a Pedidos
-                </a>
-                <div class="flex space-x-3">
-                    <a href="{% url 'actualizar_estado_pedido' pedido.id %}" 
-                       class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition-colors">
-                        <i class="fas fa-edit mr-2"></i>Cambiar Estado
+                {% if user.role == 'Admin' %}
+                    <a href="{% url 'pedidos' %}" class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>Volver a Pedidos
                     </a>
-                </div>
+                    <div class="flex space-x-3">
+                        <a href="{% url 'actualizar_estado_pedido' pedido.id %}" 
+                           class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition-colors">
+                            <i class="fas fa-edit mr-2"></i>Cambiar Estado
+                        </a>
+                    </div>
+                {% else %}
+                    <a href="{% url 'mis_pedidos' %}" class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>Volver a Mis Pedidos
+                    </a>
+                {% endif %}
             </div>
         </div>
     </main>
