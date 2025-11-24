@@ -7,9 +7,10 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     
-    # NUEVA URL PARA PERFIL
+    # Perfil
     path('perfil/', views.perfil_view, name='perfil'),
     
+    # Panel Admin
     path('paneladmin/', views.paneladmin_view, name='paneladmin'),
     path('paneladmin/usuarios/', views.usuarios_view, name='usuarios'),
     path('paneladmin/usuarios/add/', views.add_user, name='add_user'),
@@ -24,6 +25,18 @@ urlpatterns = [
     path('paneladmin/categorias/update/<int:categoria_id>/', views.categorias_update, name='categorias_update'),
     path('paneladmin/categorias/delete/<int:categoria_id>/', views.categorias_delete, name='categorias_delete'),
     path('paneladmin/inventario/', views.inventario_view, name='inventario'),
+    
+    # Registro de Ventas
+    path('paneladmin/registro-ventas/', views.registro_ventas_view, name='registro_ventas'),
+    path('paneladmin/registro-ventas/producto/<int:producto_id>/', views.detalle_producto_ventas_view, name='detalle_producto_ventas'),
+    path('paneladmin/registro-ventas/reporte-pdf/', views.reporte_ventas_pdf, name='reporte_ventas_pdf'),
+    
+    # Pedidos
+    path('paneladmin/pedidos/', views.pedidos_view, name='pedidos'),
+    path('paneladmin/pedidos/detalle/<int:pedido_id>/', views.pedido_detalle_view, name='pedido_detalle'),
+    path('paneladmin/pedidos/actualizar_estado/<int:pedido_id>/', views.actualizar_estado_pedido, name='actualizar_estado_pedido'),
+    
+    # Catálogo y Carrito
     path('catalogo/', views.catalogo_view, name='catalogo'),
     path('producto/<int:producto_id>/', views.producto_detalle_view, name='producto_detalle'),
     path('carrito/agregar/', views.agregar_al_carrito, name='agregar_al_carrito'),
@@ -33,21 +46,13 @@ urlpatterns = [
     path('checkout/', views.checkout_view, name='checkout'),
     path('procesar-pago/', views.procesar_pago, name='procesar_pago'),
     path('confirmacion-pedido/<int:pedido_id>/', views.confirmacion_pedido_view, name='confirmacion_pedido'),
-    path('paneladmin/pedidos/', views.pedidos_view, name='pedidos'),
-    path('paneladmin/pedidos/detalle/<int:pedido_id>/', views.pedido_detalle_view, name='pedido_detalle'),
-    path('paneladmin/pedidos/actualizar_estado/<int:pedido_id>/', views.actualizar_estado_pedido, name='actualizar_estado_pedido'),
-    path('mis-pedidos/', views.mis_pedidos_view, name='mis_pedidos'),
-    path('paneladmin/pedidos/', views.pedidos_view, name='pedidos'),
-    path('paneladmin/pedidos/detalle/<int:pedido_id>/', views.pedido_detalle_view, name='pedido_detalle'),
-    path('paneladmin/pedidos/actualizar_estado/<int:pedido_id>/', views.actualizar_estado_pedido, name='actualizar_estado_pedido'),
+    
+    # Mis Pedidos
     path('mis-pedidos/', views.mis_pedidos_view, name='mis_pedidos'),
     path('mis-pedidos/detalle/<int:pedido_id>/', views.mis_pedidos_detalle_view, name='mis_pedidos_detalle'),
-    path('catalogo/', views.catalogo_view, name='catalogo'),
-    path('producto/<int:producto_id>/', views.producto_detalle, name='producto_detalle'),
-    path('pedidos/<int:pedido_id>/', views.detalle_pedido, name='detalle_pedido'),
-    path('pedidos/<int:pedido_id>/cambiar-estado/', views.cambiar_estado_pedido, name='cambiar_estado_pedido'),
-    path('paneladmin/pedidos/', views.pedidos_view, name='pedidos'),
-    path('paneladmin/pedidos/detalle/<int:pedido_id>/', views.pedido_detalle_view, name='pedido_detalle'),
-    path('paneladmin/pedidos/actualizar_estado/<int:pedido_id>/', views.actualizar_estado_pedido, name='actualizar_estado_pedido'),
-]
     
+    # Inventario
+    path('paneladmin/inventario/actualizar_stock/', views.actualizar_stock_general, name='actualizar_stock_general'),
+    path('paneladmin/inventario/actualizar_stock_manual/', views.actualizar_stock_manual, name='actualizar_stock_manual'),
+    path('paneladmin/registro-ventas/registrar-manual/', views.registrar_venta_manual, name='registrar_venta_manual'),
+]

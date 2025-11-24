@@ -53,6 +53,9 @@
                 <li>
                     <a href="{% url 'pedidos' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/pedidos/' %}bg-gray-700{% endif %}">Pedidos</a>
                 </li>
+                <li>
+                    <a href="{% url 'registro_ventas' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/registro-ventas/' %}bg-gray-700{% endif %}">Registro de Ventas</a>
+                </li>
             </ul>
         </aside>
         <!-- Main Panel -->
@@ -262,6 +265,111 @@
                 <div class="p-6 bg-white rounded-md shadow-md hover:shadow-lg transition-shadow duration-300">
                     <h4 class="font-semibold text-gray-800 text-lg">Productos con Stock Bajo</h4>
                     <p class="text-4xl text-black mt-2">{{ productos_stock_bajo|length }}</p>
+                </div>
+            </div>
+
+            <!-- Sección de Registro de Ventas -->
+            <div class="mt-8 bg-white rounded-md shadow-md p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-800">Registro de Ventas Recientes</h3>
+                    <a href="{% url 'registro_ventas' %}" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition duration-300 text-sm">
+                        <i class="fas fa-chart-line mr-2"></i>Ver Registro Completo
+                    </a>
+                </div>
+
+                <!-- Estadísticas Rápidas de Ventas -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                        <div class="text-2xl font-bold text-green-600">${{ total_ventas_hoy|floatformat:0 }}</div>
+                        <div class="text-sm text-green-700 mt-1">Ventas Hoy</div>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                        <div class="text-2xl font-bold text-blue-600">{{ unidades_vendidas_hoy }}</div>
+                        <div class="text-sm text-blue-700 mt-1">Unidades Hoy</div>
+                    </div>
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 text-center">
+                        <div class="text-2xl font-bold text-purple-600">{{ productos_vendidos_hoy }}</div>
+                        <div class="text-sm text-purple-700 mt-1">Productos Vendidos Hoy</div>
+                    </div>
+                </div>
+
+                <!-- Ventas Recientes -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="py-3 px-4 text-left">Producto</th>
+                                <th class="py-3 px-4 text-left">Talla</th>
+                                <th class="py-3 px-4 text-left">Cantidad</th>
+                                <th class="py-3 px-4 text-left">Total</th>
+                                <th class="py-3 px-4 text-left">Fecha</th>
+                                <th class="py-3 px-4 text-left">Pedido</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for venta in ventas_recientes %}
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center">
+                                        {% if venta.producto.imagen %}
+                                        <img src="{{ venta.producto.imagen.url }}" alt="{{ venta.producto.nombre }}" 
+                                             class="w-8 h-8 object-cover rounded mr-2">
+                                        {% endif %}
+                                        <span class="font-medium">{{ venta.producto.nombre }}</span>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">{{ venta.talla }}</td>
+                                <td class="py-3 px-4">{{ venta.cantidad }}</td>
+                                <td class="py-3 px-4 font-semibold">${{ venta.total|floatformat:0 }}</td>
+                                <td class="py-3 px-4 text-sm">{{ venta.fecha_venta|date:"d/m/Y H:i" }}</td>
+                                <td class="py-3 px-4">
+                                    {% if venta.pedido %}
+                                    <a href="{% url 'pedido_detalle' venta.pedido.id %}" class="text-blue-500 hover:text-blue-700 text-sm">
+                                        {{ venta.pedido.numero_pedido }}
+                                    </a>
+                                    {% else %}
+                                    <span class="text-gray-500">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="py-4 px-4 text-center text-gray-500">
+                                    No hay ventas registradas hoy.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Productos Más Vendidos del Mes -->
+                <div class="mt-6">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-4">Productos Más Vendidos (Este Mes)</h4>
+                    <div class="space-y-3">
+                        {% for producto in productos_mas_vendidos_mes %}
+                        <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                            <div class="flex items-center">
+                                {% if producto.imagen %}
+                                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" 
+                                     class="w-10 h-10 object-cover rounded mr-3">
+                                {% endif %}
+                                <div>
+                                    <p class="font-medium">{{ producto.nombre }}</p>
+                                    <p class="text-sm text-gray-600">{{ producto.total_vendido }} unidades vendidas</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold">${{ producto.ingresos_totales|floatformat:0 }}</p>
+                                <a href="{% url 'detalle_producto_ventas' producto.id %}" class="text-blue-500 hover:text-blue-700 text-sm">
+                                    Ver detalle
+                                </a>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-gray-500 text-center py-4">No hay datos de ventas este mes.</p>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
 

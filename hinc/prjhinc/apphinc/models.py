@@ -249,3 +249,99 @@ class DetallePedido(models.Model):
     class Meta:
         verbose_name = "Detalle de Pedido"
         verbose_name_plural = "Detalles de Pedidos"
+
+class TipoMovimiento(models.TextChoices):
+    VENTA = 'venta', 'Venta'
+    COMPRA = 'compra', 'Compra'
+    AJUSTE = 'ajuste', 'Ajuste'
+    TRANSFERENCIA = 'transferencia', 'Transferencia'
+    DEVOLUCION = 'devolucion', 'Devolución'
+
+class MovimientoInventario(models.Model):
+    producto = models.ForeignKey('Producto', on_delete=models.CASCADE)
+    talla = models.CharField(max_length=10)
+    tipo_movimiento = models.CharField(max_length=20, choices=TipoMovimiento.choices)
+    cantidad = models.IntegerField()
+    stock_anterior = models.IntegerField()
+    stock_posterior = models.IntegerField()
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    total = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    usuario = models.ForeignKey('CustomUser', on_delete=models.SET_NULL, null=True)
+    fecha_movimiento = models.DateTimeField(default=timezone.now)
+    observaciones = models.TextField(blank=True)
+    pedido = models.ForeignKey('Pedido', on_delete=models.SET_NULL, null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-fecha_movimiento']
+        verbose_name = 'Movimiento de Inventario'
+        verbose_name_plural = 'Movimientos de Inventario'
+    
+    def __str__(self):
+        return f"{self.get_tipo_movimiento_display()} - {self.producto.nombre} - {self.talla}"
+
+class RegistroVenta(models.Model):
+    pedido = models.ForeignKey('Pedido', on_delete=models.CASCADE, null=True, blank=True)
+    producto = models.ForeignKey('Producto', on_delete=models.CASCADE)
+    talla = models.CharField(max_length=10)
+    cantidad = models.IntegerField()
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    fecha_venta = models.DateTimeField(default=timezone.now)
+    usuario = models.ForeignKey('CustomUser', on_delete=models.SET_NULL, null=True)
+    
+    class Meta:
+        ordering = ['-fecha_venta']
+        verbose_name = 'Registro de Venta'
+        verbose_name_plural = 'Registros de Ventas'
+    
+    def __str__(self):
+        return f"Venta - {self.producto.nombre} - {self.talla}"
+
+# Método adicional para StockTalla para registrar movimientos
+def registrar_movimiento_stock(self, tipo_movimiento, cantidad, usuario=None, observaciones='', pedido=None):
+    """Registra un movimiento en el inventario"""
+    stock_anterior = self.stock
+    self.stock += cantidad
+    self.save()
+    
+    # Actualizar stock general del producto
+    self.producto.actualizar_stock_general()
+    
+    # Calcular precio unitario y total si es venta
+    precio_unitario = None
+    total = None
+    if tipo_movimiento == TipoMovimiento.VENTA:
+        precio_unitario = self.producto.precio
+        total = precio_unitario * abs(cantidad)
+    
+    # Crear registro de movimiento
+    movimiento = MovimientoInventario.objects.create(
+        producto=self.producto,
+        talla=self.talla,
+        tipo_movimiento=tipo_movimiento,
+        cantidad=cantidad,
+        stock_anterior=stock_anterior,
+        stock_posterior=self.stock,
+        precio_unitario=precio_unitario,
+        total=total,
+        usuario=usuario,
+        observaciones=observaciones,
+        pedido=pedido
+    )
+    
+    # Si es venta, crear también registro de venta
+    if tipo_movimiento == TipoMovimiento.VENTA and pedido:
+        RegistroVenta.objects.create(
+            pedido=pedido,
+            producto=self.producto,
+            talla=self.talla,
+            cantidad=abs(cantidad),
+            precio_unitario=precio_unitario,
+            total=total,
+            usuario=usuario
+        )
+    
+    return movimiento
+
+# Agregar el método a la clase StockTalla
+StockTalla.registrar_movimiento = registrar_movimiento_stock

@@ -1,0 +1,298 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hinc - Registro de Ventas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="shortcut icon" href="{% static 'Img/Hinc.png' %}" type="image/x-icon">
+</head>
+<body class="bg-gray-900 font-sans text-white">
+    <!-- Header -->
+    <header class="relative h-24 overflow-hidden z-10">
+        <video class="absolute w-full h-full object-cover z-0" autoplay muted loop>
+            <source src="{% static 'Img/Hinc.mp4' %}" type="video/mp4">
+        </video>
+        <nav class="absolute w-full h-full flex items-center justify-between px-6 z-20 bg-black/60 backdrop-blur-sm">
+            <a href="{% url 'index' %}">
+                <img src="{% static 'Img/Hinc.png' %}" alt="Hinc Logo" class="w-6 h-10">
+            </a>
+            <h1 class="text-2xl font-bold absolute left-1/2 transform -translate-x-1/2">Registro de Ventas</h1>
+            <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-gray-200 hover:text-black rounded-md transition-all duration-300">
+                <i class="fa-solid fa-user"></i>
+            </button>
+        </nav>
+        <div id="userMenu" class="hidden fixed right-4 top-20 w-48 bg-gray-800 rounded-lg shadow-xl z-[9999] border border-gray-700">
+            <a href="#" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-t-lg transition-colors duration-200">Configuración</a>
+            <a href="{% url 'index' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 transition-colors duration-200">Volver al Inicio</a>
+            <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
+        </div>
+    </header>
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-800 p-6 z-0">
+            <ul>
+                <li>
+                    <a href="{% url 'paneladmin' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300">Dashboard</a>
+                </li>
+                <li>
+                    <a href="{% url 'usuarios' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300">Usuarios</a>
+                </li>
+                <li>
+                    <a href="{% url 'productos' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300">Productos</a>
+                </li>
+                <li>
+                    <a href="{% url 'categorias' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300">Categorías</a>
+                </li>
+                <li>
+                    <a href="{% url 'inventario' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300">Inventario</a>
+                </li>
+                <li>
+                    <a href="{% url 'pedidos' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300">Pedidos</a>
+                </li>
+                <li>
+                    <a href="{% url 'registro_ventas' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 bg-gray-700">Registro de Ventas</a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8 bg-gray-100 text-black">
+            {% if messages %}
+                <div id="messages-container" class="mb-4">
+                    {% for message in messages %}
+                        {% if message.tags == 'success' %}
+                            <div class="p-4 bg-green-100 text-green-800 rounded-md border border-green-300">
+                                {{ message }}
+                            </div>
+                        {% else %}
+                            <div class="p-4 bg-red-100 text-red-800 rounded-md border border-red-300">
+                                {{ message }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Filtros -->
+            <div class="mb-6 bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-semibold mb-4">Filtros de Búsqueda</h3>
+                <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Inicio</label>
+                        <input type="date" name="fecha_inicio" value="{{ filtros_aplicados.fecha_inicio }}" 
+                               class="w-full p-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Fin</label>
+                        <input type="date" name="fecha_fin" value="{{ filtros_aplicados.fecha_fin }}" 
+                               class="w-full p-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+                        <select name="producto_id" class="w-full p-2 border border-gray-300 rounded-md">
+                            <option value="">Todos los productos</option>
+                            {% for producto in productos %}
+                                <option value="{{ producto.id }}" {% if filtros_aplicados.producto_id == producto.id|stringformat:"i" %}selected{% endif %}>
+                                    {{ producto.nombre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tipo Movimiento</label>
+                        <select name="tipo_movimiento" class="w-full p-2 border border-gray-300 rounded-md">
+                            <option value="">Todos los movimientos</option>
+                            {% for tipo_val, tipo_label in tipos_movimiento %}
+                                <option value="{{ tipo_val }}" {% if filtros_aplicados.tipo_movimiento == tipo_val %}selected{% endif %}>
+                                    {{ tipo_label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="md:col-span-4 flex space-x-2">
+                        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition duration-300">
+                            <i class="fas fa-filter mr-2"></i>Aplicar Filtros
+                        </button>
+                        <a href="{% url 'registro_ventas' %}" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition duration-300">
+                            <i class="fas fa-times mr-2"></i>Limpiar
+                        </a>
+                        <a href="{% url 'reporte_ventas_pdf' %}?{{ request.GET.urlencode }}" 
+                           class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition duration-300">
+                            <i class="fas fa-file-pdf mr-2"></i>Generar PDF
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <div class="text-3xl font-bold text-green-600">${{ total_ventas|floatformat:0 }}</div>
+                    <div class="text-sm text-gray-600 mt-2">Total en Ventas</div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <div class="text-3xl font-bold text-blue-600">{{ total_unidades_vendidas }}</div>
+                    <div class="text-sm text-gray-600 mt-2">Unidades Vendidas</div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <div class="text-3xl font-bold text-purple-600">{{ total_movimientos }}</div>
+                    <div class="text-sm text-gray-600 mt-2">Movimientos Registrados</div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <div class="text-3xl font-bold text-orange-600">{{ productos_mas_vendidos|length }}</div>
+                    <div class="text-sm text-gray-600 mt-2">Productos con Ventas</div>
+                </div>
+            </div>
+
+            <!-- Productos Más Vendidos -->
+            <div class="mb-6 bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="p-4 bg-gray-800 text-white">
+                    <h3 class="text-lg font-semibold">Productos Más Vendidos</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="py-3 px-4 text-left">Producto</th>
+                                <th class="py-3 px-4 text-left">Unidades Vendidas</th>
+                                <th class="py-3 px-4 text-left">Ingresos Totales</th>
+                                <th class="py-3 px-4 text-left">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for producto in productos_mas_vendidos %}
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center">
+                                        {% if producto.imagen %}
+                                        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" 
+                                             class="w-10 h-10 object-cover rounded mr-3">
+                                        {% endif %}
+                                        <span class="font-medium">{{ producto.nombre }}</span>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">{{ producto.total_vendido }}</td>
+                                <td class="py-3 px-4">${{ producto.ingresos_totales|floatformat:0 }}</td>
+                                <td class="py-3 px-4">
+                                    <a href="{% url 'detalle_producto_ventas' producto.id %}" 
+                                       class="text-blue-500 hover:text-blue-700">
+                                        <i class="fas fa-chart-line mr-1"></i>Ver Detalle
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="py-4 px-4 text-center text-gray-500">
+                                    No hay datos de ventas disponibles.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Movimientos Recientes -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="p-4 bg-gray-800 text-white">
+                    <h3 class="text-lg font-semibold">Movimientos Recientes de Inventario</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="py-3 px-4 text-left">Fecha</th>
+                                <th class="py-3 px-4 text-left">Producto</th>
+                                <th class="py-3 px-4 text-left">Talla</th>
+                                <th class="py-3 px-4 text-left">Tipo</th>
+                                <th class="py-3 px-4 text-left">Cantidad</th>
+                                <th class="py-3 px-4 text-left">Stock Anterior</th>
+                                <th class="py-3 px-4 text-left">Stock Posterior</th>
+                                <th class="py-3 px-4 text-left">Total</th>
+                                <th class="py-3 px-4 text-left">Usuario</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for movimiento in movimientos %}
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="py-3 px-4 text-sm">{{ movimiento.fecha_movimiento|date:"d/m/Y H:i" }}</td>
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center">
+                                        {% if movimiento.producto.imagen %}
+                                        <img src="{{ movimiento.producto.imagen.url }}" alt="{{ movimiento.producto.nombre }}" 
+                                             class="w-8 h-8 object-cover rounded mr-2">
+                                        {% endif %}
+                                        <span class="font-medium">{{ movimiento.producto.nombre }}</span>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">{{ movimiento.talla }}</td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 rounded-full text-xs font-semibold 
+                                        {% if movimiento.tipo_movimiento == 'venta' %}bg-green-100 text-green-800
+                                        {% elif movimiento.tipo_movimiento == 'compra' %}bg-blue-100 text-blue-800
+                                        {% elif movimiento.tipo_movimiento == 'ajuste' %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ movimiento.get_tipo_movimiento_display }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 {% if movimiento.cantidad > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                    {% if movimiento.cantidad > 0 %}+{% endif %}{{ movimiento.cantidad }}
+                                </td>
+                                <td class="py-3 px-4">{{ movimiento.stock_anterior }}</td>
+                                <td class="py-3 px-4">{{ movimiento.stock_posterior }}</td>
+                                <td class="py-3 px-4">
+                                    {% if movimiento.total %}
+                                        ${{ movimiento.total|floatformat:0 }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 px-4 text-sm">
+                                    {% if movimiento.usuario %}
+                                        {{ movimiento.usuario.username }}
+                                    {% else %}
+                                        Sistema
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="py-4 px-4 text-center text-gray-500">
+                                    No hay movimientos registrados.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-center py-4 z-0">
+        <p class="text-sm text-white">&copy; 2025 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</p>
+    </footer>
+
+    <script>
+        // User Menu Dropdown
+        const userMenuBtn = document.getElementById('userMenuBtn');
+        const userMenu = document.getElementById('userMenu');
+        userMenuBtn.addEventListener('click', () => {
+            userMenu.classList.toggle('hidden');
+        });
+
+        // Ocultar mensajes automáticamente
+        setTimeout(() => {
+            const messagesContainer = document.getElementById('messages-container');
+            if (messagesContainer) {
+                messagesContainer.style.display = 'none';
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomUser, Producto, Categoria, Carrito, ItemCarrito, StockTalla, Pedido, DetallePedido
+from .models import CustomUser, Producto, Categoria, Carrito, ItemCarrito, StockTalla, Pedido, DetallePedido, MovimientoInventario, RegistroVenta
 
 @admin.register(CustomUser)
 class CustomUserAdmin(admin.ModelAdmin):
