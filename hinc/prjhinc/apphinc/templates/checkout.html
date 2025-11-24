@@ -102,54 +102,29 @@
                                 <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
                                     <input type="radio" name="metodo_pago" value="tarjeta" checked class="mr-3">
                                     <div>
-                                        <span class="font-medium">Tarjeta de Crédito/Débito</span>
-                                        <p class="text-sm text-gray-500">Paga con tu tarjeta Visa, Mastercard o American Express</p>
-                                    </div>
-                                </label>
-                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                                    <input type="radio" name="metodo_pago" value="paypal" class="mr-3">
-                                    <div>
-                                        <span class="font-medium">PayPal</span>
-                                        <p class="text-sm text-gray-500">Paga de forma segura con tu cuenta PayPal</p>
+                                        <span class="font-medium">Tarjeta de Crédito/Débito (Stripe)</span>
+                                        <p class="text-sm text-gray-500">Pago seguro con Stripe - Visa, Mastercard, American Express</p>
                                     </div>
                                 </label>
                             </div>
                             <div id="metodo_pago_error" class="error-message mt-2">Selecciona un método de pago</div>
                         </div>
 
-                        <!-- Información de Tarjeta (se muestra solo si se selecciona tarjeta) -->
-                        <div id="tarjeta-info" class="space-y-4">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Número de Tarjeta *</label>
-                                    <input type="text" id="numero_tarjeta" placeholder="1234 5678 9012 3456" 
-                                           class="mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black"
-                                           maxlength="19">
-                                    <div id="numero_tarjeta_error" class="error-message">Número de tarjeta inválido</div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">CVV *</label>
-                                    <input type="text" id="cvv" placeholder="123" 
-                                           class="mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black"
-                                           maxlength="3">
-                                    <div id="cvv_error" class="error-message">CVV inválido</div>
+                        <!-- Información de Stripe -->
+                        <div id="stripe-info" class="space-y-4">
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <div class="flex items-center">
+                                    <i class="fab fa-stripe text-blue-500 text-xl mr-3"></i>
+                                    <div>
+                                        <p class="font-medium text-blue-800">Pago Seguro con Stripe</p>
+                                        <p class="text-sm text-blue-600">Tu información de pago está protegida con encriptación de nivel bancario</p>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Expiración *</label>
-                                    <input type="text" id="fecha_expiracion" placeholder="MM/AA" 
-                                           class="mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black"
-                                           maxlength="5">
-                                    <div id="fecha_expiracion_error" class="error-message">Fecha inválida (MM/AA)</div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre en la Tarjeta *</label>
-                                    <input type="text" id="nombre_tarjeta" placeholder="JUAN PEREZ" 
-                                           class="mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black">
-                                    <div id="nombre_tarjeta_error" class="error-message">Nombre en tarjeta requerido</div>
-                                </div>
-                            </div>
+                            
+                            <p class="text-sm text-gray-600 text-center">
+                                Serás redirigido a Stripe para completar el pago de forma segura
+                            </p>
                         </div>
                     </div>
 
@@ -165,10 +140,10 @@
                         <div id="terminos_error" class="error-message mt-1">Debes aceptar los términos y condiciones</div>
                     </div>
 
-                    <button type="button" id="procesar-pago-btn" 
-                            class="w-full bg-orange-500 text-white py-4 px-6 rounded-lg font-semibold hover:bg-orange-600 transition-colors duration-200 flex items-center justify-center disabled:bg-gray-300 disabled:cursor-not-allowed">
-                        <i class="fas fa-lock mr-2"></i>
-                        Procesar Pago - ${{ carrito.obtener_total|floatformat:0 }}
+                    <button type="button" id="procesar-pago-stripe" 
+                            class="w-full bg-purple-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-purple-700 transition-colors duration-200 flex items-center justify-center disabled:bg-gray-300 disabled:cursor-not-allowed">
+                        <i class="fab fa-stripe mr-2"></i>
+                        Pagar con Stripe - ${{ carrito.obtener_total|floatformat:0 }}
                     </button>
                 </form>
             </div>
@@ -233,7 +208,7 @@
     </footer>
 
     <script>
-        const URL_PROCESAR_PAGO = "{% url 'procesar_pago' %}";
+        const URL_CREAR_SESION_PAGO = "{% url 'crear_sesion_pago' %}";
 
         // Estado de validación del formulario
         let formIsValid = false;
@@ -260,22 +235,6 @@
                 test: (valor) => valor.trim().length >= 2,
                 mensaje: 'La ciudad es requerida'
             },
-            numero_tarjeta: {
-                test: (valor) => /^\d{4}\s\d{4}\s\d{4}\s\d{4}$/.test(valor),
-                mensaje: 'Número de tarjeta inválido (formato: 1234 5678 9012 3456)'
-            },
-            cvv: {
-                test: (valor) => /^\d{3,4}$/.test(valor),
-                mensaje: 'CVV inválido (3-4 dígitos)'
-            },
-            fecha_expiracion: {
-                test: (valor) => /^(0[1-9]|1[0-2])\/([0-9]{2})$/.test(valor),
-                mensaje: 'Fecha inválida (formato: MM/AA)'
-            },
-            nombre_tarjeta: {
-                test: (valor) => valor.trim().length >= 3,
-                mensaje: 'Nombre en tarjeta requerido'
-            },
             metodo_pago: {
                 test: (valor) => ['tarjeta', 'paypal'].includes(valor),
                 mensaje: 'Selecciona un método de pago'
@@ -287,7 +246,7 @@
         };
 
         document.addEventListener('DOMContentLoaded', function() {
-            const procesarPagoBtn = document.getElementById('procesar-pago-btn');
+            const procesarPagoStripeBtn = document.getElementById('procesar-pago-stripe');
             const terminosCheckbox = document.getElementById('terminos');
             const form = document.getElementById('checkout-form');
 
@@ -298,35 +257,21 @@
                 telefono: document.getElementById('id_telefono'),
                 direccion: document.getElementById('id_direccion'),
                 ciudad: document.getElementById('id_ciudad'),
-                numero_tarjeta: document.getElementById('numero_tarjeta'),
-                cvv: document.getElementById('cvv'),
-                fecha_expiracion: document.getElementById('fecha_expiracion'),
-                nombre_tarjeta: document.getElementById('nombre_tarjeta'),
                 metodo_pago: document.querySelector('input[name="metodo_pago"]:checked'),
                 terminos: terminosCheckbox
             };
 
-            // Mostrar/ocultar información de tarjeta según método de pago
+            // Mostrar/ocultar información según método de pago
             const metodosPago = document.querySelectorAll('input[name="metodo_pago"]');
-            const tarjetaInfo = document.getElementById('tarjeta-info');
+            const stripeInfo = document.getElementById('stripe-info');
 
             metodosPago.forEach(radio => {
                 radio.addEventListener('change', function() {
                     elementos.metodo_pago = this;
                     if (this.value === 'tarjeta') {
-                        tarjetaInfo.style.display = 'block';
-                        // Agregar validación para campos de tarjeta
-                        agregarValidacion('numero_tarjeta');
-                        agregarValidacion('cvv');
-                        agregarValidacion('fecha_expiracion');
-                        agregarValidacion('nombre_tarjeta');
+                        stripeInfo.style.display = 'block';
                     } else {
-                        tarjetaInfo.style.display = 'none';
-                        // Remover validación para campos de tarjeta
-                        removerValidacion('numero_tarjeta');
-                        removerValidacion('cvv');
-                        removerValidacion('fecha_expiracion');
-                        removerValidacion('nombre_tarjeta');
+                        stripeInfo.style.display = 'none';
                     }
                     validarFormulario();
                 });
@@ -347,45 +292,8 @@
                 validarFormulario();
             });
 
-            // Formatear número de tarjeta
-            const numeroTarjetaInput = document.getElementById('numero_tarjeta');
-            if (numeroTarjetaInput) {
-                numeroTarjetaInput.addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-                    let matches = value.match(/\d{4,16}/g);
-                    let match = matches && matches[0] || '';
-                    let parts = [];
-                    
-                    for (let i = 0; i < match.length; i += 4) {
-                        parts.push(match.substring(i, i + 4));
-                    }
-                    
-                    if (parts.length) {
-                        e.target.value = parts.join(' ');
-                    } else {
-                        e.target.value = value;
-                    }
-                    
-                    validarCampo('numero_tarjeta', e.target.value);
-                    validarFormulario();
-                });
-            }
-
-            // Formatear fecha de expiración
-            const fechaExpiracionInput = document.getElementById('fecha_expiracion');
-            if (fechaExpiracionInput) {
-                fechaExpiracionInput.addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/[^0-9]/g, '');
-                    if (value.length >= 2) {
-                        e.target.value = value.substring(0, 2) + '/' + value.substring(2, 4);
-                    }
-                    validarCampo('fecha_expiracion', e.target.value);
-                    validarFormulario();
-                });
-            }
-
-            // Procesar pago
-            procesarPagoBtn.addEventListener('click', async function() {
+            // Procesar pago con Stripe
+            procesarPagoStripeBtn.addEventListener('click', async function() {
                 if (!formIsValid) {
                     mostrarMensajeError('Por favor, completa todos los campos requeridos correctamente.');
                     return;
@@ -395,12 +303,11 @@
                 const originalText = btn.innerHTML;
                 
                 // Mostrar loading
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Procesando Pago...';
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Redirigiendo a Stripe...';
                 btn.disabled = true;
 
                 try {
                     // Obtener datos del formulario
-                    const formData = new FormData(form);
                     const data = {
                         nombre_completo: elementos.nombre_completo.value,
                         email: elementos.email.value,
@@ -410,7 +317,8 @@
                         metodo_pago: elementos.metodo_pago.value
                     };
 
-                    const response = await fetch(URL_PROCESAR_PAGO, {
+                    // Crear sesión de pago con Stripe
+                    const response = await fetch(URL_CREAR_SESION_PAGO, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -421,9 +329,9 @@
 
                     const result = await response.json();
 
-                    if (result.success) {
-                        // Redirigir a página de confirmación
-                        window.location.href = "{% url 'confirmacion_pedido' 0 %}".replace('0', result.pedido_id);
+                    if (result.url) {
+                        // Redirigir a Stripe Checkout
+                        window.location.href = result.url;
                     } else {
                         alert('Error: ' + result.error);
                         btn.innerHTML = originalText;
@@ -452,17 +360,6 @@
                     validarCampo(campo, this.value);
                     validarFormulario();
                 });
-            }
-
-            function removerValidacion(campo) {
-                const elemento = elementos[campo];
-                if (!elemento) return;
-
-                elemento.classList.remove('valid-field', 'invalid-field');
-                const errorElement = document.getElementById(`${campo}_error`);
-                if (errorElement) {
-                    errorElement.style.display = 'none';
-                }
             }
 
             function validarCampo(campo, valor) {
@@ -504,16 +401,8 @@
                 esValido = validarCampo('metodo_pago', elementos.metodo_pago?.value) && esValido;
                 esValido = validarCampo('terminos', elementos.terminos.checked) && esValido;
 
-                // Validar campos de tarjeta si el método es tarjeta
-                if (elementos.metodo_pago?.value === 'tarjeta') {
-                    esValido = validarCampo('numero_tarjeta', elementos.numero_tarjeta.value) && esValido;
-                    esValido = validarCampo('cvv', elementos.cvv.value) && esValido;
-                    esValido = validarCampo('fecha_expiracion', elementos.fecha_expiracion.value) && esValido;
-                    esValido = validarCampo('nombre_tarjeta', elementos.nombre_tarjeta.value) && esValido;
-                }
-
                 formIsValid = esValido;
-                procesarPagoBtn.disabled = !esValido;
+                procesarPagoStripeBtn.disabled = !esValido;
 
                 return esValido;
             }

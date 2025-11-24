@@ -168,3 +168,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Define la URL base (/media/) y el directorio (BASE_DIR/media) para archivos multimedia, como imágenes de productos y categorías. Permite cargar y servir archivos subidos por usuarios/administradores en modo desarrollo, integrándose con las rutas en prjhinc/urls.py.
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+STRIPE_PUBLISHABLE_KEY = 'publishable key'
+STRIPE_SECRET_KEY = 'scret key'
+STRIPE_WEBHOOK_SECRET = 'hola'

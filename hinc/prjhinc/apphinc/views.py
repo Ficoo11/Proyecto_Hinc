@@ -13,7 +13,8 @@ from datetime import timedelta
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import json
-import logging
+import logging, stripe
+from django.conf import settings
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -1639,3 +1640,228 @@ def registrar_venta_manual(request):
         'pedidos_sin_ventas': pedidos_sin_ventas
     })
 
+    # Configurar Stripe
+stripe.api_key = settings.STRIPE_SECRET_KEY
+
+@login_required
+@require_POST
+@csrf_exempt
+def crear_sesion_pago_stripe(request):
+    """Crea una sesión de checkout de Stripe"""
+    try:
+        data = json.loads(request.body)
+        carrito, created = Carrito.objects.get_or_create(usuario=request.user)
+        
+        if not carrito.items.exists():
+            return JsonResponse({'error': 'El carrito está vacío'}, status=400)
+        
+        # Verificar stock antes de crear el pedido
+        for item in carrito.items.all():
+            try:
+                stock_talla = StockTalla.objects.get(producto=item.producto, talla=item.talla)
+                if stock_talla.stock < item.cantidad:
+                    return JsonResponse({
+                        'error': f"No hay suficiente stock para {item.producto.nombre} en talla {item.talla}"
+                    }, status=400)
+            except StockTalla.DoesNotExist:
+                return JsonResponse({
+                    'error': f"El producto {item.producto.nombre} en talla {item.talla} no está disponible"
+                }, status=400)
+        
+        # Crear el pedido primero
+        pedido = Pedido.objects.create(
+            usuario=request.user,
+            total=carrito.obtener_total(),
+            nombre_completo=data.get('nombre_completo', 'Cliente'),
+            email=data.get('email', 'cliente@ejemplo.com'),
+            direccion_envio=data.get('direccion', 'Dirección no especificada'),
+            ciudad=data.get('ciudad', 'Ciudad no especificada'),
+            telefono=data.get('telefono', '0000000000'),
+            estado='pendiente',
+            metodo_pago='tarjeta'
+        )
+        
+        # Crear detalles del pedido
+        for item in carrito.items.all():
+            DetallePedido.objects.create(
+                pedido=pedido,
+                producto=item.producto,
+                talla=item.talla,
+                cantidad=item.cantidad,
+                precio=item.producto.precio
+            )
+        
+        # Crear line items para Stripe
+        line_items = []
+        for item in carrito.items.all():
+            # Calcular precio con descuento si aplica
+            precio_final = item.producto.precio
+            if item.producto.descuento > 0:
+                precio_final = item.producto.precio_con_descuento()
+            
+            line_items.append({
+                'price_data': {
+                    'currency': 'cop',  # Pesos colombianos
+                    'product_data': {
+                        'name': f"{item.producto.nombre} - Talla {item.talla}",
+                        'description': item.producto.descripcion[:100] if item.producto.descripcion else "Producto de moda",
+                    },
+                    'unit_amount': int(precio_final * 100),  # Stripe usa centavos
+                },
+                'quantity': item.cantidad,
+            })
+        
+        # Crear sesión de checkout de Stripe
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=line_items,
+            mode='payment',
+            success_url=request.build_absolute_uri(f'/pago-exitoso/{pedido.id}/'),
+            cancel_url=request.build_absolute_uri(f'/pago-cancelado/{pedido.id}/'),
+            customer_email=pedido.email,
+            metadata={
+                'pedido_id': str(pedido.id),
+                'usuario_id': str(request.user.id)
+            }
+        )
+        
+        # Guardar el ID de la sesión de Stripe en el pedido
+        pedido.stripe_checkout_session_id = checkout_session.id
+        pedido.save()
+        
+        return JsonResponse({
+            'sessionId': checkout_session.id,
+            'url': checkout_session.url
+        })
+        
+    except Exception as e:
+        logger.error(f"Error al crear sesión de pago Stripe: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
+def pago_exitoso(request, pedido_id):
+    """Vista cuando el pago es exitoso"""
+    pedido = get_object_or_404(Pedido, id=pedido_id, usuario=request.user)
+    
+    try:
+        # Verificar el pago con Stripe
+        if pedido.stripe_checkout_session_id:
+            session = stripe.checkout.Session.retrieve(pedido.stripe_checkout_session_id)
+            
+            if session.payment_status == 'paid':
+                # Pago confirmado, actualizar estado
+                pedido.estado = 'confirmado'
+                pedido.stripe_payment_intent_id = session.payment_intent
+                pedido.save()
+                
+                # Actualizar stock
+                for detalle in pedido.detalles.all():
+                    try:
+                        stock_talla = StockTalla.objects.get(
+                            producto=detalle.producto, 
+                            talla=detalle.talla
+                        )
+                        stock_talla.stock -= detalle.cantidad
+                        stock_talla.save()
+                        detalle.producto.actualizar_stock_general()
+                    except StockTalla.DoesNotExist:
+                        pass
+                
+                # Vaciar carrito
+                carrito, created = Carrito.objects.get_or_create(usuario=request.user)
+                carrito.items.all().delete()
+                
+                messages.success(request, f"¡Pago exitoso! Tu pedido {pedido.numero_pedido} ha sido confirmado.")
+            else:
+                messages.warning(request, "El pago aún no ha sido confirmado. Te notificaremos cuando se complete.")
+                
+        return render(request, 'pago_exitoso.html', {'pedido': pedido})
+        
+    except Exception as e:
+        logger.error(f"Error en pago exitoso: {str(e)}")
+        messages.error(request, f"Error al verificar el pago: {str(e)}")
+        return redirect('ver_carrito')
+
+@login_required
+def pago_cancelado(request, pedido_id):
+    """Vista cuando el pago es cancelado"""
+    pedido = get_object_or_404(Pedido, id=pedido_id, usuario=request.user)
+    pedido.estado = 'cancelado'
+    pedido.save()
+    
+    messages.warning(request, "El pago fue cancelado. Puedes intentarlo nuevamente.")
+    return redirect('ver_carrito')
+
+@csrf_exempt
+@require_POST
+def stripe_webhook(request):
+    """Webhook para recibir notificaciones de Stripe"""
+    payload = request.body
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE', '')
+    
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError as e:
+        return JsonResponse({'error': 'Invalid payload'}, status=400)
+    except stripe.error.SignatureVerificationError as e:
+        return JsonResponse({'error': 'Invalid signature'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': 'Webhook error'}, status=400)
+    
+    # Manejar diferentes tipos de eventos
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        handle_payment_success(session)
+    elif event['type'] == 'checkout.session.expired':
+        session = event['data']['object']
+        handle_session_expired(session)
+    
+    return JsonResponse({'success': True})
+
+def handle_payment_success(session):
+    """Manejar pago exitoso desde webhook"""
+    try:
+        pedido_id = session['metadata']['pedido_id']
+        pedido = Pedido.objects.get(id=pedido_id)
+        
+        pedido.estado = 'confirmado'
+        pedido.stripe_payment_intent_id = session.get('payment_intent')
+        pedido.save()
+        
+        # Actualizar stock desde webhook
+        for detalle in pedido.detalles.all():
+            try:
+                stock_talla = StockTalla.objects.get(
+                    producto=detalle.producto, 
+                    talla=detalle.talla
+                )
+                stock_talla.stock -= detalle.cantidad
+                stock_talla.save()
+                detalle.producto.actualizar_stock_general()
+            except StockTalla.DoesNotExist:
+                pass
+        
+        logger.info(f"Pedido {pedido.numero_pedido} confirmado via webhook")
+        
+    except Pedido.DoesNotExist:
+        logger.error(f"Pedido no encontrado en webhook: {pedido_id}")
+    except Exception as e:
+        logger.error(f"Error procesando webhook: {str(e)}")
+
+def handle_session_expired(session):
+    """Manejar sesión de pago expirada"""
+    try:
+        pedido_id = session['metadata']['pedido_id']
+        pedido = Pedido.objects.get(id=pedido_id)
+        
+        pedido.estado = 'cancelado'
+        pedido.save()
+        
+        logger.info(f"Pedido {pedido.numero_pedido} cancelado por expiración")
+        
+    except Pedido.DoesNotExist:
+        logger.error(f"Pedido no encontrado en webhook de expiración: {pedido_id}")
+    except Exception as e:
+        logger.error(f"Error procesando webhook de expiración: {str(e)}")

@@ -55,4 +55,10 @@ urlpatterns = [
     path('paneladmin/inventario/actualizar_stock/', views.actualizar_stock_general, name='actualizar_stock_general'),
     path('paneladmin/inventario/actualizar_stock_manual/', views.actualizar_stock_manual, name='actualizar_stock_manual'),
     path('paneladmin/registro-ventas/registrar-manual/', views.registrar_venta_manual, name='registrar_venta_manual'),
+
+    #stripe
+    path('crear-sesion-pago/', views.crear_sesion_pago_stripe, name='crear_sesion_pago'),
+    path('pago-exitoso/<int:pedido_id>/', views.pago_exitoso, name='pago_exitoso'),
+    path('pago-cancelado/<int:pedido_id>/', views.pago_cancelado, name='pago_cancelado'),
+    path('stripe-webhook/', views.stripe_webhook, name='stripe_webhook'),
 ]

@@ -180,7 +180,6 @@ class Pedido(models.Model):
     METODOS_PAGO = [
         ('tarjeta', 'Tarjeta de Crédito/Débito'),
         ('paypal', 'PayPal'),
-        ('transferencia', 'Transferencia Bancaria'),
     ]
     
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='pedidos')
@@ -198,9 +197,10 @@ class Pedido(models.Model):
     ciudad = models.CharField(max_length=100, default="Ciudad no especificada")
     telefono = models.CharField(max_length=20, default="0000000000")
     
-    # Información de pago (opcional)
-    numero_tarjeta = models.CharField(max_length=20, blank=True, null=True)
-    fecha_expiracion = models.CharField(max_length=10, blank=True, null=True)
+    # Campos para Stripe
+    stripe_payment_intent_id = models.CharField(max_length=100, blank=True, null=True)
+    stripe_customer_id = models.CharField(max_length=100, blank=True, null=True)
+    stripe_checkout_session_id = models.CharField(max_length=100, blank=True, null=True)
     
     def __str__(self):
         return f"Pedido {self.numero_pedido} - {self.usuario.username}"
@@ -214,22 +214,6 @@ class Pedido(models.Model):
         if not self.numero_pedido:
             self.numero_pedido = self.generar_numero_pedido()
         super().save(*args, **kwargs)
-    
-    def obtener_estado_color(self):
-        """Devuelve el color correspondiente al estado del pedido"""
-        colores = {
-            'pendiente': 'yellow',
-            'confirmado': 'blue', 
-            'procesando': 'orange',
-            'enviado': 'purple',
-            'entregado': 'green',
-            'cancelado': 'red',
-        }
-        return colores.get(self.estado, 'gray')
-    
-    def es_reciente(self):
-        """Verifica si el pedido fue creado en los últimos 7 días"""
-        return self.creado_en >= timezone.now() - timedelta(days=7)
 
 # MODELO DETALLE PEDIDO COMPLETO Y FUNCIONAL
 class DetallePedido(models.Model):
