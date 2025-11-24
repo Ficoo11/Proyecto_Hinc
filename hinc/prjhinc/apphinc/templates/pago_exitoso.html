@@ -1,0 +1,60 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago Exitoso - Hinc</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="shortcut icon" href="{% static 'Img/Hinc.png' %}" type="image/x-icon">
+</head>
+<body class="bg-gray-50 font-sans">
+    <header class="relative h-20 bg-white shadow-sm">
+        <nav class="w-full h-full flex items-center justify-between px-6 max-w-7xl mx-auto">
+            <a href="{% url 'index' %}">
+                <img src="{% static 'img/Hinc.png' %}" alt="Hinc Logo" class="h-8">
+            </a>
+            <h1 class="text-xl font-bold text-gray-800">Pago Exitoso</h1>
+        </nav>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow-sm p-8 text-center">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-check text-green-500 text-3xl"></i>
+            </div>
+
+            <h1 class="text-3xl font-bold text-gray-800 mb-4">¡Pago Exitoso!</h1>
+            <p class="text-lg text-gray-600 mb-2">Gracias por tu compra, {{ pedido.usuario.username }}</p>
+            <p class="text-gray-500 mb-8">Tu pedido ha sido confirmado y está siendo procesado.</p>
+
+            <div class="bg-gray-50 rounded-lg p-6 mb-8">
+                <h3 class="font-semibold text-gray-800 mb-3">Información del Pedido</h3>
+                <p class="mb-2"><span class="font-medium">Número de Pedido:</span> {{ pedido.numero_pedido }}</p>
+                <p class="mb-2"><span class="font-medium">Total:</span> ${{ pedido.total|floatformat:0 }}</p>
+                <p class="mb-2"><span class="font-medium">Estado:</span> 
+                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-sm font-medium">
+                        Confirmado
+                    </span>
+                </p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'index' %}" 
+                   class="bg-orange-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors duration-200 flex items-center justify-center">
+                    <i class="fas fa-home mr-2"></i>Volver al Inicio
+                </a>
+                <a href="{% url 'catalogo' %}" 
+                   class="bg-gray-800 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-900 transition-colors duration-200 flex items-center justify-center">
+                    <i class="fas fa-shopping-bag mr-2"></i>Seguir Comprando
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-black py-4 text-center text-white mt-12">
+        <small>&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</small>
+    </footer>
+</body>
+</html>
