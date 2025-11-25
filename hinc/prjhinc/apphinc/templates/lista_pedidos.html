@@ -1,0 +1,232 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hinc - Gestión de Pedidos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="shortcut icon" href="{% static 'Img/Hinc.png' %}" type="image/x-icon">
+</head>
+<body class="bg-gray-900 font-sans text-white">
+    <!-- Header -->
+    <header class="relative h-24 overflow-hidden z-10">
+        <video class="absolute w-full h-full object-cover z-0" autoplay muted loop>
+            <source src="{% static 'Img/Hinc.mp4' %}" type="video/mp4">
+        </video>
+        <nav class="absolute w-full h-full flex items-center justify-between px-6 z-20 bg-black/60 backdrop-blur-sm">
+            <a href="{% url 'index' %}">
+                <img src="{% static 'Img/Hinc.png' %}" alt="Hinc Logo" class="w-6 h-10">
+            </a>
+            <h1 class="text-2xl font-bold absolute left-1/2 transform -translate-x-1/2">Gestión de Pedidos</h1>
+            <button id="userMenuBtn" class="text-white text-base p-2 hover:bg-gray-200 hover:text-black rounded-md transition-all duration-300">
+                <i class="fa-solid fa-user"></i>
+            </button>
+        </nav>
+        <div id="userMenu" class="hidden fixed right-4 top-20 w-48 bg-gray-800 rounded-lg shadow-xl z-[9999] border border-gray-700">
+            <a href="#" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-t-lg transition-colors duration-200">Configuración</a>
+            <a href="{% url 'index' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 transition-colors duration-200">Volver al Inicio</a>
+            <a href="{% url 'logout' %}" class="block px-4 py-3 text-gray-200 hover:bg-gray-700 rounded-b-lg transition-colors duration-200">Cerrar Sesión</a>
+        </div>
+    </header>
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-800 p-6 z-0">
+            <ul>
+                <li>
+                    <a href="{% url 'paneladmin' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300">Dashboard</a>
+                </li>
+                <li>
+                    <a href="{% url 'usuarios' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300">Usuarios</a>
+                </li>
+                <li>
+                    <a href="{% url 'productos' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300">Productos</a>
+                </li>
+                <li>
+                    <a href="{% url 'categorias' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300">Categorías</a>
+                </li>
+                <li>
+                    <a href="{% url 'inventario' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300">Inventario</a>
+                </li>
+                <li>
+                    <a href="{% url 'pedidos' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 bg-gray-700">Pedidos</a>
+                </li>
+                <li>
+                    <a href="{% url 'registro_ventas' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300">Registro de Ventas</a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8 bg-gray-100 text-black">
+            {% if messages %}
+                <div id="messages-container" class="mb-4">
+                    {% for message in messages %}
+                        {% if message.tags == 'success' %}
+                            <div class="p-4 bg-green-100 text-green-800 rounded-md border border-green-300">
+                                {{ message }}
+                            </div>
+                        {% else %}
+                            <div class="p-4 bg-red-100 text-red-800 rounded-md border border-red-300">
+                                {{ message }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Filtros -->
+            <div class="mb-6 bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Filtros de Búsqueda</h3>
+                <form method="GET" class="flex gap-4 items-end">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Estado del Pedido</label>
+                        <select name="estado" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-black focus:border-black">
+                            <option value="">Todos los estados</option>
+                            {% for estado_val, estado_label in estados %}
+                                <option value="{{ estado_val }}" {% if estado_filtro == estado_val %}selected{% endif %}>
+                                    {{ estado_label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition duration-300 flex items-center">
+                        <i class="fas fa-filter mr-2"></i>Filtrar
+                    </button>
+                    <a href="{% url 'pedidos' %}" class="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition duration-300 flex items-center">
+                        <i class="fas fa-times mr-2"></i>Limpiar
+                    </a>
+                </form>
+            </div>
+
+            <!-- Lista de Pedidos -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="p-4 bg-gray-800 text-white">
+                    <h3 class="text-lg font-semibold">Lista de Pedidos</h3>
+                </div>
+                
+                {% if pedidos %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="py-3 px-4 border-b text-left text-gray-700">Número de Pedido</th>
+                                <th class="py-3 px-4 border-b text-left text-gray-700">Cliente</th>
+                                <th class="py-3 px-4 border-b text-left text-gray-700">Total</th>
+                                <th class="py-3 px-4 border-b text-left text-gray-700">Estado</th>
+                                <th class="py-3 px-4 border-b text-left text-gray-700">Fecha</th>
+                                <th class="py-3 px-4 border-b text-left text-gray-700">Método de Pago</th>
+                                <th class="py-3 px-4 border-b text-left text-gray-700">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pedido in pedidos %}
+                            <tr class="border-b hover:bg-gray-50 transition-colors duration-200">
+                                <td class="py-3 px-4 font-semibold text-gray-800">
+                                    #{{ pedido.numero_pedido }}
+                                </td>
+                                <td class="py-3 px-4">
+                                    <div>
+                                        <p class="font-medium text-gray-800">{{ pedido.nombre_completo }}</p>
+                                        <p class="text-sm text-gray-600">{{ pedido.email }}</p>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <span class="font-bold text-lg text-green-600">${{ pedido.total|floatformat:0 }}</span>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <span class="px-3 py-1 rounded-full text-sm font-semibold 
+                                        {% if pedido.estado == 'entregado' %}bg-green-100 text-green-800 border border-green-200
+                                        {% elif pedido.estado == 'enviado' %}bg-purple-100 text-purple-800 border border-purple-200
+                                        {% elif pedido.estado == 'procesando' %}bg-orange-100 text-orange-800 border border-orange-200
+                                        {% elif pedido.estado == 'confirmado' %}bg-blue-100 text-blue-800 border border-blue-200
+                                        {% elif pedido.estado == 'cancelado' %}bg-red-100 text-red-800 border border-red-200
+                                        {% else %}bg-yellow-100 text-yellow-800 border border-yellow-200{% endif %}">
+                                        {{ pedido.get_estado_display }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 text-sm text-gray-600">
+                                    {{ pedido.creado_en|date:"d/m/Y H:i" }}
+                                </td>
+                                <td class="py-3 px-4">
+                                    <span class="text-sm text-gray-600">{{ pedido.get_metodo_pago_display }}</span>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <div class="flex space-x-2">
+                                        {% if pedido.id %}
+                                        <a href="{% url 'pedido_detalle' pedido.id %}" 
+                                           class="text-blue-500 hover:text-blue-700 transition duration-200 flex items-center text-sm">
+                                            <i class="fas fa-eye mr-1"></i> Detalle
+                                        </a>
+                                        <a href="{% url 'cambiar_estado_pedido' pedido.id %}" 
+                                           class="text-green-500 hover:text-green-700 transition duration-200 flex items-center text-sm">
+                                            <i class="fas fa-edit mr-1"></i> Estado
+                                        </a>
+                                        {% else %}
+                                        <span class="text-red-500 text-sm">ID no disponible</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-12">
+                    <div class="w-24 h-24 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
+                        <i class="fas fa-box-open text-3xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-600 mb-2">No hay pedidos registrados</h3>
+                    <p class="text-gray-500">Cuando los clientes realicen pedidos, aparecerán aquí.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Estadísticas Rápidas -->
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <div class="text-3xl font-bold text-blue-600">{{ pedidos.count }}</div>
+                    <div class="text-sm text-gray-600 mt-2">Total Pedidos</div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <div class="text-3xl font-bold text-green-600">{{ pedidos|length }}</div>
+                    <div class="text-sm text-gray-600 mt-2">Pedidos Activos</div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <div class="text-3xl font-bold text-orange-600">{{ pedidos.filter|length }}</div>
+                    <div class="text-sm text-gray-600 mt-2">Filtrados</div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                    <div class="text-3xl font-bold text-purple-600">${{ total_general|default:0|floatformat:0 }}</div>
+                    <div class="text-sm text-gray-600 mt-2">Ingresos Totales</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-center py-4 z-0">
+        <p class="text-sm text-white">&copy; 2025 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</p>
+    </footer>
+
+    <script>
+        // User Menu Dropdown
+        const userMenuBtn = document.getElementById('userMenuBtn');
+        const userMenu = document.getElementById('userMenu');
+        userMenuBtn.addEventListener('click', () => {
+            userMenu.classList.toggle('hidden');
+        });
+
+        // Ocultar mensajes automáticamente después de 5 segundos
+        setTimeout(() => {
+            const messagesContainer = document.getElementById('messages-container');
+            if (messagesContainer) {
+                messagesContainer.style.display = 'none';
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

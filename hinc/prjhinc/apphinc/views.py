@@ -637,16 +637,13 @@ def inventario_view(request):
     producto_id = request.GET.get('producto_id')
     producto = get_object_or_404(Producto, id=producto_id) if action in ['update_productos', 'delete_productos'] and producto_id else None
     
-    if producto and action == 'update_productos':
-        stock_tallas = StockTalla.objects.filter(producto=producto)
-        stock_forms = [StockTallaForm(instance=stock) for stock in stock_tallas]
-    else:
-        stock_forms = []
+    print(f"=== INVENTARIO_VIEW ===")
+    print(f"Action: {action}, Producto ID: {producto_id}")
+    print(f"Method: {request.method}")
     
-    form = InventoryForm(instance=producto) if action == 'update_productos' else InventoryForm()
-    
-    # Procesar actualización manual de stocks - CON VALIDACIÓN DE TOPE
-    if request.method == 'POST' and request.POST.get('action') == 'update_stocks_manual':
+    # Procesar actualización manual de stocks (formulario de agregar unidades)
+    if request.method == 'POST' and any(key.startswith('nuevas_unidades[') for key in request.POST.keys()):
+        print("Procesando formulario de ACTUALIZACIÓN DE STOCK")
         try:
             productos_actualizados = set()
             tallas_actualizadas = 0
@@ -658,7 +655,9 @@ def inventario_view(request):
                     try:
                         # Extraer el ID del stock_talla del formato: nuevas_unidades[1]
                         stock_talla_id = key.split('[')[1].split(']')[0]
-                        nuevas_unidades = int(value)
+                        nuevas_unidades = int(value) if value else 0
+                        
+                        print(f"Procesando: {key} = {nuevas_unidades} unidades")
                         
                         if nuevas_unidades > 0:
                             stock_talla = get_object_or_404(StockTalla, id=stock_talla_id)
@@ -670,14 +669,28 @@ def inventario_view(request):
                                 continue
                             
                             # SUMAR las nuevas unidades al stock actual
+                            stock_anterior = stock_talla.stock
                             stock_talla.stock += nuevas_unidades
                             stock_talla.save()
+                            
+                            # Registrar movimiento de inventario
+                            MovimientoInventario.objects.create(
+                                producto=stock_talla.producto,
+                                talla=stock_talla.talla,
+                                tipo_movimiento=TipoMovimiento.COMPRA,
+                                cantidad=nuevas_unidades,
+                                stock_anterior=stock_anterior,
+                                stock_posterior=stock_talla.stock,
+                                usuario=request.user,
+                                observaciones=f"Actualización manual de stock - Agregadas {nuevas_unidades} unidades"
+                            )
                             
                             tallas_actualizadas += 1
                             total_unidades_agregadas += nuevas_unidades
                             productos_actualizados.add(stock_talla.producto.id)
                             
-                    except (ValueError, IndexError, StockTalla.DoesNotExist):
+                    except (ValueError, IndexError, StockTalla.DoesNotExist) as e:
+                        print(f"Error procesando {key}: {e}")
                         continue
             
             # Actualizar stock general de todos los productos afectados
@@ -691,7 +704,7 @@ def inventario_view(request):
             if tallas_actualizadas > 0:
                 messages.success(request, f"Stock actualizado correctamente. Se agregaron {total_unidades_agregadas} unidades en {tallas_actualizadas} tallas de {len(productos_actualizados)} productos.")
             else:
-                messages.warning(request, "No se realizaron actualizaciones. Verifica que las cantidades no excedan los topes máximos.")
+                messages.warning(request, "No se realizaron actualizaciones. Verifica que las cantidades sean mayores a 0 y no excedan los topes máximos.")
                 
             return redirect('inventario')
             
@@ -699,13 +712,16 @@ def inventario_view(request):
             messages.error(request, f"Error al actualizar el stock: {str(e)}")
             return redirect('inventario')
     
-    # Procesar edición de producto desde inventario
-    if request.method == 'POST' and action == 'update_productos' and producto_id:
+    # Procesar ACTUALIZACIÓN DE PRODUCTO (formulario de edición)
+    elif request.method == 'POST' and action == 'update_productos' and producto_id:
+        print("Procesando formulario de ACTUALIZACIÓN DE PRODUCTO")
         producto = get_object_or_404(Producto, id=producto_id)
-        form = InventoryForm(request.POST, instance=producto)
+        form = ProductoForm(request.POST, request.FILES, instance=producto)
+        
         if form.is_valid():
             try:
-                producto_actualizado = form.save()
+                print("Formulario válido, guardando producto...")
+                producto_actualizado = form.save(commit=False)
                 total_stock = 0
                 
                 # Actualizar stocks por talla
@@ -714,57 +730,79 @@ def inventario_view(request):
                     stock_field = f'stock_{stock_talla.talla}'
                     stock_inicial_field = f'stock_inicial_{stock_talla.talla}'
                     
+                    print(f"Procesando talla {stock_talla.talla}: {stock_field}, {stock_inicial_field}")
+                    
                     if stock_field in request.POST:
                         try:
                             nuevo_stock = int(request.POST[stock_field])
+                            print(f"  Nuevo stock: {nuevo_stock}")
                             if nuevo_stock >= 0:
-                                # VALIDAR QUE NO EXCEDA EL TOPE
+                                stock_talla.stock = nuevo_stock
+                                total_stock += nuevo_stock
+                                
                                 if stock_inicial_field in request.POST:
                                     nuevo_stock_inicial = int(request.POST[stock_inicial_field])
+                                    print(f"  Nuevo stock inicial: {nuevo_stock_inicial}")
                                     if nuevo_stock_inicial >= 0:
                                         stock_talla.stock_inicial = nuevo_stock_inicial
                                 
-                                # Asegurar que el stock actual no exceda el stock inicial
-                                stock_talla.stock = min(nuevo_stock, stock_talla.stock_inicial)
-                                total_stock += stock_talla.stock
                                 stock_talla.save()
-                        except ValueError:
+                                print(f"  Stock guardado: {stock_talla.stock} (inicial: {stock_talla.stock_inicial})")
+                        except ValueError as e:
+                            print(f"  Error en valores: {e}")
                             pass
                 
                 # Actualizar stock general del producto inmediatamente
                 producto_actualizado.stock = total_stock
+                print(f"Stock total actualizado: {total_stock}")
                 
                 # Actualizar estado basado en el stock
                 if producto_actualizado.stock > 0 and producto_actualizado.estado == 'Agotado':
                     producto_actualizado.estado = 'Habilitado'
+                    print("Estado cambiado a Habilitado")
                 elif producto_actualizado.stock == 0 and producto_actualizado.estado != 'Agotado':
                     producto_actualizado.estado = 'Agotado'
+                    print("Estado cambiado a Agotado")
                 
                 producto_actualizado.save()
+                print("Producto guardado exitosamente")
                 
-                messages.success(request, "Inventario actualizado exitosamente.")
+                messages.success(request, "Producto actualizado exitosamente.")
                 return redirect('inventario')
                 
             except Exception as e:
-                messages.error(request, f"Error al actualizar el inventario: {str(e)}")
+                print(f"Error al actualizar el producto: {str(e)}")
+                messages.error(request, f"Error al actualizar el producto: {str(e)}")
         else:
-            messages.error(request, "Error al actualizar inventario. Verifica los datos.")
+            print("Formulario inválido")
+            messages.error(request, "Error al actualizar producto. Verifica los datos.")
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{form.fields[field].label if field in form.fields else field}: {error}")
     
-    # Procesar eliminación de producto
-    if request.method == 'POST' and action == 'delete_productos' and producto_id:
+    # Procesar ELIMINACIÓN DE PRODUCTO
+    elif request.method == 'POST' and action == 'delete_productos' and producto_id:
+        print("Procesando ELIMINACIÓN DE PRODUCTO")
         try:
             producto = get_object_or_404(Producto, id=producto_id)
             producto_nombre = producto.nombre
             producto.delete()
-            messages.success(request, f"Producto '{producto_nombre}' eliminado del inventario exitosamente.")
+            messages.success(request, f"Producto '{producto_nombre}' eliminado exitosamente.")
             return redirect('inventario')
         except Exception as e:
             messages.error(request, f"Error al eliminar el producto: {str(e)}")
     
     # GET request - mostrar formularios o lista
+    print("Renderizando template...")
+    if producto and action == 'update_productos':
+        stock_tallas = StockTalla.objects.filter(producto=producto)
+        stock_forms = [StockTallaForm(instance=stock) for stock in stock_tallas]
+        form = ProductoForm(instance=producto)
+        print(f"Modo edición para producto: {producto.nombre}")
+    else:
+        stock_forms = []
+        form = InventoryForm()
+    
     return render(request, 'Pinventario.html', {
         'productos': productos, 
         'action': action, 
@@ -1075,14 +1113,23 @@ def pedidos_view(request):
         messages.error(request, "No tienes permiso para acceder a esta sección.")
         return redirect('paneladmin')
     
+    # Filtrar solo pedidos con ID válido y ordenar
     pedidos = Pedido.objects.all().order_by('-creado_en')
+    
+    # Debug: Verificar los pedidos
+    print("=== DEBUG PEDIDOS ===")
+    for pedido in pedidos:
+        print(f"ID: {pedido.id}, Número: {pedido.numero_pedido}")
+    print("=====================")
+    
     estados = Pedido.ESTADOS_PEDIDO
     
     estado_filtro = request.GET.get('estado')
     if estado_filtro:
         pedidos = pedidos.filter(estado=estado_filtro)
     
-    return render(request, 'pedidos.html', {
+    # Cambia 'pedidos.html' por 'lista_pedidos.html'
+    return render(request, 'lista_pedidos.html', {
         'pedidos': pedidos,
         'estados': estados,
         'estado_filtro': estado_filtro
@@ -1865,3 +1912,54 @@ def handle_session_expired(session):
         logger.error(f"Pedido no encontrado en webhook de expiración: {pedido_id}")
     except Exception as e:
         logger.error(f"Error procesando webhook de expiración: {str(e)}")
+
+@login_required
+def cambiar_estado_pedido(request, pedido_id):
+    """Vista para cambiar el estado de un pedido"""
+    if request.user.role != 'Admin':
+        messages.error(request, "No tienes permiso para realizar esta acción.")
+        return redirect('paneladmin')
+    
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+    
+    if request.method == 'POST':
+        nuevo_estado = request.POST.get('nuevo_estado')
+        if nuevo_estado in dict(Pedido.ESTADOS_PEDIDO):
+            pedido.estado = nuevo_estado
+            pedido.save()
+            
+            messages.success(request, f"Estado del pedido {pedido.numero_pedido} actualizado a {pedido.get_estado_display()}.")
+            return redirect('pedidos')
+        else:
+            messages.error(request, "Estado inválido.")
+    
+    return render(request, 'cambiar_estado_pedido.html', {
+        'pedido': pedido,
+        'estados': Pedido.ESTADOS_PEDIDO
+    })
+
+@login_required
+def actualizar_estado_pedido(request, pedido_id):
+    """Vista para cambiar el estado de un pedido desde el detalle"""
+    if request.user.role != 'Admin':
+        messages.error(request, "No tienes permiso para realizar esta acción.")
+        return redirect('paneladmin')
+    
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+    
+    if request.method == 'POST':
+        nuevo_estado = request.POST.get('nuevo_estado')
+        if nuevo_estado in dict(Pedido.ESTADOS_PEDIDO):
+            pedido.estado = nuevo_estado
+            pedido.save()
+            
+            messages.success(request, f"Estado del pedido {pedido.numero_pedido} actualizado a {pedido.get_estado_display()}.")
+            return redirect('pedido_detalle', pedido_id=pedido.id)
+        else:
+            messages.error(request, "Estado inválido.")
+    
+    # Si es GET, mostrar el formulario
+    return render(request, 'cambiar_estado_pedido.html', {
+        'pedido': pedido,
+        'estados': Pedido.ESTADOS_PEDIDO
+    })

@@ -72,104 +72,107 @@
             {% endif %}
             
             {% if action == 'update_productos' and producto %}
-                <!-- Formulario de edición tradicional con autocomplete -->
-                <form method="post" action="{% url 'inventario' %}?action=update_productos&producto_id={{ producto.id }}" class="mb-6 p-6 bg-white rounded-md shadow-md" id="inventoryForm">
-                    {% csrf_token %}
-                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Editar Inventario: {{ producto.nombre }}</h3>
-                    
-                    <div class="grid grid-cols-1 gap-4 mb-6">
-                        {% for field in form %}
-                            <div>
-                                <label class="block text-gray-700 font-semibold">{{ field.label }}</label>
-                                {{ field|add_class:"mt-1 p-2 w-full border border-gray-300 rounded-md focus:ring-black focus:border-black" }}
-                                {% if field.errors %}
-                                    <span class="text-red-500 text-sm">{{ field.errors.0 }}</span>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
+               <!-- Formulario de edición tradicional con autocomplete - CORREGIDO -->
+<form method="post" action="{% url 'inventario' %}?action=update_productos&producto_id={{ producto.id }}" class="mb-6 p-6 bg-white rounded-md shadow-md" id="inventoryForm">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="update_productos">
+    <input type="hidden" name="producto_id" value="{{ producto.id }}">
+    
+    <h3 class="text-xl font-semibold text-gray-800 mb-4">Editar Inventario: {{ producto.nombre }}</h3>
+    
+    <div class="grid grid-cols-1 gap-4 mb-6">
+        {% for field in form %}
+            <div>
+                <label class="block text-gray-700 font-semibold">{{ field.label }}</label>
+                {{ field|add_class:"mt-1 p-2 w-full border border-gray-300 rounded-md focus:ring-black focus:border-black" }}
+                {% if field.errors %}
+                    <span class="text-red-500 text-sm">{{ field.errors.0 }}</span>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Sección de Stock por Tallas -->
+    <div class="mt-6 border-t pt-6">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Stock por Tallas</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for stock_form in stock_forms %}
+            <div class="bg-gray-50 p-4 rounded-md border border-gray-200 
+                {% if stock_form.instance.obtener_estado_stock.0 == 'critico' %}border-red-300 bg-red-50
+                {% elif stock_form.instance.obtener_estado_stock.0 == 'bajo' %}border-orange-300 bg-orange-50
+                {% elif stock_form.instance.obtener_estado_stock.0 == 'medio' %}border-yellow-300 bg-yellow-50
+                {% else %}border-green-300 bg-green-50{% endif %}">
+                
+                <div class="flex justify-between items-center mb-3">
+                    <label class="block text-gray-700 font-semibold">Talla {{ stock_form.instance.talla }}</label>
+                    <span class="text-xs font-semibold px-2 py-1 rounded 
+                        {% if stock_form.instance.obtener_estado_stock.0 == 'critico' %}bg-red-100 text-red-800
+                        {% elif stock_form.instance.obtener_estado_stock.0 == 'bajo' %}bg-orange-100 text-orange-800
+                        {% elif stock_form.instance.obtener_estado_stock.0 == 'medio' %}bg-yellow-100 text-yellow-800
+                        {% else %}bg-green-100 text-green-800{% endif %}">
+                        {{ stock_form.instance.obtener_estado_stock.1 }}
+                    </span>
+                </div>
+                
+                <div class="space-y-2">
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">Stock Inicial (Tope)</label>
+                        <input type="number" 
+                               name="stock_inicial_{{ stock_form.instance.talla }}" 
+                               value="{{ stock_form.instance.stock_inicial }}" 
+                               min="0" 
+                               class="mt-1 p-2 w-full border border-gray-300 rounded-md focus:ring-black focus:border-black stock-inicial-input"
+                               placeholder="Stock inicial"
+                               data-talla="{{ stock_form.instance.talla }}"
+                               onchange="actualizarStockActual(this)"
+                               required>
                     </div>
                     
-                    <!-- Sección de Stock por Tallas - MODIFICADA CON AUTOCOMPLETE -->
-                    <div class="mt-6 border-t pt-6">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Stock por Tallas</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {% for stock_form in stock_forms %}
-                            <div class="bg-gray-50 p-4 rounded-md border border-gray-200 
-                                {% if stock_form.instance.obtener_estado_stock.0 == 'critico' %}border-red-300 bg-red-50
-                                {% elif stock_form.instance.obtener_estado_stock.0 == 'bajo' %}border-orange-300 bg-orange-50
-                                {% elif stock_form.instance.obtener_estado_stock.0 == 'medio' %}border-yellow-300 bg-yellow-50
-                                {% else %}border-green-300 bg-green-50{% endif %}">
-                                
-                                <div class="flex justify-between items-center mb-3">
-                                    <label class="block text-gray-700 font-semibold">Talla {{ stock_form.instance.talla }}</label>
-                                    <span class="text-xs font-semibold px-2 py-1 rounded 
-                                        {% if stock_form.instance.obtener_estado_stock.0 == 'critico' %}bg-red-100 text-red-800
-                                        {% elif stock_form.instance.obtener_estado_stock.0 == 'bajo' %}bg-orange-100 text-orange-800
-                                        {% elif stock_form.instance.obtener_estado_stock.0 == 'medio' %}bg-yellow-100 text-yellow-800
-                                        {% else %}bg-green-100 text-green-800{% endif %}">
-                                        {{ stock_form.instance.obtener_estado_stock.1 }}
-                                    </span>
-                                </div>
-                                
-                                <div class="space-y-2">
-                                    <div>
-                                        <label class="block text-sm text-gray-600 mb-1">Stock Inicial (Tope)</label>
-                                        <input type="number" 
-                                               name="stock_inicial_{{ stock_form.instance.talla }}" 
-                                               value="{{ stock_form.instance.stock_inicial }}" 
-                                               min="0" 
-                                               class="mt-1 p-2 w-full border border-gray-300 rounded-md focus:ring-black focus:border-black stock-inicial-input"
-                                               placeholder="Stock inicial"
-                                               data-talla="{{ stock_form.instance.talla }}"
-                                               onchange="actualizarStockActual(this)"
-                                               required>
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm text-gray-600 mb-1">Stock Actual</label>
-                                        <input type="number" 
-                                               name="stock_{{ stock_form.instance.talla }}" 
-                                               value="{{ stock_form.instance.stock }}" 
-                                               min="0" 
-                                               class="mt-1 p-2 w-full border border-gray-300 rounded-md focus:ring-black focus:border-black stock-actual-input"
-                                               placeholder="Stock actual"
-                                               data-talla="{{ stock_form.instance.talla }}"
-                                               id="stock-actual-{{ stock_form.instance.talla }}"
-                                               max="{{ stock_form.instance.stock_inicial }}"
-                                               required>
-                                        <div class="text-xs text-gray-500 mt-1">
-                                            Stock actual: {{ stock_form.instance.stock }} / Tope: {{ stock_form.instance.stock_inicial }}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Información de porcentaje -->
-                                <div class="mt-3">
-                                    <div class="flex justify-between text-xs text-gray-600 mb-1">
-                                        <span>Disponibilidad</span>
-                                        <span>{{ stock_form.instance.obtener_porcentaje_stock|floatformat:1 }}%</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div class="h-2 rounded-full 
-                                            {% if stock_form.instance.obtener_estado_stock.0 == 'critico' %}bg-red-500
-                                            {% elif stock_form.instance.obtener_estado_stock.0 == 'bajo' %}bg-orange-500
-                                            {% elif stock_form.instance.obtener_estado_stock.0 == 'medio' %}bg-yellow-500
-                                            {% else %}bg-green-500{% endif %}" 
-                                            style="width: {{ stock_form.instance.obtener_porcentaje_stock }}%">
-                                        </div>
-                                    </div>
-                                    <div class="text-xs text-gray-500 mt-1 text-center">
-                                        {{ stock_form.instance.stock }} de {{ stock_form.instance.stock_inicial }} unidades
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">Stock Actual</label>
+                        <input type="number" 
+                               name="stock_{{ stock_form.instance.talla }}" 
+                               value="{{ stock_form.instance.stock }}" 
+                               min="0" 
+                               class="mt-1 p-2 w-full border border-gray-300 rounded-md focus:ring-black focus:border-black stock-actual-input"
+                               placeholder="Stock actual"
+                               data-talla="{{ stock_form.instance.talla }}"
+                               id="stock-actual-{{ stock_form.instance.talla }}"
+                               max="{{ stock_form.instance.stock_inicial }}"
+                               required>
+                        <div class="text-xs text-gray-500 mt-1">
+                            Stock actual: {{ stock_form.instance.stock }} / Tope: {{ stock_form.instance.stock_inicial }}
                         </div>
                     </div>
-                    
-                    <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-300">Actualizar Inventario</button>
-                    <a href="{% url 'inventario' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
-                </form>
+                </div>
+                
+                <!-- Información de porcentaje -->
+                <div class="mt-3">
+                    <div class="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>Disponibilidad</span>
+                        <span>{{ stock_form.instance.obtener_porcentaje_stock|floatformat:1 }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="h-2 rounded-full 
+                            {% if stock_form.instance.obtener_estado_stock.0 == 'critico' %}bg-red-500
+                            {% elif stock_form.instance.obtener_estado_stock.0 == 'bajo' %}bg-orange-500
+                            {% elif stock_form.instance.obtener_estado_stock.0 == 'medio' %}bg-yellow-500
+                            {% else %}bg-green-500{% endif %}" 
+                            style="width: {{ stock_form.instance.obtener_porcentaje_stock }}%">
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1 text-center">
+                        {{ stock_form.instance.stock }} de {{ stock_form.instance.stock_inicial }} unidades
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <button type="submit" class="mt-4 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-300">Actualizar Inventario</button>
+    <a href="{% url 'inventario' %}" class="ml-4 text-gray-500 hover:underline">Cancelar</a>
+</form>
 
                 <!-- Script para autocompletar stock actual CORREGIDO -->
                 <script>
@@ -291,131 +294,134 @@
                 </div>
             {% else %}
                 <!-- Botones de acción - MODIFICADO -->
-                <div class="mb-6 flex justify-between items-center bg-white p-4 rounded-lg shadow-md">
-                    <div class="flex space-x-4">
-                        <button id="toggleEditBtn" class="bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-600 transition duration-300 flex items-center">
-                            <i class="fas fa-plus mr-2"></i>Actualizar Stock 
-                        </button>
-                        <a href="{% url 'productos' %}" class="bg-green-500 text-white px-6 py-3 rounded-md hover:bg-green-600 transition duration-300 flex items-center">
-                            <i class="fas fa-plus mr-2"></i>Gestionar Productos
-                        </a>
-                    </div>
-                    <div id="editModeMessage" class="hidden bg-yellow-100 text-yellow-800 px-4 py-2 rounded-md border border-yellow-300">
-                        <i class="fas fa-edit mr-2"></i>Modo actualización activado - Agrega nuevas unidades a los stocks
-                    </div>
-                </div>
+<div class="mb-6 flex justify-between items-center bg-white p-4 rounded-lg shadow-md">
+    <div class="flex space-x-4">
+        <button id="toggleEditBtn" class="bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-600 transition duration-300 flex items-center">
+            <i class="fas fa-plus mr-2"></i>Actualizar Stock 
+        </button>
+        <a href="{% url 'productos' %}" class="bg-green-500 text-white px-6 py-3 rounded-md hover:bg-green-600 transition duration-300 flex items-center">
+            <i class="fas fa-plus mr-2"></i>Gestionar Productos
+        </a>
+    </div>
+    <div id="editModeMessage" class="hidden bg-yellow-100 text-yellow-800 px-4 py-2 rounded-md border border-yellow-300">
+        <i class="fas fa-edit mr-2"></i>Modo actualización activado - Agrega nuevas unidades a los stocks
+    </div>
+</div>
 
-                <!-- Formulario para actualización de stock - MODIFICADO CON VALIDACIÓN DE TOPE -->
-                <form id="manualStockForm" method="post" action="{% url 'inventario' %}" class="hidden mb-6 bg-white p-6 rounded-lg shadow-md">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="update_stocks_manual">
-                    
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-semibold text-gray-800">Actualización de Stock</h3>
-                        <div class="flex space-x-2">
-                            <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition duration-300 flex items-center">
-                                <i class="fas fa-save mr-2"></i>Guardar Actualización
-                            </button>
-                            <button type="button" id="cancelEditBtn" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition duration-300 flex items-center">
-                                <i class="fas fa-times mr-2"></i>Cancelar
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <p class="text-gray-600 mb-4">Agrega nuevas unidades a cada producto y talla. Las unidades se sumarán al stock actual respetando el tope máximo.</p>
+<!-- Formulario para actualización de stock - CORREGIDO -->
+<form id="manualStockForm" method="post" action="{% url 'inventario' %}" class="hidden mb-6 bg-white p-6 rounded-lg shadow-md">
+    {% csrf_token %}
+    
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-semibold text-gray-800">Actualización de Stock</h3>
+        <div class="flex space-x-2">
+            <button type="submit" class="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition duration-300 flex items-center">
+                <i class="fas fa-save mr-2"></i>Guardar Actualización
+            </button>
+            <button type="button" id="cancelEditBtn" class="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition duration-300 flex items-center">
+                <i class="fas fa-times mr-2"></i>Cancelar
+            </button>
+        </div>
+    </div>
+    
+    <p class="text-gray-600 mb-4">Agrega nuevas unidades a cada producto y talla. Las unidades se sumarán al stock actual respetando el tope máximo.</p>
 
-                    <!-- Tabla de inventario en modo actualización - MODIFICADA -->
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full bg-white border border-gray-300">
-                            <thead>
-                                <tr class="bg-gray-200">
-                                    <th class="py-3 px-4 border-b text-left text-gray-700">Producto</th>
-                                    <th class="py-3 px-4 border-b text-left text-gray-700">Talla</th>
-                                    <th class="py-3 px-4 border-b text-left text-gray-700">Stock Inicial (Tope)</th>
-                                    <th class="py-3 px-4 border-b text-left text-gray-700">Stock Actual</th>
-                                    <th class="py-3 px-4 border-b text-left text-gray-700">Unidades a Agregar</th>
-                                    <th class="py-3 px-4 border-b text-left text-gray-700">Nuevo Stock</th>
-                                    <th class="py-3 px-4 border-b text-left text-gray-700">Estado Actual</th>
-                                </tr>
-                            </thead>
-                            <tbody id="editStockBody">
-                                {% for producto in productos %}
-                                    <!-- Encabezado del producto -->
-                                    <tr class="bg-blue-50 border-t-4 border-blue-200">
-                                        <td colspan="7" class="py-3 px-4 font-bold text-blue-800">
-                                            <div class="flex items-center">
-                                                {% if producto.imagen %}
-                                                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="w-10 h-10 object-cover rounded mr-3">
-                                                {% endif %}
-                                                {{ producto.nombre }}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    
-                                    <!-- Filas de tallas para este producto -->
-                                    {% for stock_talla in producto.stocktalla_set.all %}
-                                    <tr class="hover:bg-gray-50 border-b group">
-                                        <td class="py-3 px-4">
-                                            <!-- Celda vacía para alinear con el encabezado del producto -->
-                                        </td>
-                                        <td class="py-3 px-4">
-                                            <span class="font-medium bg-gray-100 px-3 py-1.5 rounded-lg border group-hover:bg-gray-200 transition-colors">
-                                                Talla {{ stock_talla.talla }}
-                                            </span>
-                                        </td>
-                                        <td class="py-3 px-4 text-center">
-                                            <span class="font-semibold text-gray-700">{{ stock_talla.stock_inicial }}</span>
-                                        </td>
-                                        <td class="py-3 px-4 text-center">
-                                            <span class="font-semibold text-gray-700">{{ stock_talla.stock }}</span>
-                                        </td>
-                                        <td class="py-3 px-4">
-                                            <input type="number" 
-                                                   name="nuevas_unidades[{{ stock_talla.id }}]" 
-                                                   value="0" 
-                                                   min="0" 
-                                                   max="{{ stock_talla.stock_inicial|add:stock_talla.stock }}"
-                                                   class="w-24 p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition-colors stock-input"
-                                                   data-stock-inicial="{{ stock_talla.stock_inicial }}"
-                                                   data-stock-actual="{{ stock_talla.stock }}"
-                                                   data-tope="{{ stock_talla.stock_inicial }}"
-                                                   oninput="validarAgregarStock(this)"
-                                                   required>
-                                            <div class="text-xs text-gray-500 mt-1">
-                                                Máximo a agregar: <span id="max-agregar-{{ stock_talla.id }}">{{ stock_talla.stock_inicial|add:stock_talla.stock }}</span>
-                                            </div>
-                                        </td>
-                                        <td class="py-3 px-4 text-center">
-                                            <span class="font-semibold text-green-600 nuevo-stock" 
-                                                  data-stock-id="{{ stock_talla.id }}">
-                                                {{ stock_talla.stock }}
-                                            </span>
-                                        </td>
-                                        <td class="py-3 px-4">
-                                            <span class="text-xs px-3 py-1.5 rounded-full font-semibold 
-                                                {% if stock_talla.obtener_estado_stock.0 == 'critico' %}bg-red-100 text-red-800 border border-red-200
-                                                {% elif stock_talla.obtener_estado_stock.0 == 'bajo' %}bg-orange-100 text-orange-800 border border-orange-200
-                                                {% elif stock_talla.obtener_estado_stock.0 == 'medio' %}bg-yellow-100 text-yellow-800 border border-yellow-200
-                                                {% else %}bg-green-100 text-green-800 border border-green-200{% endif %}">
-                                                {{ stock_talla.obtener_estado_stock.1 }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+    <!-- Tabla de inventario en modo actualización - CORREGIDA -->
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white border border-gray-300">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="py-3 px-4 border-b text-left text-gray-700">Producto</th>
+                    <th class="py-3 px-4 border-b text-left text-gray-700">Talla</th>
+                    <th class="py-3 px-4 border-b text-left text-gray-700">Stock Inicial (Tope)</th>
+                    <th class="py-3 px-4 border-b text-left text-gray-700">Stock Actual</th>
+                    <th class="py-3 px-4 border-b text-left text-gray-700">Unidades a Agregar</th>
+                    <th class="py-3 px-4 border-b text-left text-gray-700">Nuevo Stock</th>
+                    <th class="py-3 px-4 border-b text-left text-gray-700">Estado Actual</th>
+                </tr>
+            </thead>
+            <tbody id="editStockBody">
+                {% for producto in productos %}
+                    <!-- Encabezado del producto -->
+                    <tr class="bg-blue-50 border-t-4 border-blue-200">
+                        <td colspan="7" class="py-3 px-4 font-bold text-blue-800">
+                            <div class="flex items-center">
+                                {% if producto.imagen %}
+                                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="w-10 h-10 object-cover rounded mr-3">
+                                {% endif %}
+                                {{ producto.nombre }}
+                            </div>
+                        </td>
+                    </tr>
                     
-                    <!-- Resumen de cambios -->
-                    <div id="changesSummary" class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200 hidden">
-                        <h4 class="font-semibold text-blue-800 mb-2">Resumen de actualización:</h4>
-                        <ul id="changesList" class="text-sm text-blue-700">
-                            <!-- Los cambios se agregarán aquí dinámicamente -->
-                        </ul>
-                    </div>
-                </form>
-
+                    <!-- Filas de tallas para este producto -->
+                    {% for stock_talla in producto.stocktalla_set.all %}
+                    <tr class="hover:bg-gray-50 border-b group">
+                        <td class="py-3 px-4">
+                            <!-- Celda vacía para alinear con el encabezado del producto -->
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="font-medium bg-gray-100 px-3 py-1.5 rounded-lg border group-hover:bg-gray-200 transition-colors">
+                                Talla {{ stock_talla.talla }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="font-semibold text-gray-700">{{ stock_talla.stock_inicial }}</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="font-semibold text-gray-700 stock-actual-display" data-stock-id="{{ stock_talla.id }}">
+                                {{ stock_talla.stock }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <input type="number" 
+                                   name="nuevas_unidades[{{ stock_talla.id }}]" 
+                                   value="0" 
+                                   min="0" 
+                                   max="{{ stock_talla.stock_inicial }}"
+                                   class="w-24 p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition-colors stock-input"
+                                   data-stock-inicial="{{ stock_talla.stock_inicial }}"
+                                   data-stock-actual="{{ stock_talla.stock }}"
+                                   data-tope="{{ stock_talla.stock_inicial }}"
+                                   data-stock-talla-id="{{ stock_talla.id }}"
+                                   oninput="validarAgregarStock(this)"
+                                   required>
+                            <div class="text-xs text-gray-500 mt-1">
+                                Máximo a agregar: <span id="max-agregar-{{ stock_talla.id }}" class="max-agregar-display">
+                                    {{ stock_talla.stock_inicial|add:0 }}{{ stock_talla.stock|add:"-0" }}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="font-semibold text-green-600 nuevo-stock" 
+                                  data-stock-id="{{ stock_talla.id }}">
+                                {{ stock_talla.stock }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="text-xs px-3 py-1.5 rounded-full font-semibold 
+                                {% if stock_talla.obtener_estado_stock.0 == 'critico' %}bg-red-100 text-red-800 border border-red-200
+                                {% elif stock_talla.obtener_estado_stock.0 == 'bajo' %}bg-orange-100 text-orange-800 border border-orange-200
+                                {% elif stock_talla.obtener_estado_stock.0 == 'medio' %}bg-yellow-100 text-yellow-800 border border-yellow-200
+                                {% else %}bg-green-100 text-green-800 border border-green-200{% endif %}">
+                                {{ stock_talla.obtener_estado_stock.1 }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Resumen de cambios -->
+    <div id="changesSummary" class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200 hidden">
+        <h4 class="font-semibold text-blue-800 mb-2">Resumen de actualización:</h4>
+        <ul id="changesList" class="text-sm text-blue-700">
+            <!-- Los cambios se agregarán aquí dinámicamente -->
+        </ul>
+    </div>
+</form>
                 <!-- Tabla de inventario normal (vista) -->
                 <div id="normalView" class="overflow-x-auto bg-white rounded-md shadow-md">
                     <table class="min-w-full bg-white border border-gray-300">
@@ -562,58 +568,301 @@
     </footer>
 
     <!-- Scripts para el control de stock -->
-    <script>
-        // Función para validar la cantidad a agregar respetando el tope
-        function validarAgregarStock(input) {
-            const nuevasUnidades = parseInt(input.value) || 0;
-            const stockActual = parseInt(input.dataset.stockActual);
-            const tope = parseInt(input.dataset.tope);
-            const stockTallaId = input.name.match(/\[(\d+)\]/)[1];
-            const maxAgregarElement = document.getElementById(`max-agregar-${stockTallaId}`);
+ <script>
+// Toggle del formulario de actualización - COMPLETO Y FUNCIONAL
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleEditBtn = document.getElementById('toggleEditBtn');
+    const manualStockForm = document.getElementById('manualStockForm');
+    const editModeMessage = document.getElementById('editModeMessage');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const normalView = document.getElementById('normalView');
+
+    console.log('Elementos cargados:', {
+        toggleEditBtn: !!toggleEditBtn,
+        manualStockForm: !!manualStockForm,
+        editModeMessage: !!editModeMessage,
+        cancelEditBtn: !!cancelEditBtn,
+        normalView: !!normalView
+    });
+
+    // Toggle del formulario de actualización
+    if (toggleEditBtn && manualStockForm) {
+        toggleEditBtn.addEventListener('click', function() {
+            console.log('Botón clickeado - Alternando formulario');
             
-            const maxPermitido = Math.max(0, tope - stockActual);
-            const nuevoStock = Math.min(stockActual + nuevasUnidades, tope);
+            // Alternar visibilidad del formulario
+            manualStockForm.classList.toggle('hidden');
             
-            if (nuevasUnidades > maxPermitido) {
-                input.classList.add('border-red-500', 'bg-red-50');
-                input.title = `No puedes agregar más de ${maxPermitido} unidades (tope: ${tope})`;
-                if (maxAgregarElement) {
-                    maxAgregarElement.classList.add('text-red-600', 'font-semibold');
-                }
+            // Alternar mensaje de modo edición
+            if (editModeMessage) {
+                editModeMessage.classList.toggle('hidden');
+            }
+            
+            // Alternar vista normal
+            if (normalView) {
+                normalView.classList.toggle('hidden');
+            }
+            
+            // Cambiar texto del botón
+            if (manualStockForm.classList.contains('hidden')) {
+                toggleEditBtn.innerHTML = '<i class="fas fa-plus mr-2"></i>Actualizar Stock';
+                toggleEditBtn.classList.remove('bg-gray-500');
+                toggleEditBtn.classList.add('bg-blue-500');
             } else {
-                input.classList.remove('border-red-500', 'bg-red-50');
-                input.title = '';
-                if (maxAgregarElement) {
-                    maxAgregarElement.classList.remove('text-red-600', 'font-semibold');
-                }
+                toggleEditBtn.innerHTML = '<i class="fas fa-eye mr-2"></i>Ver Inventario';
+                toggleEditBtn.classList.remove('bg-blue-500');
+                toggleEditBtn.classList.add('bg-gray-500');
                 
+                // Inicializar los máximos permitidos cuando se muestra el formulario
+                inicializarMaximosPermitidos();
+            }
+        });
+    } else {
+        console.error('No se encontraron los elementos necesarios para el toggle');
+    }
+
+    // Botón cancelar
+    if (cancelEditBtn && manualStockForm) {
+        cancelEditBtn.addEventListener('click', function() {
+            console.log('Cancelar clickeado');
+            
+            manualStockForm.classList.add('hidden');
+            
+            if (editModeMessage) {
+                editModeMessage.classList.add('hidden');
+            }
+            
+            if (normalView) {
+                normalView.classList.remove('hidden');
+            }
+            
+            if (toggleEditBtn) {
+                toggleEditBtn.innerHTML = '<i class="fas fa-plus mr-2"></i>Actualizar Stock';
+                toggleEditBtn.classList.remove('bg-gray-500');
+                toggleEditBtn.classList.add('bg-blue-500');
+            }
+            
+            // Resetear todos los inputs
+            const inputs = manualStockForm.querySelectorAll('.stock-input');
+            inputs.forEach(input => {
+                input.value = '0';
                 // Actualizar display del nuevo stock
+                const stockTallaId = input.dataset.stockTallaId;
+                const stockActual = parseInt(input.dataset.stockActual);
                 const nuevoStockElement = document.querySelector(`.nuevo-stock[data-stock-id="${stockTallaId}"]`);
                 if (nuevoStockElement) {
-                    nuevoStockElement.textContent = nuevoStock;
+                    nuevoStockElement.textContent = stockActual;
                 }
-            }
+            });
             
-            // Actualizar máximo permitido en el input
-            input.max = maxPermitido;
-            if (maxAgregarElement) {
-                maxAgregarElement.textContent = maxPermitido;
-            }
-            
-            // Recalcular resumen de cambios
-            calcularNuevoStock();
-        }
-
-        // Modificar la función calcularNuevoStock para respetar el tope
-        function calcularNuevoStock() {
-            const manualStockForm = document.getElementById('manualStockForm');
-            const changesList = document.getElementById('changesList');
+            // Resetear resumen
             const changesSummary = document.getElementById('changesSummary');
-            
-            if (!manualStockForm || !changesList) return;
-            
-            const inputs = manualStockForm.querySelectorAll('.stock-input');
-            let hasChanges = false;
-            changesList.innerHTML = '';
+            if (changesSummary) {
+                changesSummary.classList.add('hidden');
+            }
+        });
+    }
 
-            inputs.forEach(input)
+    // Configurar validación en tiempo real para inputs de stock
+    const stockInputs = document.querySelectorAll('.stock-input');
+    stockInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            validarAgregarStock(this);
+            calcularNuevoStock();
+        });
+    });
+
+    // Inicializar los máximos permitidos al cargar la página
+    inicializarMaximosPermitidos();
+
+    // Validación del formulario antes de enviar
+    const manualStockFormElement = document.getElementById('manualStockForm');
+    if (manualStockFormElement) {
+        manualStockFormElement.addEventListener('submit', function(e) {
+            console.log('Formulario enviado');
+            
+            let tieneCambios = false;
+            const inputs = this.querySelectorAll('.stock-input');
+            
+            // Verificar si hay al menos un cambio
+            inputs.forEach(input => {
+                if (parseInt(input.value) > 0) {
+                    tieneCambios = true;
+                }
+            });
+            
+            if (!tieneCambios) {
+                e.preventDefault();
+                alert('Por favor, ingresa al menos una cantidad mayor a 0 para actualizar el stock.');
+                return false;
+            }
+            
+            // Validar que no se excedan los topes
+            let excedeTope = false;
+            let mensajeError = '';
+            
+            inputs.forEach(input => {
+                const nuevasUnidades = parseInt(input.value) || 0;
+                if (nuevasUnidades > 0) {
+                    const stockInicial = parseInt(input.dataset.stockInicial);
+                    const stockActual = parseInt(input.dataset.stockActual);
+                    const nuevoStock = stockActual + nuevasUnidades;
+                    
+                    if (nuevoStock > stockInicial) {
+                        excedeTope = true;
+                        input.classList.add('border-red-500', 'bg-red-50');
+                        
+                        // Encontrar el nombre del producto y talla para el mensaje
+                        const row = input.closest('tr');
+                        const productoNombre = row.closest('tbody').querySelector('.bg-blue-50 .font-bold').textContent.trim();
+                        const talla = row.querySelector('span.font-medium').textContent.replace('Talla ', '');
+                        
+                        mensajeError += `• ${productoNombre} - Talla ${talla}: ${nuevoStock} > ${stockInicial} (tope)\n`;
+                    }
+                }
+            });
+            
+            if (excedeTope) {
+                e.preventDefault();
+                alert('Algunas cantidades exceden el tope máximo permitido:\n\n' + mensajeError + '\nPor favor, corrige los valores en rojo.');
+                return false;
+            }
+            
+            // Mostrar loading
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Actualizando...';
+            submitBtn.disabled = true;
+            
+            // Permitir el envío del formulario
+            console.log('Formulario válido, enviando...');
+            return true;
+        });
+    }
+
+    // Función para manejar el menú de usuario
+    const userMenuBtn = document.getElementById('userMenuBtn');
+    const userMenu = document.getElementById('userMenu');
+    
+    if (userMenuBtn && userMenu) {
+        userMenuBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            userMenu.classList.toggle('hidden');
+        });
+        
+        // Cerrar menú al hacer clic fuera
+        document.addEventListener('click', function() {
+            userMenu.classList.add('hidden');
+        });
+        
+        // Prevenir que el clic en el menú lo cierre
+        userMenu.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    }
+});
+
+// Función para inicializar los máximos permitidos
+function inicializarMaximosPermitidos() {
+    const stockInputs = document.querySelectorAll('.stock-input');
+    
+    stockInputs.forEach(input => {
+        const stockInicial = parseInt(input.dataset.stockInicial);
+        const stockActual = parseInt(input.dataset.stockActual);
+        const maxPermitido = Math.max(0, stockInicial - stockActual);
+        
+        input.max = maxPermitido;
+        
+        const stockTallaId = input.dataset.stockTallaId;
+        const maxAgregarElement = document.getElementById(`max-agregar-${stockTallaId}`);
+        if (maxAgregarElement) {
+            maxAgregarElement.textContent = maxPermitido;
+        }
+    });
+}
+
+// Función para validar la cantidad a agregar respetando el tope
+function validarAgregarStock(input) {
+    const nuevasUnidades = parseInt(input.value) || 0;
+    const stockActual = parseInt(input.dataset.stockActual);
+    const tope = parseInt(input.dataset.tope);
+    const stockTallaId = input.dataset.stockTallaId;
+    const maxAgregarElement = document.getElementById(`max-agregar-${stockTallaId}`);
+    
+    const maxPermitido = Math.max(0, tope - stockActual);
+    const nuevoStock = stockActual + nuevasUnidades;
+    
+    if (nuevasUnidades > maxPermitido) {
+        input.classList.add('border-red-500', 'bg-red-50');
+        input.title = `No puedes agregar más de ${maxPermitido} unidades (tope: ${tope})`;
+        if (maxAgregarElement) {
+            maxAgregarElement.classList.add('text-red-600', 'font-semibold');
+        }
+    } else {
+        input.classList.remove('border-red-500', 'bg-red-50');
+        input.title = '';
+        if (maxAgregarElement) {
+            maxAgregarElement.classList.remove('text-red-600', 'font-semibold');
+        }
+        
+        // Actualizar display del nuevo stock
+        const nuevoStockElement = document.querySelector(`.nuevo-stock[data-stock-id="${stockTallaId}"]`);
+        if (nuevoStockElement) {
+            nuevoStockElement.textContent = nuevoStock;
+        }
+    }
+    
+    // Actualizar máximo permitido en el input
+    input.max = maxPermitido;
+    if (maxAgregarElement) {
+        maxAgregarElement.textContent = maxPermitido;
+    }
+    
+    // Actualizar resumen de cambios
+    calcularNuevoStock();
+}
+
+// Función para calcular y mostrar el nuevo stock
+function calcularNuevoStock() {
+    const manualStockForm = document.getElementById('manualStockForm');
+    const changesList = document.getElementById('changesList');
+    const changesSummary = document.getElementById('changesSummary');
+    
+    if (!manualStockForm || !changesList) return;
+    
+    const inputs = manualStockForm.querySelectorAll('.stock-input');
+    let hasChanges = false;
+    changesList.innerHTML = '';
+
+    inputs.forEach(input => {
+        const nuevasUnidades = parseInt(input.value) || 0;
+        if (nuevasUnidades > 0) {
+            const stockTallaId = input.dataset.stockTallaId;
+            const stockActual = parseInt(input.dataset.stockActual);
+            const nuevoStock = stockActual + nuevasUnidades;
+            
+            // Encontrar el nombre del producto y talla
+            const row = input.closest('tr');
+            const productoNombre = row.closest('tbody').querySelector('.bg-blue-50 .font-bold').textContent.trim();
+            const talla = row.querySelector('span.font-medium').textContent.replace('Talla ', '');
+            
+            changesList.innerHTML += `
+                <li class="flex justify-between py-1">
+                    <span>${productoNombre} - Talla ${talla}</span>
+                    <span>+${nuevasUnidades} unidades (${stockActual} → ${nuevoStock})</span>
+                </li>
+            `;
+            hasChanges = true;
+        }
+    });
+
+    if (hasChanges) {
+        changesSummary.classList.remove('hidden');
+    } else {
+        changesSummary.classList.add('hidden');
+    }
+}
+</script>
+
+</body>
+</html>

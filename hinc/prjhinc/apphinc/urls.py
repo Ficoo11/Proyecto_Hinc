@@ -34,6 +34,7 @@ urlpatterns = [
     # Pedidos
     path('paneladmin/pedidos/', views.pedidos_view, name='pedidos'),
     path('paneladmin/pedidos/detalle/<int:pedido_id>/', views.pedido_detalle_view, name='pedido_detalle'),
+    path('paneladmin/pedidos/cambiar_estado/<int:pedido_id>/', views.cambiar_estado_pedido, name='cambiar_estado_pedido'),
     path('paneladmin/pedidos/actualizar_estado/<int:pedido_id>/', views.actualizar_estado_pedido, name='actualizar_estado_pedido'),
     
     # Catálogo y Carrito
