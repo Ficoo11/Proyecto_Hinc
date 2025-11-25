@@ -34,25 +34,32 @@
     <!-- Main Content -->
     <div class="flex min-h-screen">
         <!-- Sidebar -->
-        <aside class="w-64 bg-gray-800 p-6 z-0">
-            <ul>
-                <li>
-                    <a href="{% url 'paneladmin' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/' %}bg-gray-700{% endif %}">Dashboard</a>
-                </li>
-                <li>
-                    <a href="{% url 'usuarios' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/usuarios/' %}bg-gray-700{% endif %}">Usuarios</a>
-                </li>
-                <li>
-                    <a href="{% url 'productos' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/productos/' %}bg-gray-700{% endif %}">Productos</a>
-                </li>
-                <li>
-                    <a href="{% url 'categorias' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/categorias/' %}bg-gray-700{% endif %}">Categorías</a>
-                </li>
-                <li>
-                    <a href="{% url 'inventario' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/inventario/' %}bg-gray-700{% endif %}">Inventario</a>
-                </li>
-            </ul>
-        </aside>
+<aside class="w-64 bg-gray-800 p-6 z-0">
+    <ul>
+        <li>
+            <a href="{% url 'paneladmin' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/' %}bg-gray-700{% endif %}">Dashboard</a>
+        </li>
+        <li>
+            <a href="{% url 'usuarios' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/usuarios/' %}bg-gray-700{% endif %}">Usuarios</a>
+        </li>
+        <li>
+            <a href="{% url 'productos' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/productos/' %}bg-gray-700{% endif %}">Productos</a>
+        </li>
+        <li>
+            <a href="{% url 'categorias' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/categorias/' %}bg-gray-700{% endif %}">Categorías</a>
+        </li>
+        <li>
+            <a href="{% url 'inventario' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/inventario/' %}bg-gray-700{% endif %}">Inventario</a>
+        </li>
+        <!-- AGREGAR ESTOS ENLACES -->
+        <li>
+            <a href="{% url 'pedidos' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/pedidos/' %}bg-gray-700{% endif %}">Pedidos</a>
+        </li>
+        <li>
+            <a href="{% url 'registro_ventas' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/registro-ventas/' %}bg-gray-700{% endif %}">Registro de Ventas</a>
+        </li>
+    </ul>
+</aside>
         <!-- Main Panel -->
         <main class="flex-1 p-8 bg-gray-100 text-black">
             {% if messages %}

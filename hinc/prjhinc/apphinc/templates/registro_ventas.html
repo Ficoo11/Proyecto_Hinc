@@ -77,6 +77,28 @@
                 </div>
             {% endif %}
 
+            <!-- Herramientas de Administración -->
+            <div class="mb-6 bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-semibold mb-4">Herramientas de Administración</h3>
+                <div class="flex flex-wrap gap-2">
+                    <a href="{% url 'reparar_registros_ventas' %}" 
+                       class="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition duration-300">
+                        <i class="fas fa-tools mr-2"></i>Reparar Registros
+                    </a>
+                    <a href="{% url 'sincronizar_ventas_stripe' %}" 
+                       class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition duration-300">
+                        <i class="fab fa-stripe mr-2"></i>Sincronizar Stripe
+                    </a>
+                    {% comment %} <a href="{% url 'registrar_venta_manual' %}" 
+                       class="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600 transition duration-300">
+                        <i class="fas fa-plus-circle mr-2"></i>Registro Manual
+                    </a> {% endcomment %}
+                </div>
+                <p class="text-sm text-gray-600 mt-2">
+                    Usa estas herramientas para sincronizar ventas de Stripe y reparar registros faltantes.
+                </p>
+            </div>
+
             <!-- Filtros -->
             <div class="mb-6 bg-white p-6 rounded-lg shadow-md">
                 <h3 class="text-xl font-semibold mb-4">Filtros de Búsqueda</h3>
@@ -148,10 +170,33 @@
                 </div>
             </div>
 
+            <!-- Información de Debug (solo visible si no hay datos) -->
+            {% if movimientos|length == 0 %}
+            <div class="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-yellow-800 mb-2">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Información de Diagnóstico
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                        <strong>Ventas en BD:</strong> {{ ventas_count }} registros
+                    </div>
+                    <div>
+                        <strong>Movimientos en BD:</strong> {{ movimientos_count }} registros
+                    </div>
+                    <div>
+                        <strong>Pedidos confirmados:</strong> {{ pedidos_confirmados_count }}
+                    </div>
+                </div>
+                <p class="text-yellow-700 mt-3">
+                    Si no ves datos, usa las herramientas de administración arriba para sincronizar con Stripe.
+                </p>
+            </div>
+            {% endif %}
+
             <!-- Productos Más Vendidos -->
             <div class="mb-6 bg-white rounded-lg shadow-md overflow-hidden">
                 <div class="p-4 bg-gray-800 text-white">
-                    <h3 class="text-lg font-semibold">Productos Más Vendidos</h3>
+                    <h3 class="text-lg font-semibold">Productos Más Vendidos (Últimos 90 días)</h3>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full">
@@ -187,7 +232,10 @@
                             {% empty %}
                             <tr>
                                 <td colspan="4" class="py-4 px-4 text-center text-gray-500">
-                                    No hay datos de ventas disponibles.
+                                    No hay datos de ventas disponibles. 
+                                    <a href="{% url 'sincronizar_ventas_stripe' %}" class="text-blue-500 hover:underline ml-1">
+                                        Sincronizar con Stripe
+                                    </a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -199,7 +247,12 @@
             <!-- Movimientos Recientes -->
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
                 <div class="p-4 bg-gray-800 text-white">
-                    <h3 class="text-lg font-semibold">Movimientos Recientes de Inventario</h3>
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold">Movimientos Recientes de Inventario</h3>
+                        <span class="text-sm bg-blue-500 px-2 py-1 rounded">
+                            {{ movimientos|length }} registros
+                        </span>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full">
@@ -214,6 +267,7 @@
                                 <th class="py-3 px-4 text-left">Stock Posterior</th>
                                 <th class="py-3 px-4 text-left">Total</th>
                                 <th class="py-3 px-4 text-left">Usuario</th>
+                                <th class="py-3 px-4 text-left">Pedido</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -258,11 +312,27 @@
                                         Sistema
                                     {% endif %}
                                 </td>
+                                <td class="py-3 px-4 text-sm">
+                                    {% if movimiento.pedido %}
+                                        <a href="{% url 'pedido_detalle' movimiento.pedido.id %}" class="text-blue-500 hover:text-blue-700">
+                                            {{ movimiento.pedido.numero_pedido }}
+                                        </a>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="9" class="py-4 px-4 text-center text-gray-500">
-                                    No hay movimientos registrados.
+                                <td colspan="10" class="py-8 px-4 text-center text-gray-500">
+                                    <div class="mb-4">
+                                        <i class="fas fa-inbox text-4xl text-gray-300 mb-2"></i>
+                                    </div>
+                                    <p class="text-lg mb-2">No hay movimientos registrados</p>
+                                    <p class="text-sm mb-4">Los pedidos procesados con Stripe pueden necesitar sincronización</p>
+                                    <a href="{% url 'sincronizar_ventas_stripe' %}" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition duration-300">
+                                        <i class="fab fa-stripe mr-2"></i>Sincronizar con Stripe
+                                    </a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -293,6 +363,17 @@
                 messagesContainer.style.display = 'none';
             }
         }, 5000);
+
+        // Auto-recargar después de acciones de sincronización
+        {% if messages %}
+            {% for message in messages %}
+                {% if 'sincronizaron' in message.message or 'reparación' in message.message %}
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                {% endif %}
+            {% endfor %}
+        {% endif %}
     </script>
 </body>
 </html>

@@ -641,7 +641,7 @@ def inventario_view(request):
     print(f"Action: {action}, Producto ID: {producto_id}")
     print(f"Method: {request.method}")
     
-    # Procesar actualización manual de stocks (formulario de agregar unidades)
+    # Procesar actualización manual de stocks (formulario de agregar unidades) - MODIFICADO
     if request.method == 'POST' and any(key.startswith('nuevas_unidades[') for key in request.POST.keys()):
         print("Procesando formulario de ACTUALIZACIÓN DE STOCK")
         try:
@@ -662,14 +662,12 @@ def inventario_view(request):
                         if nuevas_unidades > 0:
                             stock_talla = get_object_or_404(StockTalla, id=stock_talla_id)
                             
-                            # VALIDAR QUE NO EXCEDA EL TOPE
-                            nuevo_stock = stock_talla.stock + nuevas_unidades
-                            if nuevo_stock > stock_talla.stock_inicial:
-                                messages.error(request, f"No se puede agregar {nuevas_unidades} unidades a {stock_talla.producto.nombre} - Talla {stock_talla.talla}. Excede el tope máximo de {stock_talla.stock_inicial} unidades.")
-                                continue
+                            # MODIFICADO: Actualizar tanto stock_inicial como stock
+                            stock_anterior_inicial = stock_talla.stock_inicial
+                            stock_anterior_actual = stock_talla.stock
                             
-                            # SUMAR las nuevas unidades al stock actual
-                            stock_anterior = stock_talla.stock
+                            # SUMAR las nuevas unidades tanto al stock inicial como al actual
+                            stock_talla.stock_inicial += nuevas_unidades
                             stock_talla.stock += nuevas_unidades
                             stock_talla.save()
                             
@@ -679,10 +677,10 @@ def inventario_view(request):
                                 talla=stock_talla.talla,
                                 tipo_movimiento=TipoMovimiento.COMPRA,
                                 cantidad=nuevas_unidades,
-                                stock_anterior=stock_anterior,
+                                stock_anterior=stock_anterior_actual,
                                 stock_posterior=stock_talla.stock,
                                 usuario=request.user,
-                                observaciones=f"Actualización manual de stock - Agregadas {nuevas_unidades} unidades"
+                                observaciones=f"Actualización manual de stock - Agregadas {nuevas_unidades} unidades (Stock inicial: {stock_anterior_inicial} → {stock_talla.stock_inicial})"
                             )
                             
                             tallas_actualizadas += 1
@@ -704,7 +702,7 @@ def inventario_view(request):
             if tallas_actualizadas > 0:
                 messages.success(request, f"Stock actualizado correctamente. Se agregaron {total_unidades_agregadas} unidades en {tallas_actualizadas} tallas de {len(productos_actualizados)} productos.")
             else:
-                messages.warning(request, "No se realizaron actualizaciones. Verifica que las cantidades sean mayores a 0 y no excedan los topes máximos.")
+                messages.warning(request, "No se realizaron actualizaciones. Verifica que las cantidades sean mayores a 0.")
                 
             return redirect('inventario')
             
@@ -794,23 +792,42 @@ def inventario_view(request):
     
     # GET request - mostrar formularios o lista
     print("Renderizando template...")
+    
+    # PREPARAR LOS DATOS PARA EL TEMPLATE
     if producto and action == 'update_productos':
         stock_tallas = StockTalla.objects.filter(producto=producto)
         stock_forms = [StockTallaForm(instance=stock) for stock in stock_tallas]
         form = ProductoForm(instance=producto)
         print(f"Modo edición para producto: {producto.nombre}")
+        
+        return render(request, 'Pinventario.html', {
+            'productos': productos, 
+            'action': action, 
+            'producto': producto, 
+            'form': form,
+            'stock_forms': stock_forms
+        })
+        
+    elif producto and action == 'delete_productos':
+        return render(request, 'Pinventario.html', {
+            'productos': productos, 
+            'action': action, 
+            'producto': producto
+        })
+        
     else:
+        # Vista normal del inventario
         stock_forms = []
         form = InventoryForm()
-    
-    return render(request, 'Pinventario.html', {
-        'productos': productos, 
-        'action': action, 
-        'producto': producto, 
-        'form': form,
-        'stock_forms': stock_forms
-    })
-
+        
+        return render(request, 'Pinventario.html', {
+            'productos': productos, 
+            'action': action, 
+            'producto': producto, 
+            'form': form,
+            'stock_forms': stock_forms
+        })
+        
 def catalogo_view(request):
     productos = Producto.objects.all()
     categorias = Categoria.objects.all()
@@ -969,6 +986,8 @@ def checkout_view(request):
             pedido.usuario = request.user
             pedido.total = carrito.obtener_total()
             pedido.numero_pedido = pedido.generar_numero_pedido()
+            # IMPORTANTE: Cambiar estado a confirmado inmediatamente
+            pedido.estado = 'confirmado'
             pedido.save()
             
             for item in carrito.items.all():
@@ -981,12 +1000,44 @@ def checkout_view(request):
                 )
                 
                 stock_talla = StockTalla.objects.get(producto=item.producto, talla=item.talla)
+                
+                # Registrar movimiento de inventario
+                MovimientoInventario.objects.create(
+                    producto=item.producto,
+                    talla=item.talla,
+                    tipo_movimiento=TipoMovimiento.VENTA,
+                    cantidad=-item.cantidad,
+                    stock_anterior=stock_talla.stock,
+                    stock_posterior=stock_talla.stock - item.cantidad,
+                    precio_unitario=item.producto.precio,
+                    total=item.obtener_total(),
+                    usuario=request.user,
+                    pedido=pedido,
+                    observaciones=f"Venta - Pedido {pedido.numero_pedido}"
+                )
+                
+                # Registrar venta - ¡ESTO ES CLAVE!
+                RegistroVenta.objects.create(
+                    pedido=pedido,
+                    producto=item.producto,
+                    talla=item.talla,
+                    cantidad=item.cantidad,
+                    precio_unitario=item.producto.precio,
+                    total=item.obtener_total(),
+                    usuario=request.user,
+                    fecha_venta=timezone.now()
+                )
+                
+                # Actualizar stock
                 stock_talla.stock -= item.cantidad
                 stock_talla.save()
                 
                 item.producto.actualizar_stock_general()
             
             carrito.items.all().delete()
+            
+            # Crear registros de venta automáticamente
+            crear_registro_venta_desde_pedido(pedido)
             
             messages.success(request, f"¡Pedido realizado exitosamente! Número de pedido: {pedido.numero_pedido}")
             return redirect('confirmacion_pedido', pedido_id=pedido.id)
@@ -1324,7 +1375,7 @@ def actualizar_stock_manual(request):
     
 @login_required
 def registro_ventas_view(request):
-    """Vista principal del registro de ventas"""
+    """Vista principal del registro de ventas - VERSIÓN CORREGIDA PARA STRIPE"""
     if request.user.role != 'Admin':
         messages.error(request, "No tienes permiso para acceder a esta sección.")
         return redirect('paneladmin')
@@ -1335,37 +1386,37 @@ def registro_ventas_view(request):
     producto_id = request.GET.get('producto_id')
     tipo_movimiento = request.GET.get('tipo_movimiento')
     
-    # Obtener movimientos y ventas
-    movimientos = MovimientoInventario.objects.select_related('producto', 'usuario', 'pedido')
-    ventas = RegistroVenta.objects.select_related('producto', 'usuario', 'pedido')
+    # Obtener TODOS los movimientos y ventas (incluyendo pedidos pendientes)
+    movimientos = MovimientoInventario.objects.select_related('producto', 'usuario', 'pedido').all()
+    ventas = RegistroVenta.objects.select_related('producto', 'usuario', 'pedido').all()
     
-    # Aplicar filtros
+    # Aplicar filtros a MOVIMIENTOS - INCLUIR PEDIDOS PENDIENTES
+    movimientos_filtrados = movimientos
     if fecha_inicio:
-        movimientos = movimientos.filter(fecha_movimiento__date__gte=fecha_inicio)
-        ventas = ventas.filter(fecha_venta__date__gte=fecha_inicio)
-    
+        movimientos_filtrados = movimientos_filtrados.filter(fecha_movimiento__date__gte=fecha_inicio)
     if fecha_fin:
-        movimientos = movimientos.filter(fecha_movimiento__date__lte=fecha_fin)
-        ventas = ventas.filter(fecha_venta__date__lte=fecha_fin)
-    
+        movimientos_filtrados = movimientos_filtrados.filter(fecha_movimiento__date__lte=fecha_fin)
     if producto_id:
-        movimientos = movimientos.filter(producto_id=producto_id)
-        ventas = ventas.filter(producto_id=producto_id)
-    
+        movimientos_filtrados = movimientos_filtrados.filter(producto_id=producto_id)
     if tipo_movimiento:
-        movimientos = movimientos.filter(tipo_movimiento=tipo_movimiento)
-        if tipo_movimiento == 'venta':
-            ventas = ventas.all()
-        else:
-            ventas = ventas.none()
+        movimientos_filtrados = movimientos_filtrados.filter(tipo_movimiento=tipo_movimiento)
     
-    # Estadísticas
-    total_ventas = ventas.aggregate(total=Sum('total'))['total'] or 0
-    total_unidades_vendidas = ventas.aggregate(total=Sum('cantidad'))['total'] or 0
-    total_movimientos = movimientos.count()
+    # Aplicar filtros a VENTAS (para estadísticas) - INCLUIR TODOS LOS ESTADOS
+    ventas_filtradas = ventas
+    if fecha_inicio:
+        ventas_filtradas = ventas_filtradas.filter(fecha_venta__date__gte=fecha_inicio)
+    if fecha_fin:
+        ventas_filtradas = ventas_filtradas.filter(fecha_venta__date__lte=fecha_fin)
+    if producto_id:
+        ventas_filtradas = ventas_filtradas.filter(producto_id=producto_id)
     
-    # Productos más vendidos (últimos 30 días)
-    desde = timezone.now() - timedelta(days=30)
+    # Estadísticas - usar VENTAS para estadísticas de ventas
+    total_ventas = ventas_filtradas.aggregate(total=Sum('total'))['total'] or 0
+    total_unidades_vendidas = ventas_filtradas.aggregate(total=Sum('cantidad'))['total'] or 0
+    total_movimientos = movimientos_filtrados.count()
+    
+    # Productos más vendidos (basado en RegistroVenta) - PERÍODO MÁS AMPLIO
+    desde = timezone.now() - timedelta(days=90)  # 3 meses en lugar de 30 días
     productos_mas_vendidos = Producto.objects.annotate(
         total_vendido=Sum('registroventa__cantidad', 
                          filter=Q(registroventa__fecha_venta__gte=desde)),
@@ -1373,19 +1424,21 @@ def registro_ventas_view(request):
                            filter=Q(registroventa__fecha_venta__gte=desde))
     ).filter(total_vendido__gt=0).order_by('-total_vendido')[:10]
     
-    # Movimientos recientes (últimos 50)
-    movimientos_recientes = movimientos.order_by('-fecha_movimiento')[:50]
-    
-    # Ventas recientes (últimos 50)
-    ventas_recientes = ventas.order_by('-fecha_venta')[:50]
+    # Movimientos recientes (últimos 100)
+    movimientos_recientes = movimientos_filtrados.order_by('-fecha_movimiento')[:100]
     
     # Datos para filtros
     productos = Producto.objects.all()
     tipos_movimiento = TipoMovimiento.choices
     
+    # DEBUG: Verificar datos
+    print("=== DEBUG REGISTRO VENTAS - STRIPE ===")
+    print(f"Total ventas encontradas: {ventas_filtradas.count()}")
+    print(f"Total movimientos encontrados: {movimientos_filtrados.count()}")
+    print(f"Productos más vendidos: {productos_mas_vendidos.count()}")
+    
     context = {
         'movimientos': movimientos_recientes,
-        'ventas': ventas_recientes,
         'total_ventas': total_ventas,
         'total_unidades_vendidas': total_unidades_vendidas,
         'total_movimientos': total_movimientos,
@@ -1516,6 +1569,12 @@ def reporte_ventas_pdf(request):
 def registrar_venta_automatica(pedido):
     """Función para registrar ventas automáticamente cuando se procesa un pedido"""
     try:
+        # Verificar si ya existen registros de venta para este pedido
+        ventas_existentes = RegistroVenta.objects.filter(pedido=pedido)
+        if ventas_existentes.exists():
+            logger.info(f"Ya existen registros de venta para el pedido {pedido.numero_pedido}")
+            return True
+        
         # Obtener todos los detalles del pedido
         detalles_pedido = DetallePedido.objects.filter(pedido=pedido)
         
@@ -1532,26 +1591,7 @@ def registrar_venta_automatica(pedido):
                 fecha_venta=pedido.creado_en
             )
             
-            # También registrar movimiento de inventario
-            stock_talla = StockTalla.objects.get(
-                producto=detalle.producto, 
-                talla=detalle.talla
-            )
-            
-            # Registrar movimiento de inventario (venta)
-            MovimientoInventario.objects.create(
-                producto=detalle.producto,
-                talla=detalle.talla,
-                tipo_movimiento=TipoMovimiento.VENTA,
-                cantidad=-detalle.cantidad,  # Negativo porque es salida
-                stock_anterior=stock_talla.stock + detalle.cantidad,
-                stock_posterior=stock_talla.stock,
-                precio_unitario=detalle.precio,
-                total=detalle.obtener_total(),
-                usuario=pedido.usuario,
-                pedido=pedido,
-                observaciones=f"Venta - Pedido {pedido.numero_pedido}"
-            )
+            logger.info(f"Registro de venta creado para {detalle.producto.nombre} - Talla {detalle.talla}")
         
         return True
     except Exception as e:
@@ -1963,3 +2003,143 @@ def actualizar_estado_pedido(request, pedido_id):
         'pedido': pedido,
         'estados': Pedido.ESTADOS_PEDIDO
     })
+
+@login_required
+def reparar_registros_ventas(request):
+    """Función para reparar registros de ventas faltantes - VERSIÓN MEJORADA"""
+    if request.user.role != 'Admin':
+        messages.error(request, "No tienes permiso para realizar esta acción.")
+        return redirect('paneladmin')
+    
+    try:
+        # Encontrar pedidos que deberían tener registros de venta
+        pedidos_con_ventas = Pedido.objects.filter(
+            estado__in=['confirmado', 'procesando', 'enviado', 'entregado']
+        )
+        
+        pedidos_sin_ventas = pedidos_con_ventas.exclude(
+            id__in=RegistroVenta.objects.values('pedido_id')
+        )
+        
+        print(f"=== REPARANDO REGISTROS DE VENTA ===")
+        print(f"Pedidos con ventas potenciales: {pedidos_con_ventas.count()}")
+        print(f"Pedidos sin registros de venta: {pedidos_sin_ventas.count()}")
+        
+        registros_creados = 0
+        pedidos_procesados = 0
+        
+        for pedido in pedidos_sin_ventas:
+            if crear_registro_venta_desde_pedido(pedido):
+                registros_creados += 1
+            pedidos_procesados += 1
+        
+        # También verificar pedidos que ya tienen algunos registros pero podrían estar incompletos
+        pedidos_con_detalles = Pedido.objects.filter(
+            estado__in=['confirmado', 'procesando', 'enviado', 'entregado']
+        )
+        
+        for pedido in pedidos_con_detalles:
+            detalles_count = DetallePedido.objects.filter(pedido=pedido).count()
+            ventas_count = RegistroVenta.objects.filter(pedido=pedido).count()
+            
+            if detalles_count > ventas_count:
+                print(f"Pedido {pedido.numero_pedido} tiene {detalles_count} detalles pero {ventas_count} ventas")
+                if crear_registro_venta_desde_pedido(pedido):
+                    registros_creados += 1
+        
+        if registros_creados > 0:
+            messages.success(request, f"¡Reparación completada! Se crearon {registros_creados} registros de venta faltantes.")
+        else:
+            messages.info(request, "No se encontraron registros de venta faltantes. Todo está en orden.")
+            
+        print(f"Reparación completada: {registros_creados} registros creados")
+            
+    except Exception as e:
+        messages.error(request, f"Error al reparar registros: {str(e)}")
+        print(f"Error en reparación: {str(e)}")
+    
+    return redirect('registro_ventas')
+
+def crear_registro_venta_desde_pedido(pedido):
+    """Crea registros de venta automáticamente desde un pedido - VERSIÓN MEJORADA"""
+    try:
+        # Verificar si ya existen registros de venta para este pedido
+        ventas_existentes = RegistroVenta.objects.filter(pedido=pedido)
+        if ventas_existentes.exists():
+            print(f"Ya existen {ventas_existentes.count()} registros de venta para el pedido {pedido.numero_pedido}")
+            return True
+        
+        # Obtener todos los detalles del pedido
+        detalles_pedido = DetallePedido.objects.filter(pedido=pedido)
+        
+        if not detalles_pedido.exists():
+            print(f"No hay detalles de pedido para {pedido.numero_pedido}")
+            return False
+        
+        registros_creados = 0
+        
+        for detalle in detalles_pedido:
+            # Crear registro de venta
+            registro_venta = RegistroVenta.objects.create(
+                pedido=pedido,
+                producto=detalle.producto,
+                talla=detalle.talla,
+                cantidad=detalle.cantidad,
+                precio_unitario=detalle.precio,
+                total=detalle.obtener_total(),
+                usuario=pedido.usuario,
+                fecha_venta=pedido.creado_en
+            )
+            
+            registros_creados += 1
+            print(f"Registro de venta creado: {detalle.producto.nombre} - {detalle.talla} - {detalle.cantidad} unidades")
+        
+        print(f"Se crearon {registros_creados} registros de venta para el pedido {pedido.numero_pedido}")
+        return True
+        
+    except Exception as e:
+        print(f"Error al crear registros de venta para pedido {pedido.numero_pedido}: {str(e)}")
+        return False
+    
+@login_required
+def sincronizar_ventas_stripe(request):
+    """Sincroniza ventas de pedidos Stripe que no tienen registros de venta"""
+    if request.user.role != 'Admin':
+        messages.error(request, "No tienes permiso para realizar esta acción.")
+        return redirect('paneladmin')
+        
+    try:
+        # Encontrar pedidos de Stripe que no tienen registros de venta
+        pedidos_stripe = Pedido.objects.filter(
+            stripe_checkout_session_id__isnull=False
+        ).exclude(
+            id__in=RegistroVenta.objects.values('pedido_id')
+        )
+            
+        registros_creados = 0
+            
+        for pedido in pedidos_stripe:
+            # Verificar si el pago de Stripe fue exitoso
+            if pedido.stripe_checkout_session_id:
+                try:
+                    session = stripe.checkout.Session.retrieve(pedido.stripe_checkout_session_id)
+                        
+                    if session.payment_status == 'paid' and pedido.estado == 'confirmado':
+                        # Crear registros de venta para este pedido
+                        if crear_registro_venta_desde_pedido(pedido):
+                            registros_creados += 1
+                            print(f"Registros creados para pedido Stripe: {pedido.numero_pedido}")
+                except Exception as e:
+                    print(f"Error verificando sesión Stripe {pedido.stripe_checkout_session_id}: {str(e)}")
+                    continue
+            
+        if registros_creados > 0:
+            messages.success(request, f"Se sincronizaron {registros_creados} pedidos de Stripe con el registro de ventas.")
+        else:
+            messages.info(request, "No se encontraron pedidos de Stripe pendientes de sincronización.")
+                
+    except Exception as e:
+        messages.error(request, f"Error al sincronizar ventas Stripe: {str(e)}")
+        
+    return redirect('registro_ventas')
+

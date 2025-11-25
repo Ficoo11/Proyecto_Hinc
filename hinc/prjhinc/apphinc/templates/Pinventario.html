@@ -34,25 +34,32 @@
     <!-- Main Content -->
     <div class="flex min-h-screen">
         <!-- Sidebar -->
-        <aside class="w-64 bg-gray-800 p-6 z-0">
-            <ul>
-                <li>
-                    <a href="{% url 'paneladmin' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/' %}bg-gray-700{% endif %}">Dashboard</a>
-                </li>
-                <li>
-                    <a href="{% url 'usuarios' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/usuarios/' %}bg-gray-700{% endif %}">Usuarios</a>
-                </li>
-                <li>
-                    <a href="{% url 'productos' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/productos/' %}bg-gray-700{% endif %}">Productos</a>
-                </li>
-                <li>
-                    <a href="{% url 'categorias' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/categorias/' %}bg-gray-700{% endif %}">Categorías</a>
-                </li>
-                <li>
-                    <a href="{% url 'inventario' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/inventario/' %}bg-gray-700{% endif %}">Inventario</a>
-                </li>
-            </ul>
-        </aside>
+<aside class="w-64 bg-gray-800 p-6 z-0">
+    <ul>
+        <li>
+            <a href="{% url 'paneladmin' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/' %}bg-gray-700{% endif %}">Dashboard</a>
+        </li>
+        <li>
+            <a href="{% url 'usuarios' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/usuarios/' %}bg-gray-700{% endif %}">Usuarios</a>
+        </li>
+        <li>
+            <a href="{% url 'productos' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/productos/' %}bg-gray-700{% endif %}">Productos</a>
+        </li>
+        <li>
+            <a href="{% url 'categorias' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/categorias/' %}bg-gray-700{% endif %}">Categorías</a>
+        </li>
+        <li>
+            <a href="{% url 'inventario' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/inventario/' %}bg-gray-700{% endif %}">Inventario</a>
+        </li>
+        <!-- AGREGAR ESTOS ENLACES -->
+        <li>
+            <a href="{% url 'pedidos' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/pedidos/' %}bg-gray-700{% endif %}">Pedidos</a>
+        </li>
+        <li>
+            <a href="{% url 'registro_ventas' %}" class="w-full text-left py-2 px-4 hover:bg-gray-700 rounded-md transition-all duration-300 {% if request.path == '/paneladmin/registro-ventas/' %}bg-gray-700{% endif %}">Registro de Ventas</a>
+        </li>
+    </ul>
+</aside>
         <!-- Main Panel -->
         <main class="flex-1 p-8 bg-gray-100 text-black">
             {% if messages %}
@@ -308,9 +315,10 @@
     </div>
 </div>
 
-<!-- Formulario para actualización de stock - CORREGIDO -->
+   <!-- Formulario para actualización de stock - MEJORADO -->
 <form id="manualStockForm" method="post" action="{% url 'inventario' %}" class="hidden mb-6 bg-white p-6 rounded-lg shadow-md">
     {% csrf_token %}
+    <input type="hidden" name="action" value="update_stock_masivo">
     
     <div class="flex justify-between items-center mb-4">
         <h3 class="text-xl font-semibold text-gray-800">Actualización de Stock</h3>
@@ -324,27 +332,28 @@
         </div>
     </div>
     
-    <p class="text-gray-600 mb-4">Agrega nuevas unidades a cada producto y talla. Las unidades se sumarán al stock actual respetando el tope máximo.</p>
+    <p class="text-gray-600 mb-4">Agrega nuevas unidades a cada producto y talla. Tanto el stock inicial como el actual se actualizarán automáticamente.</p>
 
-    <!-- Tabla de inventario en modo actualización - CORREGIDA -->
+    <!-- Tabla de inventario en modo actualización - MEJORADA -->
     <div class="overflow-x-auto">
         <table class="min-w-full bg-white border border-gray-300">
             <thead>
                 <tr class="bg-gray-200">
                     <th class="py-3 px-4 border-b text-left text-gray-700">Producto</th>
                     <th class="py-3 px-4 border-b text-left text-gray-700">Talla</th>
-                    <th class="py-3 px-4 border-b text-left text-gray-700">Stock Inicial (Tope)</th>
+                    <th class="py-3 px-4 border-b text-left text-gray-700">Stock Inicial Actual</th>
                     <th class="py-3 px-4 border-b text-left text-gray-700">Stock Actual</th>
                     <th class="py-3 px-4 border-b text-left text-gray-700">Unidades a Agregar</th>
-                    <th class="py-3 px-4 border-b text-left text-gray-700">Nuevo Stock</th>
-                    <th class="py-3 px-4 border-b text-left text-gray-700">Estado Actual</th>
+                    <th class="py-3 px-4 border-b text-left text-gray-700">Nuevo Stock Inicial</th>
+                    <th class="py-3 px-4 border-b text-left text-gray-700">Nuevo Stock Actual</th>
+                    <th class="py-3 px-4 border-b text-left text-gray-700">Estado</th>
                 </tr>
             </thead>
             <tbody id="editStockBody">
                 {% for producto in productos %}
                     <!-- Encabezado del producto -->
                     <tr class="bg-blue-50 border-t-4 border-blue-200">
-                        <td colspan="7" class="py-3 px-4 font-bold text-blue-800">
+                        <td colspan="8" class="py-3 px-4 font-bold text-blue-800">
                             <div class="flex items-center">
                                 {% if producto.imagen %}
                                 <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="w-10 h-10 object-cover rounded mr-3">
@@ -366,7 +375,9 @@
                             </span>
                         </td>
                         <td class="py-3 px-4 text-center">
-                            <span class="font-semibold text-gray-700">{{ stock_talla.stock_inicial }}</span>
+                            <span class="font-semibold text-gray-700 stock-inicial-display" data-stock-id="{{ stock_talla.id }}">
+                                {{ stock_talla.stock_inicial }}
+                            </span>
                         </td>
                         <td class="py-3 px-4 text-center">
                             <span class="font-semibold text-gray-700 stock-actual-display" data-stock-id="{{ stock_talla.id }}">
@@ -378,22 +389,24 @@
                                    name="nuevas_unidades[{{ stock_talla.id }}]" 
                                    value="0" 
                                    min="0" 
-                                   max="{{ stock_talla.stock_inicial }}"
                                    class="w-24 p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 transition-colors stock-input"
                                    data-stock-inicial="{{ stock_talla.stock_inicial }}"
                                    data-stock-actual="{{ stock_talla.stock }}"
-                                   data-tope="{{ stock_talla.stock_inicial }}"
                                    data-stock-talla-id="{{ stock_talla.id }}"
-                                   oninput="validarAgregarStock(this)"
+                                   oninput="actualizarStocks(this)"
                                    required>
                             <div class="text-xs text-gray-500 mt-1">
-                                Máximo a agregar: <span id="max-agregar-{{ stock_talla.id }}" class="max-agregar-display">
-                                    {{ stock_talla.stock_inicial|add:0 }}{{ stock_talla.stock|add:"-0" }}
-                                </span>
+                                Ingresa las unidades a agregar
                             </div>
                         </td>
                         <td class="py-3 px-4 text-center">
-                            <span class="font-semibold text-green-600 nuevo-stock" 
+                            <span class="font-semibold text-blue-600 nuevo-stock-inicial" 
+                                  data-stock-id="{{ stock_talla.id }}">
+                                {{ stock_talla.stock_inicial }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="font-semibold text-green-600 nuevo-stock-actual" 
                                   data-stock-id="{{ stock_talla.id }}">
                                 {{ stock_talla.stock }}
                             </span>
@@ -567,258 +580,185 @@
         <p class="text-sm text-white">&copy; 2025 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</p>
     </footer>
 
-    <!-- Scripts para el control de stock -->
- <script>
-// Toggle del formulario de actualización - COMPLETO Y FUNCIONAL
-document.addEventListener('DOMContentLoaded', function() {
-    const toggleEditBtn = document.getElementById('toggleEditBtn');
-    const manualStockForm = document.getElementById('manualStockForm');
-    const editModeMessage = document.getElementById('editModeMessage');
-    const cancelEditBtn = document.getElementById('cancelEditBtn');
-    const normalView = document.getElementById('normalView');
-
-    console.log('Elementos cargados:', {
-        toggleEditBtn: !!toggleEditBtn,
-        manualStockForm: !!manualStockForm,
-        editModeMessage: !!editModeMessage,
-        cancelEditBtn: !!cancelEditBtn,
-        normalView: !!normalView
-    });
-
+    <!-- Scripts para el control de stock - ACTUALIZADO -->
+    <script>
     // Toggle del formulario de actualización
-    if (toggleEditBtn && manualStockForm) {
-        toggleEditBtn.addEventListener('click', function() {
-            console.log('Botón clickeado - Alternando formulario');
-            
-            // Alternar visibilidad del formulario
-            manualStockForm.classList.toggle('hidden');
-            
-            // Alternar mensaje de modo edición
-            if (editModeMessage) {
-                editModeMessage.classList.toggle('hidden');
-            }
-            
-            // Alternar vista normal
-            if (normalView) {
-                normalView.classList.toggle('hidden');
-            }
-            
-            // Cambiar texto del botón
-            if (manualStockForm.classList.contains('hidden')) {
-                toggleEditBtn.innerHTML = '<i class="fas fa-plus mr-2"></i>Actualizar Stock';
-                toggleEditBtn.classList.remove('bg-gray-500');
-                toggleEditBtn.classList.add('bg-blue-500');
-            } else {
-                toggleEditBtn.innerHTML = '<i class="fas fa-eye mr-2"></i>Ver Inventario';
-                toggleEditBtn.classList.remove('bg-blue-500');
-                toggleEditBtn.classList.add('bg-gray-500');
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleEditBtn = document.getElementById('toggleEditBtn');
+        const manualStockForm = document.getElementById('manualStockForm');
+        const editModeMessage = document.getElementById('editModeMessage');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const normalView = document.getElementById('normalView');
+
+        // Toggle del formulario de actualización
+        if (toggleEditBtn && manualStockForm) {
+            toggleEditBtn.addEventListener('click', function() {
+                // Alternar visibilidad del formulario
+                manualStockForm.classList.toggle('hidden');
                 
-                // Inicializar los máximos permitidos cuando se muestra el formulario
-                inicializarMaximosPermitidos();
-            }
-        });
-    } else {
-        console.error('No se encontraron los elementos necesarios para el toggle');
-    }
-
-    // Botón cancelar
-    if (cancelEditBtn && manualStockForm) {
-        cancelEditBtn.addEventListener('click', function() {
-            console.log('Cancelar clickeado');
-            
-            manualStockForm.classList.add('hidden');
-            
-            if (editModeMessage) {
-                editModeMessage.classList.add('hidden');
-            }
-            
-            if (normalView) {
-                normalView.classList.remove('hidden');
-            }
-            
-            if (toggleEditBtn) {
-                toggleEditBtn.innerHTML = '<i class="fas fa-plus mr-2"></i>Actualizar Stock';
-                toggleEditBtn.classList.remove('bg-gray-500');
-                toggleEditBtn.classList.add('bg-blue-500');
-            }
-            
-            // Resetear todos los inputs
-            const inputs = manualStockForm.querySelectorAll('.stock-input');
-            inputs.forEach(input => {
-                input.value = '0';
-                // Actualizar display del nuevo stock
-                const stockTallaId = input.dataset.stockTallaId;
-                const stockActual = parseInt(input.dataset.stockActual);
-                const nuevoStockElement = document.querySelector(`.nuevo-stock[data-stock-id="${stockTallaId}"]`);
-                if (nuevoStockElement) {
-                    nuevoStockElement.textContent = stockActual;
+                // Alternar mensaje de modo edición
+                if (editModeMessage) {
+                    editModeMessage.classList.toggle('hidden');
+                }
+                
+                // Alternar vista normal
+                if (normalView) {
+                    normalView.classList.toggle('hidden');
+                }
+                
+                // Cambiar texto del botón
+                if (manualStockForm.classList.contains('hidden')) {
+                    toggleEditBtn.innerHTML = '<i class="fas fa-plus mr-2"></i>Actualizar Stock';
+                    toggleEditBtn.classList.remove('bg-gray-500');
+                    toggleEditBtn.classList.add('bg-blue-500');
+                } else {
+                    toggleEditBtn.innerHTML = '<i class="fas fa-eye mr-2"></i>Ver Inventario';
+                    toggleEditBtn.classList.remove('bg-blue-500');
+                    toggleEditBtn.classList.add('bg-gray-500');
                 }
             });
-            
-            // Resetear resumen
-            const changesSummary = document.getElementById('changesSummary');
-            if (changesSummary) {
-                changesSummary.classList.add('hidden');
-            }
-        });
-    }
+        }
 
-    // Configurar validación en tiempo real para inputs de stock
-    const stockInputs = document.querySelectorAll('.stock-input');
-    stockInputs.forEach(input => {
-        input.addEventListener('input', function() {
-            validarAgregarStock(this);
-            calcularNuevoStock();
-        });
-    });
-
-    // Inicializar los máximos permitidos al cargar la página
-    inicializarMaximosPermitidos();
-
-    // Validación del formulario antes de enviar
-    const manualStockFormElement = document.getElementById('manualStockForm');
-    if (manualStockFormElement) {
-        manualStockFormElement.addEventListener('submit', function(e) {
-            console.log('Formulario enviado');
-            
-            let tieneCambios = false;
-            const inputs = this.querySelectorAll('.stock-input');
-            
-            // Verificar si hay al menos un cambio
-            inputs.forEach(input => {
-                if (parseInt(input.value) > 0) {
-                    tieneCambios = true;
+        // Botón cancelar
+        if (cancelEditBtn && manualStockForm) {
+            cancelEditBtn.addEventListener('click', function() {
+                manualStockForm.classList.add('hidden');
+                
+                if (editModeMessage) {
+                    editModeMessage.classList.add('hidden');
                 }
-            });
-            
-            if (!tieneCambios) {
-                e.preventDefault();
-                alert('Por favor, ingresa al menos una cantidad mayor a 0 para actualizar el stock.');
-                return false;
-            }
-            
-            // Validar que no se excedan los topes
-            let excedeTope = false;
-            let mensajeError = '';
-            
-            inputs.forEach(input => {
-                const nuevasUnidades = parseInt(input.value) || 0;
-                if (nuevasUnidades > 0) {
-                    const stockInicial = parseInt(input.dataset.stockInicial);
+                
+                if (normalView) {
+                    normalView.classList.remove('hidden');
+                }
+                
+                if (toggleEditBtn) {
+                    toggleEditBtn.innerHTML = '<i class="fas fa-plus mr-2"></i>Actualizar Stock';
+                    toggleEditBtn.classList.remove('bg-gray-500');
+                    toggleEditBtn.classList.add('bg-blue-500');
+                }
+                
+                // Resetear todos los inputs
+                const inputs = manualStockForm.querySelectorAll('.stock-input');
+                inputs.forEach(input => {
+                    input.value = '0';
+                    // Actualizar display del nuevo stock
+                    const stockTallaId = input.dataset.stockTallaId;
                     const stockActual = parseInt(input.dataset.stockActual);
-                    const nuevoStock = stockActual + nuevasUnidades;
+                    const stockInicial = parseInt(input.dataset.stockInicial);
                     
-                    if (nuevoStock > stockInicial) {
-                        excedeTope = true;
-                        input.classList.add('border-red-500', 'bg-red-50');
-                        
-                        // Encontrar el nombre del producto y talla para el mensaje
-                        const row = input.closest('tr');
-                        const productoNombre = row.closest('tbody').querySelector('.bg-blue-50 .font-bold').textContent.trim();
-                        const talla = row.querySelector('span.font-medium').textContent.replace('Talla ', '');
-                        
-                        mensajeError += `• ${productoNombre} - Talla ${talla}: ${nuevoStock} > ${stockInicial} (tope)\n`;
+                    const nuevoStockInicialElement = document.querySelector(`.nuevo-stock-inicial[data-stock-id="${stockTallaId}"]`);
+                    const nuevoStockActualElement = document.querySelector(`.nuevo-stock-actual[data-stock-id="${stockTallaId}"]`);
+                    
+                    if (nuevoStockInicialElement) {
+                        nuevoStockInicialElement.textContent = stockInicial;
                     }
+                    if (nuevoStockActualElement) {
+                        nuevoStockActualElement.textContent = stockActual;
+                    }
+                });
+                
+                // Resetear resumen
+                const changesSummary = document.getElementById('changesSummary');
+                if (changesSummary) {
+                    changesSummary.classList.add('hidden');
                 }
             });
-            
-            if (excedeTope) {
-                e.preventDefault();
-                alert('Algunas cantidades exceden el tope máximo permitido:\n\n' + mensajeError + '\nPor favor, corrige los valores en rojo.');
-                return false;
-            }
-            
-            // Mostrar loading
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Actualizando...';
-            submitBtn.disabled = true;
-            
-            // Permitir el envío del formulario
-            console.log('Formulario válido, enviando...');
-            return true;
-        });
-    }
+        }
 
-    // Función para manejar el menú de usuario
-    const userMenuBtn = document.getElementById('userMenuBtn');
-    const userMenu = document.getElementById('userMenu');
-    
-    if (userMenuBtn && userMenu) {
-        userMenuBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            userMenu.classList.toggle('hidden');
+        // Configurar validación en tiempo real para inputs de stock
+        const stockInputs = document.querySelectorAll('.stock-input');
+        stockInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                actualizarStocks(this);
+                calcularNuevoStock();
+            });
         });
-        
-        // Cerrar menú al hacer clic fuera
-        document.addEventListener('click', function() {
-            userMenu.classList.add('hidden');
-        });
-        
-        // Prevenir que el clic en el menú lo cierre
-        userMenu.addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
-    }
-});
 
-// Función para inicializar los máximos permitidos
-function inicializarMaximosPermitidos() {
-    const stockInputs = document.querySelectorAll('.stock-input');
-    
-    stockInputs.forEach(input => {
-        const stockInicial = parseInt(input.dataset.stockInicial);
-        const stockActual = parseInt(input.dataset.stockActual);
-        const maxPermitido = Math.max(0, stockInicial - stockActual);
+        // Validación del formulario antes de enviar
+        const manualStockFormElement = document.getElementById('manualStockForm');
+        if (manualStockFormElement) {
+            manualStockFormElement.addEventListener('submit', function(e) {
+                let tieneCambios = false;
+                const inputs = this.querySelectorAll('.stock-input');
+                
+                // Verificar si hay al menos un cambio
+                inputs.forEach(input => {
+                    if (parseInt(input.value) > 0) {
+                        tieneCambios = true;
+                    }
+                });
+                
+                if (!tieneCambios) {
+                    e.preventDefault();
+                    alert('Por favor, ingresa al menos una cantidad mayor a 0 para actualizar el stock.');
+                    return false;
+                }
+                
+                // Mostrar loading
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Actualizando...';
+                submitBtn.disabled = true;
+                
+                return true;
+            });
+        }
+
+        // Función para manejar el menú de usuario
+        const userMenuBtn = document.getElementById('userMenuBtn');
+        const userMenu = document.getElementById('userMenu');
         
-        input.max = maxPermitido;
-        
-        const stockTallaId = input.dataset.stockTallaId;
-        const maxAgregarElement = document.getElementById(`max-agregar-${stockTallaId}`);
-        if (maxAgregarElement) {
-            maxAgregarElement.textContent = maxPermitido;
+        if (userMenuBtn && userMenu) {
+            userMenuBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                userMenu.classList.toggle('hidden');
+            });
+            
+            // Cerrar menú al hacer clic fuera
+            document.addEventListener('click', function() {
+                userMenu.classList.add('hidden');
+            });
+            
+            // Prevenir que el clic en el menú lo cierre
+            userMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
         }
     });
-}
 
-// Función para validar la cantidad a agregar respetando el tope
-function validarAgregarStock(input) {
+    // Función para actualizar ambos stocks (inicial y actual) automáticamente
+function actualizarStocks(input) {
     const nuevasUnidades = parseInt(input.value) || 0;
-    const stockActual = parseInt(input.dataset.stockActual);
-    const tope = parseInt(input.dataset.tope);
     const stockTallaId = input.dataset.stockTallaId;
-    const maxAgregarElement = document.getElementById(`max-agregar-${stockTallaId}`);
+    const stockActualOriginal = parseInt(input.dataset.stockActual);
+    const stockInicialOriginal = parseInt(input.dataset.stockInicial);
     
-    const maxPermitido = Math.max(0, tope - stockActual);
-    const nuevoStock = stockActual + nuevasUnidades;
+    // Calcular nuevos valores - AMBOS stocks se actualizan
+    const nuevoStockInicial = stockInicialOriginal + nuevasUnidades;
+    const nuevoStockActual = stockActualOriginal + nuevasUnidades;
     
-    if (nuevasUnidades > maxPermitido) {
+    // Actualizar displays
+    const nuevoStockInicialElement = document.querySelector(`.nuevo-stock-inicial[data-stock-id="${stockTallaId}"]`);
+    const nuevoStockActualElement = document.querySelector(`.nuevo-stock-actual[data-stock-id="${stockTallaId}"]`);
+    
+    if (nuevoStockInicialElement) {
+        nuevoStockInicialElement.textContent = nuevoStockInicial;
+    }
+    if (nuevoStockActualElement) {
+        nuevoStockActualElement.textContent = nuevoStockActual;
+    }
+    
+    // Validar que no sea negativo
+    if (nuevasUnidades < 0) {
         input.classList.add('border-red-500', 'bg-red-50');
-        input.title = `No puedes agregar más de ${maxPermitido} unidades (tope: ${tope})`;
-        if (maxAgregarElement) {
-            maxAgregarElement.classList.add('text-red-600', 'font-semibold');
-        }
+        input.title = 'No puedes ingresar valores negativos';
     } else {
         input.classList.remove('border-red-500', 'bg-red-50');
         input.title = '';
-        if (maxAgregarElement) {
-            maxAgregarElement.classList.remove('text-red-600', 'font-semibold');
-        }
-        
-        // Actualizar display del nuevo stock
-        const nuevoStockElement = document.querySelector(`.nuevo-stock[data-stock-id="${stockTallaId}"]`);
-        if (nuevoStockElement) {
-            nuevoStockElement.textContent = nuevoStock;
-        }
     }
     
-    // Actualizar máximo permitido en el input
-    input.max = maxPermitido;
-    if (maxAgregarElement) {
-        maxAgregarElement.textContent = maxPermitido;
-    }
-    
-    // Actualizar resumen de cambios
+    // Recalcular cambios
     calcularNuevoStock();
 }
 
@@ -838,8 +778,10 @@ function calcularNuevoStock() {
         const nuevasUnidades = parseInt(input.value) || 0;
         if (nuevasUnidades > 0) {
             const stockTallaId = input.dataset.stockTallaId;
-            const stockActual = parseInt(input.dataset.stockActual);
-            const nuevoStock = stockActual + nuevasUnidades;
+            const stockActualOriginal = parseInt(input.dataset.stockActual);
+            const stockInicialOriginal = parseInt(input.dataset.stockInicial);
+            const nuevoStockInicial = stockInicialOriginal + nuevasUnidades;
+            const nuevoStockActual = stockActualOriginal + nuevasUnidades;
             
             // Encontrar el nombre del producto y talla
             const row = input.closest('tr');
@@ -847,9 +789,15 @@ function calcularNuevoStock() {
             const talla = row.querySelector('span.font-medium').textContent.replace('Talla ', '');
             
             changesList.innerHTML += `
-                <li class="flex justify-between py-1">
-                    <span>${productoNombre} - Talla ${talla}</span>
-                    <span>+${nuevasUnidades} unidades (${stockActual} → ${nuevoStock})</span>
+                <li class="flex justify-between py-1 border-b border-blue-100 last:border-b-0">
+                    <span class="font-medium">${productoNombre} - Talla ${talla}</span>
+                    <div class="text-right">
+                        <div class="text-green-600">+${nuevasUnidades} unidades</div>
+                        <div class="text-xs text-gray-600">
+                            Stock Inicial: ${stockInicialOriginal} → <strong>${nuevoStockInicial}</strong><br>
+                            Stock Actual: ${stockActualOriginal} → <strong>${nuevoStockActual}</strong>
+                        </div>
+                    </div>
                 </li>
             `;
             hasChanges = true;
@@ -862,7 +810,7 @@ function calcularNuevoStock() {
         changesSummary.classList.add('hidden');
     }
 }
-</script>
+    </script>
 
 </body>
 </html>
