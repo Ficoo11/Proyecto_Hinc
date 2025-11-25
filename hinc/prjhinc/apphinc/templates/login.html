@@ -60,7 +60,7 @@
                 <label for="id_password" class="block text-sm font-medium text-gray-700">Contraseña</label>
                 <input type="password" name="password" id="id_password" required class="mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-black focus:border-black">
             </div>
-            <a href="#" class="text-sm text-black hover:underline block text-center mb-4">¿Olvidaste tu contraseña?</a>
+            <a href="{% url 'password_reset' %}" class="text-sm text-black hover:underline block text-center mb-4">¿Olvidaste tu contraseña?</a>
             <button type="submit" class="w-full bg-black text-white p-3 rounded-lg font-semibold hover:bg-gray-800 transition">Iniciar Sesión</button>
         </form>
         <div class="mt-4 text-center">

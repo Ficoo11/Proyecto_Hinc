@@ -15,6 +15,15 @@ from django.views.decorators.http import require_POST
 import json
 import logging, stripe
 from django.conf import settings
+from django.shortcuts import render, redirect
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import SetPasswordForm
+import random
+import string
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -2143,3 +2152,99 @@ def sincronizar_ventas_stripe(request):
         
     return redirect('registro_ventas')
 
+def password_reset_request(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        
+        try:
+            user = CustomUser.objects.get(email=email)
+            
+            # Generar código de 6 dígitos
+            reset_code = ''.join(random.choices(string.digits, k=6))
+            
+            # Guardar código en sesión
+            request.session['reset_code'] = reset_code
+            request.session['reset_email'] = email
+            
+            # Enviar email con el código
+            send_mail(
+                'Código de Recuperación - Hinc',
+                f'''
+Hola {user.username},
+
+Has solicitado restablecer tu contraseña en Hinc.
+
+Tu código de verificación es: {reset_code}
+
+Ingresa este código en la página de verificación.
+
+Si no solicitaste este cambio, por favor ignora este mensaje.
+
+Saludos,
+El equipo de Hinc
+                ''',
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+            
+            messages.success(request, 'Se ha enviado un código de verificación a tu correo.')
+            return redirect('password_reset_code')
+            
+        except CustomUser.DoesNotExist:
+            messages.error(request, 'No existe una cuenta con este correo electrónico.')
+    
+    return render(request, 'password_reset.html')
+
+def password_reset_code(request):
+    # Verificar que hay una solicitud en proceso
+    if 'reset_email' not in request.session:
+        messages.error(request, 'Debes solicitar un código primero.')
+        return redirect('password_reset')
+    
+    if request.method == 'POST':
+        entered_code = request.POST.get('code')
+        stored_code = request.session.get('reset_code')
+        
+        if entered_code == stored_code:
+            messages.success(request, 'Código verificado correctamente.')
+            return redirect('password_reset_confirm')
+        else:
+            messages.error(request, 'Código incorrecto. Inténtalo de nuevo.')
+    
+    return render(request, 'password_reset_code.html')
+
+def password_reset_confirm(request):
+    # Verificar que el código fue validado
+    if 'reset_email' not in request.session:
+        messages.error(request, 'Debes verificar tu código primero.')
+        return redirect('password_reset')
+    
+    email = request.session.get('reset_email')
+    
+    try:
+        user = CustomUser.objects.get(email=email)
+        
+        if request.method == 'POST':
+            form = SetPasswordForm(user, request.POST)
+            if form.is_valid():
+                form.save()
+                # Limpiar la sesión
+                if 'reset_code' in request.session:
+                    del request.session['reset_code']
+                if 'reset_email' in request.session:
+                    del request.session['reset_email']
+                
+                messages.success(request, 'Tu contraseña ha sido cambiada exitosamente.')
+                return redirect('password_reset_complete')
+        else:
+            form = SetPasswordForm(user)
+        
+        return render(request, 'password_reset_confirm.html', {'form': form})
+    
+    except CustomUser.DoesNotExist:
+        messages.error(request, 'Usuario no encontrado.')
+        return redirect('password_reset')
+
+def password_reset_complete(request):
+    return render(request, 'password_reset_complete.html')

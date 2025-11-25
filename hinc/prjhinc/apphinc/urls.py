@@ -1,4 +1,5 @@
 from django.urls import path
+from django.contrib.auth import views as auth_views
 from . import views
 
 urlpatterns = [
@@ -65,4 +66,10 @@ urlpatterns = [
     path('stripe-webhook/', views.stripe_webhook, name='stripe_webhook'),
     path('paneladmin/registro-ventas/sincronizar-stripe/', views.sincronizar_ventas_stripe, name='sincronizar_ventas_stripe'),
     path('paneladmin/registro-ventas/registrar-manual/', views.registrar_venta_manual, name='registrar_venta_manual'),
+
+    #smtp
+    path('password-reset/', views.password_reset_request, name='password_reset'),
+    path('password-reset/code/', views.password_reset_code, name='password_reset_code'),
+    path('password-reset/confirm/', views.password_reset_confirm, name='password_reset_confirm'),
+    path('password-reset/complete/', views.password_reset_complete, name='password_reset_complete'),
 ]

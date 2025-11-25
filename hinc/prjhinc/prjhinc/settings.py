@@ -170,5 +170,14 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 STRIPE_PUBLISHABLE_KEY = ''
-STRIPE_SECRET_KEY = ''
+STRIPE_SECRET_KEY = 'hruk fwpp ejmd legg'
 STRIPE_WEBHOOK_SECRET = 'proximamente...'
+
+# Configuración de Email
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # O tu servidor SMTP
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'hincoficial@gmail.com'  # Tu email
+EMAIL_HOST_PASSWORD = 'hruk fwpp ejmd legg'  # Password de aplicación
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
