@@ -161,7 +161,12 @@ class ItemCarrito(models.Model):
         return f"{self.cantidad} x {self.producto.nombre} ({self.talla})"
     
     def obtener_total(self):
-        return float(self.producto.precio) * int(self.cantidad)
+        # USAR PRECIO CON DESCUENTO si existe
+        if self.producto.descuento > 0:
+            precio_final = float(self.producto.precio_con_descuento())
+        else:
+            precio_final = float(self.producto.precio)
+        return precio_final * int(self.cantidad)
     
     class Meta:
         unique_together = ('carrito', 'producto', 'talla')

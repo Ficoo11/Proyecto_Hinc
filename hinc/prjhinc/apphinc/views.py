@@ -921,20 +921,75 @@ def quitar_del_carrito(request):
         data = json.loads(request.body)
         producto_id = data.get('producto_id')
         talla = data.get('talla')
+        item_id = data.get('item_id')
        
+        print(f"DEBUG: Datos recibidos - Item ID: {item_id}, Producto ID: {producto_id}, Talla: {talla}")
+        
         carrito = get_object_or_404(Carrito, usuario=request.user)
-        item = get_object_or_404(ItemCarrito, carrito=carrito, producto_id=producto_id, talla=talla)
+        
+        item = None
+        
+        # PRIMERO: Buscar por item_id si está disponible (es la forma más precisa)
+        if item_id and item_id != 'None':
+            try:
+                item = ItemCarrito.objects.get(id=int(item_id), carrito=carrito)
+                print(f"DEBUG: Item encontrado por ID: {item_id}")
+            except (ItemCarrito.DoesNotExist, ValueError) as e:
+                print(f"DEBUG: No se encontró item con ID {item_id}: {e}")
+                item = None
+        
+        # SEGUNDO: Si no tenemos item_id, buscar por producto_id y talla
+        if not item and producto_id and producto_id != 'None' and talla and talla != 'None':
+            try:
+                # Si hay múltiples items, tomar el primero
+                items = ItemCarrito.objects.filter(
+                    carrito=carrito, 
+                    producto_id=int(producto_id), 
+                    talla=talla
+                )
+                if items.exists():
+                    item = items.first()  # Tomar el primer item encontrado
+                    print(f"DEBUG: Se encontraron {items.count()} items. Eliminando el primero: {item.id}")
+            except ValueError as e:
+                print(f"DEBUG: Error en los datos: {e}")
+                item = None
+        
+        # TERCERO: Si aún no tenemos item, buscar solo por producto_id
+        if not item and producto_id and producto_id != 'None':
+            try:
+                items = ItemCarrito.objects.filter(
+                    carrito=carrito, 
+                    producto_id=int(producto_id)
+                )
+                if items.exists():
+                    item = items.first()  # Tomar el primer item encontrado
+                    print(f"DEBUG: Se encontraron {items.count()} items por producto. Eliminando el primero: {item.id}")
+            except ValueError as e:
+                print(f"DEBUG: Error en los datos: {e}")
+                item = None
+        
+        if not item:
+            print(f"DEBUG: No se pudo encontrar ningún item con los datos proporcionados")
+            return JsonResponse({
+                'success': False, 
+                'error': 'No se encontró el producto en el carrito'
+            })
+        
+        print(f"DEBUG: Eliminando item: {item.id} - {item.producto.nombre} - {item.talla} - Cantidad: {item.cantidad}")
         item.delete()
+        
+        # Obtener datos actualizados del carrito
+        carrito_data = obtener_datos_carrito(carrito)
        
         return JsonResponse({
             'success': True,
-            'carrito': obtener_datos_carrito(carrito)
+            'carrito': carrito_data
         })
        
     except Exception as e:
         logger.error(f"Error al quitar del carrito: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)})
-
+    
 @login_required
 def obtener_carrito(request):
     try:
@@ -949,11 +1004,19 @@ def obtener_carrito(request):
 def obtener_datos_carrito(carrito):
     items = []
     for item in carrito.items.all():
+        # Calcular precio con descuento
+        if item.producto.descuento > 0:
+            precio_final = float(item.producto.precio_con_descuento())
+        else:
+            precio_final = float(item.producto.precio)
+            
         items.append({
             'id': item.id,
             'id_producto': item.producto.id,
             'nombre': item.producto.nombre,
-            'precio': float(item.producto.precio),
+            'precio': precio_final,  # Usar precio con descuento
+            'precio_original': float(item.producto.precio),  # Precio original para comparación
+            'descuento': item.producto.descuento,  # Porcentaje de descuento
             'cantidad': item.cantidad,
             'talla': item.talla,
             'imagen': item.producto.imagen.url if item.producto.imagen else ''

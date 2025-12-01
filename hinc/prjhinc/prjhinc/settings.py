@@ -170,7 +170,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 STRIPE_PUBLISHABLE_KEY = ''
-STRIPE_SECRET_KEY = 'hruk fwpp ejmd legg'
+STRIPE_SECRET_KEY = ''
 STRIPE_WEBHOOK_SECRET = 'proximamente...'
 
 # Configuración de Email

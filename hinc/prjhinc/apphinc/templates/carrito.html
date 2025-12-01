@@ -60,9 +60,13 @@
             <h1 class="text-3xl font-bold mb-8 text-gray-800">Tu Carrito de Compras</h1>
            
             {% if carrito.items.all %}
-            <div class="bg-white shadow-md rounded-lg p-6 border border-gray-200">
+            <div class="bg-white shadow-md rounded-lg p-6 border border-gray-200" id="carrito-container">
                 {% for item in carrito.items.all %}
-                <div class="flex justify-between items-center border-b py-4" data-item-id="{{ item.id }}" data-producto-id="{{ item.producto.id }}" data-talla="{{ item.talla }}">
+                <div class="flex justify-between items-center border-b py-4 carrito-item" 
+                     id="item-{{ item.id }}"
+                     data-item-id="{{ item.id }}"
+                     data-producto-id="{{ item.producto.id }}" 
+                     data-talla="{{ item.talla }}">
                     <div class="flex items-center">
                         {% if item.producto.imagen %}
                         <img src="{{ item.producto.imagen.url }}" alt="{{ item.producto.nombre }}"
@@ -70,15 +74,30 @@
                         {% endif %}
                         <div>
                             <h3 class="font-semibold text-lg text-gray-800">{{ item.producto.nombre }}</h3>
-                            <p class="text-gray-600">$ {{ item.producto.precio }}</p>
+                            
+                            <!-- MOSTRAR PRECIO CON DESCUENTO -->
+                            {% if item.producto.descuento > 0 %}
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-lg font-bold text-orange-500">${{ item.producto.precio_con_descuento|floatformat:0 }}</span>
+                                    <span class="text-sm text-gray-500 line-through">${{ item.producto.precio|floatformat:0 }}</span>
+                                    <span class="bg-red-100 text-red-800 text-xs font-medium px-2 py-1 rounded">-{{ item.producto.descuento }}%</span>
+                                </div>
+                                <p class="text-sm text-green-600 font-medium mt-1">
+                                    Ahorras: ${{ item.producto.precio|floatformat:0 }} por unidad
+                                </p>
+                            {% else %}
+                                <span class="text-lg font-bold text-gray-800">${{ item.producto.precio|floatformat:0 }}</span>
+                            {% endif %}
+                            
                             <p class="text-gray-600">Cantidad: {{ item.cantidad }}</p>
                             <p class="text-gray-600">Talla: {{ item.talla }}</p>
                         </div>
                     </div>
                    
                     <div class="flex items-center">
-                        <span class="font-semibold text-lg text-gray-800 mr-4">$ {{ item.obtener_total }}</span>
-                        <button class="btn-quitar-producto bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition duration-300"
+                        <span class="font-semibold text-lg text-gray-800 mr-4">$ {{ item.obtener_total|floatformat:0 }}</span>
+                        <button class="btn-eliminar bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition duration-300"
+                                data-item-id="{{ item.id }}"
                                 data-producto-id="{{ item.producto.id }}"
                                 data-talla="{{ item.talla }}">
                             <i class="fa-solid fa-trash mr-2"></i>Eliminar
@@ -86,10 +105,33 @@
                     </div>
                 </div>
                 {% endfor %}
+
+                <!-- RESUMEN SIMPLIFICADO -->
+                <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h3 class="font-semibold text-blue-800 mb-2">Resumen del Pedido</h3>
+                    <div class="space-y-2 text-sm text-blue-700">
+                        <div class="flex justify-between">
+                            <span>Subtotal:</span>
+                            <span>${{ carrito.obtener_total|floatformat:0 }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Envío:</span>
+                            <span class="text-green-600">Gratis</span>
+                        </div>
+                        {% for item in carrito.items.all %}
+                            {% if item.producto.descuento > 0 %}
+                                <div class="flex justify-between font-medium">
+                                    <span>Descuentos aplicados:</span>
+                                    <span class="text-green-600">Sí</span>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
                
                 <!-- BOTÓN PROCEDER AL PAGO ACTUALIZADO -->
                 <div class="mt-6 text-right">
-                    <h2 class="text-2xl font-bold text-gray-800">Total: $ {{ carrito.obtener_total|floatformat:0 }}</h2>
+                    <h2 class="text-2xl font-bold text-gray-800" id="total-carrito">Total: $ {{ carrito.obtener_total|floatformat:0 }}</h2>
                     <a href="{% url 'checkout' %}" 
                        class="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600 mt-4 transition duration-300 inline-block font-semibold text-lg">
                        <i class="fas fa-credit-card mr-2"></i>Proceder al Pago
@@ -101,7 +143,7 @@
                 </div>
             </div>
             {% else %}
-            <div class="text-center py-12 bg-white rounded-lg shadow-md border border-gray-200">
+            <div class="text-center py-12 bg-white rounded-lg shadow-md border border-gray-200" id="carrito-vacio">
                 <p class="text-gray-500 text-lg">Tu carrito está vacío</p>
                 <a href="{% url 'catalogo' %}" class="text-orange-500 hover:underline mt-4 inline-block font-semibold">
                     <i class="fas fa-shopping-bag mr-2"></i>Continuar comprando
@@ -115,13 +157,25 @@
     <footer class="bg-gray-900 text-center py-4 z-0">
         <p class="text-sm text-white">&copy; 2024 <b>CODECRAFTERS</b> - Todos los Derechos Reservados</p>
     </footer>
+
     <script>
+        // URLs para el carrito
+        const URL_QUITAR_DEL_CARRITO = "{% url 'quitar_del_carrito' %}";
+
         // User Menu Dropdown
         const userMenuBtn = document.getElementById('userMenuBtn');
         const userMenu = document.getElementById('userMenu');
         userMenuBtn.addEventListener('click', () => {
             userMenu.classList.toggle('hidden');
         });
+
+        // Cerrar menú desplegable al hacer clic fuera de él
+        document.addEventListener('click', function(event) {
+            if (userMenu && userMenuBtn && !userMenu.contains(event.target) && !userMenuBtn.contains(event.target)) {
+                userMenu.classList.add('hidden');
+            }
+        });
+
         // Ocultar mensajes automáticamente después de 5 segundos
         setTimeout(() => {
             const messagesContainer = document.getElementById('messages-container');
@@ -129,60 +183,130 @@
                 messagesContainer.style.display = 'none';
             }
         }, 5000);
-        // URLs para el carrito
-        const URL_AGREGAR_CARRITO = "{% url 'agregar_al_carrito' %}";
-        const URL_OBTENER_CARRITO = "{% url 'obtener_carrito' %}";
-        const URL_QUITAR_DEL_CARRITO = "{% url 'quitar_del_carrito' %}";
 
-        // Eliminar productos del carrito - CORREGIDO
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.btn-quitar-producto').forEach(button => {
-                button.addEventListener('click', async function() {
-                    const productoId = this.dataset.productoId;
-                    const talla = this.dataset.talla;
+        // Función para obtener el token CSRF
+        function getCSRFToken() {
+            const name = 'csrftoken';
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+                if (cookie.startsWith(name + '=')) {
+                    return decodeURIComponent(cookie.substring(name.length + 1));
+                }
+            }
+            return '';
+        }
+
+        // Función para mostrar mensajes
+        function showMessage(message, type = 'info') {
+            // Crear elemento de mensaje
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `fixed top-4 right-4 p-4 rounded-md shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' : 
+                'bg-blue-500 text-white'
+            }`;
+            messageDiv.textContent = message;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
+            }, 3000);
+        }
+
+        // Función para eliminar items del carrito
+        async function eliminarItem(itemId, productoId, talla) {
+            if (!confirm('¿Estás seguro de que quieres eliminar este producto del carrito?')) {
+                return;
+            }
+            
+            console.log('Enviando datos al servidor:', {
+                item_id: itemId,
+                producto_id: productoId,
+                talla: talla
+            });
+            
+            try {
+                const response = await fetch(URL_QUITAR_DEL_CARRITO, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        item_id: itemId,
+                        producto_id: productoId,
+                        talla: talla
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Respuesta del servidor:', data);
+                
+                if (data.success) {
+                    // Eliminar el elemento del DOM
+                    const itemElement = document.getElementById(`item-${itemId}`);
+                    if (itemElement) {
+                        itemElement.remove();
+                    }
                     
-                    try {
-                        const response = await fetch(URL_QUITAR_DEL_CARRITO, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': getCookie('csrftoken')
-                            },
-                            body: JSON.stringify({
-                                producto_id: productoId,
-                                talla: talla
-                            })
-                        });
-
-                        const data = await response.json();
-
-                        if (data.success) {
-                            // Recargar la página para actualizar la vista
-                            location.reload();
-                        } else {
-                            alert('Error: ' + data.error);
+                    // Actualizar el total
+                    if (data.carrito && data.carrito.total !== undefined) {
+                        const totalElement = document.getElementById('total-carrito');
+                        if (totalElement) {
+                            totalElement.textContent = `Total: $ ${parseFloat(data.carrito.total).toFixed(0)}`;
                         }
-                    } catch (error) {
-                        alert('Error al eliminar del carrito: ' + error.message);
+                    }
+                    
+                    // Verificar si el carrito está vacío
+                    const carritoContainer = document.getElementById('carrito-container');
+                    if (carritoContainer) {
+                        const itemsRestantes = carritoContainer.querySelectorAll('.carrito-item');
+                        if (itemsRestantes.length === 0) {
+                            window.location.reload();
+                        }
+                    }
+                    
+                    showMessage('Producto eliminado del carrito', 'success');
+                } else {
+                    showMessage('Error: ' + (data.error || 'No se pudo eliminar el producto'), 'error');
+                }
+            } catch (error) {
+                console.error('Error al eliminar producto:', error);
+                showMessage('Error de conexión', 'error');
+            }
+        }
+
+        // Agregar event listeners a los botones de eliminar
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.btn-eliminar').forEach(button => {
+                button.addEventListener('click', function() {
+                    const itemId = this.getAttribute('data-item-id');
+                    const productoId = this.getAttribute('data-producto-id');
+                    const talla = this.getAttribute('data-talla');
+                    
+                    console.log('Datos del botón clickeado:', {
+                        itemId: itemId,
+                        productoId: productoId,
+                        talla: talla
+                    });
+                    
+                    if (itemId && productoId && talla) {
+                        eliminarItem(itemId, productoId, talla);
+                    } else {
+                        console.error('Faltan datos en el botón:', {
+                            itemId: itemId,
+                            productoId: productoId,
+                            talla: talla
+                        });
+                        showMessage('Error: No se pudieron obtener los datos del producto', 'error');
                     }
                 });
             });
         });
-
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
     </script>
 </body>
 </html>

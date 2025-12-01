@@ -26,7 +26,6 @@
             </a>
             <div class="nav-navbar flex space-x-4">
                 <a href="{% url 'catalogo' %}" class="text-gray-800 text-lg font-medium px-4 py-2 transition-all">Catálogo</a>
-                <a href="#Categorias" class="text-gray-800 text-lg font-medium px-4 py-2 transition-all">Categorías</a>
             </div>
             <div class="flex items-center space-x-2">
                 {% if user.is_authenticated %}
@@ -129,10 +128,10 @@
                 <div>
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-semibold text-gray-900">Selecciona tu talla</h3>
-                        <button type="button" class="text-sm text-gray-500 hover:text-gray-700 flex items-center">
+                        <!-- <button type="button" class="text-sm text-gray-500 hover:text-gray-700 flex items-center">
                             <i class="fas fa-ruler mr-1"></i>
                             Guía de tallas
-                        </button>
+                        </button> -->
                     </div>
                     <div class="grid grid-cols-4 gap-3" id="tallas-container">
                         {% for stock_info_item in stock_info %}
@@ -196,9 +195,9 @@
                             <i class="fas fa-shopping-cart mr-2"></i>
                             Agregar al Carrito
                         </button>
-                        <button class="w-12 h-12 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors duration-200">
+                        <!-- <button class="w-12 h-12 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors duration-200">
                             <i class="far fa-heart text-gray-600"></i>
-                        </button>
+                        </button> -->
                     </div>
                 </div>
 
@@ -207,7 +206,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-gray-600">
                         <div class="flex items-center">
                             <i class="fas fa-truck text-gray-400 mr-3"></i>
-                            <span>Envío gratis en compras superiores a $100.000</span>
+                            <span>Envío gratis</span>
                         </div>
                         <div class="flex items-center">
                             <i class="fas fa-undo text-gray-400 mr-3"></i>
@@ -258,34 +257,39 @@
             }
         }
 
-        // Función para actualizar el sidebar del carrito
-        function actualizarSidebarCarrito(carrito) {
-            const carritoContenido = document.getElementById('carritoContenido');
-            const subtotalCarrito = document.getElementById('subtotalCarrito');
+       // Función para actualizar el sidebar del carrito
+function actualizarSidebarCarrito(carrito) {
+    const carritoContenido = document.getElementById('carritoContenido');
+    const subtotalCarrito = document.getElementById('subtotalCarrito');
+    
+    if (carrito.items.length === 0) {
+        carritoContenido.innerHTML = '<p class="text-center text-gray-500">No tienes productos en tu carrito</p>';
+        subtotalCarrito.textContent = '$0';
+    } else {
+        let html = '';
+        carrito.items.forEach(item => {
+            // Usar precio con descuento si está disponible
+            const precio = item.precio; // Ya viene con descuento aplicado desde el backend
+            const totalItem = precio * item.cantidad;
             
-            if (carrito.items.length === 0) {
-                carritoContenido.innerHTML = '<p class="text-center text-gray-500">No tienes productos en tu carrito</p>';
-                subtotalCarrito.textContent = '$0';
-            } else {
-                let html = '';
-                carrito.items.forEach(item => {
-                    html += `
-                        <div class="flex items-center justify-between mb-3 p-2 bg-gray-50 rounded">
-                            <div class="flex items-center">
-                                ${item.imagen ? `<img src="${item.imagen}" alt="${item.nombre}" class="w-10 h-10 object-cover rounded mr-2">` : ''}
-                                <div>
-                                    <p class="text-sm font-medium">${item.nombre}</p>
-                                    <p class="text-xs text-gray-500">Talla: ${item.talla} | Cantidad: ${item.cantidad}</p>
-                                </div>
-                            </div>
-                            <p class="text-sm font-semibold">$${(item.precio * item.cantidad).toFixed(0)}</p>
+            html += `
+                <div class="flex items-center justify-between mb-3 p-2 bg-gray-50 rounded">
+                    <div class="flex items-center">
+                        ${item.imagen ? `<img src="${item.imagen}" alt="${item.nombre}" class="w-10 h-10 object-cover rounded mr-2">` : ''}
+                        <div>
+                            <p class="text-sm font-medium">${item.nombre}</p>
+                            <p class="text-xs text-gray-500">Talla: ${item.talla} | Cantidad: ${item.cantidad}</p>
+                            ${item.descuento > 0 ? `<p class="text-xs text-green-600">-${item.descuento}% OFF</p>` : ''}
                         </div>
-                    `;
-                });
-                carritoContenido.innerHTML = html;
-                subtotalCarrito.textContent = '$' + carrito.total.toFixed(0);
-            }
-        }
+                    </div>
+                    <p class="text-sm font-semibold">$${totalItem.toFixed(0)}</p>
+                </div>
+            `;
+        });
+        carritoContenido.innerHTML = html;
+        subtotalCarrito.textContent = '$' + carrito.total.toFixed(0);
+    }
+}
 
         // Selección de talla
         document.addEventListener('DOMContentLoaded', function() {

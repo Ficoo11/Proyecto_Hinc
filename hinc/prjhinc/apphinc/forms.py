@@ -268,5 +268,3 @@ class PedidoForm(forms.ModelForm):
     class Meta:
         model = Pedido
         fields = ['nombre_completo', 'email', 'telefono', 'direccion', 'ciudad']
-
-        
