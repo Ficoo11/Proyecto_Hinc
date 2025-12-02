@@ -24,6 +24,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm
 import random
 import string
+import requests
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -586,25 +587,30 @@ def categorias_view(request):
             return redirect('categorias')
     return render(request, 'PAcategorias.html', {'categorias': categorias, 'action': action, 'categoria': categoria, 'form': form})
 
-@login_required
 def categorias_create(request):
-    if request.user.role != 'Admin':
-        messages.error(request, "No tienes permiso para crear categorías.")
-        return redirect('categorias')
-    if request.method == 'POST':
-        form = CategoriaForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Categoría agregada exitosamente.")
-            return redirect('categorias')
-        else:
-            messages.error(request, "Error al agregar categoría. Verifica los datos.")
-            for error in form.errors.values():
-                messages.error(request, error)
-    else:
-        form = CategoriaForm()
-    return render(request, 'PAcategorias.html', {'form': form, 'action': 'create_categorias'})
+    if request.method != "POST":
+        return redirect("categorias")
 
+    data = {
+        "nombre": request.POST.get("nombre"),
+        "descripcion": request.POST.get("descripcion"),
+        "imagen": None
+    }
+
+    try:
+        response = requests.post(settings.JAVA_CATEGORIAS_CREAR, json=data)
+
+        if response.status_code not in [200, 201]:
+            messages.error(request, "Error creando la categoría en Java.")
+            return redirect("categorias")
+
+        messages.success(request, "Categoría creada correctamente.")
+        return redirect("categorias")
+
+    except requests.exceptions.ConnectionError:
+        messages.error(request, "No se pudo conectar con el microservicio Java.")
+        return redirect("categorias")
+    
 @login_required
 def categorias_update(request, categoria_id):
     if request.user.role != 'Admin':

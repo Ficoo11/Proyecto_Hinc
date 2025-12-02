@@ -181,3 +181,5 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'hincoficial@gmail.com'  # Tu email
 EMAIL_HOST_PASSWORD = 'hruk fwpp ejmd legg'  # Password de aplicación
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+JAVA_CATEGORIAS_CREAR = 'http://localhost:8080/api/categorias/crear'
