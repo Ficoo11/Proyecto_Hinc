@@ -67,7 +67,7 @@ urlpatterns = [
     path('paneladmin/registro-ventas/sincronizar-stripe/', views.sincronizar_ventas_stripe, name='sincronizar_ventas_stripe'),
     path('paneladmin/registro-ventas/registrar-manual/', views.registrar_venta_manual, name='registrar_venta_manual'),
 
-    #smtp
+    #smtp recuperacion contraseña
     path('password-reset/', views.password_reset_request, name='password_reset'),
     path('password-reset/code/', views.password_reset_code, name='password_reset_code'),
     path('password-reset/confirm/', views.password_reset_confirm, name='password_reset_confirm'),

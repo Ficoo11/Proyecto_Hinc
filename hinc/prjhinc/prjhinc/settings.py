@@ -169,6 +169,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# Pasarela de pagos
 STRIPE_PUBLISHABLE_KEY = ''
 STRIPE_SECRET_KEY = ''
 STRIPE_WEBHOOK_SECRET = 'proximamente...'
@@ -182,4 +183,5 @@ EMAIL_HOST_USER = 'hincoficial@gmail.com'  # Tu email
 EMAIL_HOST_PASSWORD = 'hruk fwpp ejmd legg'  # Password de aplicación
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
+# Microservicio Java
 JAVA_CATEGORIAS_CREAR = 'http://localhost:8080/api/categorias/crear'

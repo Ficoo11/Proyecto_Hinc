@@ -12,8 +12,6 @@ from django.utils import timezone
 from datetime import timedelta
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-import json
-import logging, stripe
 from django.conf import settings
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
@@ -22,9 +20,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm
-import random
-import string
-import requests
+import logging, stripe, requests, random, string, json
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
